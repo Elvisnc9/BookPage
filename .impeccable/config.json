@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "apps/web/src/styles/base.css"
+        ],
+        "createdAt": "2026-10-14T21:01:37.406Z",
+        "reason": "Project brief and design/README.md specify the striped 'scan' headline word (stripe background clipped to text)"
+      }
+    ]
+  }
+}

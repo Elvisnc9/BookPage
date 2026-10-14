@@ -1,0 +1,18 @@
+---
+import Base from '../../../layouts/Base.astro';
+
+// Reached only via the {slug}. subdomain rewrite in middleware.ts.
+const { slug } = Astro.params;
+---
+
+<Base title={`${slug} · Book online`}>
+  <main>
+    <p class="lab">{slug} · booking page</p>
+    <h1 class="h-display">Book with {slug}</h1>
+  </main>
+</Base>
+
+<style>
+  main { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
+  h1 { font-size: 40px; margin: 8px 0 0; }
+</style>

@@ -1,0 +1,28 @@
+{
+  "name": "@bookpage/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "build:prod": "CLOUDFLARE_ENV=production astro build",
+    "preview": "astro preview",
+    "deploy": "pnpm build:prod && wrangler deploy",
+    "typecheck": "astro check",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.3.4",
+    "@bookpage/shared": "workspace:*",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "astro": "^7.3.8"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.4",
+    "wrangler": "^4.151.0"
+  }
+}

@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="BookPage · Never miss a booking" description="A free booking page with an AI receptionist for every local business.">
+  <main class="stub">
+    <p class="lab">bookpage.app · marketing</p>
+    <h1 class="h-display">Never miss a <span class="scan">booking.</span></h1>
+    <div class="row">
+      <a class="btn btn-ink" href="/">Get your free page</a>
+      <a class="btn" href="/">See an example</a>
+    </div>
+    <div class="box raised card">
+      <p class="lab">Token check</p>
+      <div class="swatches">
+        <span style="background: var(--red)"></span>
+        <span style="background: var(--orange)"></span>
+        <span style="background: var(--yellow)"></span>
+        <span style="background: var(--tint-yellow)"></span>
+        <span style="background: var(--tint-orange)"></span>
+        <span style="background: var(--tint-red)"></span>
+      </div>
+      <div class="row">
+        <button class="chip" aria-pressed="true">Haircut</button>
+        <button class="chip" aria-pressed="false">Braids</button>
+      </div>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .stub { max-width: 720px; margin: 0 auto; padding: 48px 16px; display: grid; gap: 24px; }
+  h1 { font-size: clamp(44px, 11vw, 96px); margin: 0; }
+  .lab { margin: 0; }
+  .row { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card { padding: 20px; display: grid; gap: 16px; }
+  .swatches { display: flex; gap: 8px; }
+  .swatches span { width: 32px; height: 32px; border: var(--border); border-radius: var(--r-sm); }
+</style>

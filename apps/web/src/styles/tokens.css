@@ -1,0 +1,51 @@
+/* BookPage design tokens. Source of truth: design/README.md.
+   Softened neo-brutalism: 2px ink borders, hard offset shadows, 4–10px radii.
+   Accents are used one per element; there is no primary colour. */
+:root {
+  /* Surfaces & text */
+  --page: #EBEBE8;
+  --surface: #FFFFFF;
+  --surface-2: #FAFAF9;
+  --ink: #0D0D10;
+  --ink-hover: #2A2A30;
+  --ink-soft: #3C3C44;
+  --muted: #5C5C66;
+  --faint: #8E8E96;
+  --line: #CFCFD4;
+  --line-soft: #F2F2F3;
+
+  /* Accents */
+  --red: #C8553D;
+  --orange: #E07A3F;
+  --yellow: #E9B949;
+
+  /* Tints */
+  --tint-yellow: #FBF3DC;
+  --tint-orange: #FCE9DC;
+  --tint-red: #FBE4DE;
+
+  /* Type */
+  --font-sans: 'Geist Variable', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --track-tight: -0.04em;
+  --track-label: 0.08em;
+
+  /* Shape */
+  --border-w: 2px;
+  --border: var(--border-w) solid var(--ink);
+  --r-sm: 4px;
+  --r: 6px;
+  --r-lg: 8px;
+  --r-xl: 10px;
+  --r-pill: 999px;
+
+  /* Hard offset shadows */
+  --shadow-sm: 5px 5px 0 var(--ink);
+  --shadow: 6px 6px 0 var(--ink);
+  --shadow-lg: 10px 10px 0 var(--ink);
+
+  /* Motion */
+  --ease-out: cubic-bezier(.23, 1, .32, 1);
+  --dur-fast: 140ms;
+  --dur: 220ms;
+}

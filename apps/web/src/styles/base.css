@@ -1,0 +1,123 @@
+@import '@fontsource-variable/geist/wght.css';
+@import '@fontsource-variable/geist-mono/wght.css';
+@import './tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--ink); }
+img, svg { display: block; max-width: 100%; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+::selection { background: var(--ink); color: var(--surface); }
+
+:where(a, button, input, textarea, select, summary):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Headlines: 800–900, tight tracking. */
+.h-display {
+  font-weight: 900;
+  letter-spacing: var(--track-tight);
+  line-height: .95;
+}
+
+.mono { font-family: var(--font-mono); }
+
+.lab {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The striped "scan" word in headings. */
+.scan {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  letter-spacing: -0.06em;
+  color: transparent;
+  background-image: repeating-linear-gradient(180deg, var(--ink) 0 5px, transparent 5px 9px);
+  background-size: 100% 18px;
+  -webkit-background-clip: text;
+  background-clip: text;
+  padding-bottom: .06em;
+  animation: scan 3.4s linear infinite;
+}
+@keyframes scan { to { background-position: 0 -18px; } }
+
+.box {
+  border: var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.box.raised { box-shadow: var(--shadow); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px; /* touch target */
+  padding: 0 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  border: var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+.btn:active { transform: scale(.97); }
+.btn-ink { background: var(--ink); color: var(--surface); }
+
+.chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: .06em;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+.lift { transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) ease; }
+
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--ink); color: var(--surface); }
+  .btn-ink:hover { background: var(--ink-hover); }
+  .lift:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-lg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

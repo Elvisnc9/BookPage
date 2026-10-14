@@ -1,0 +1,17 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// Reached only via the app. subdomain rewrite in middleware.ts.
+---
+
+<Base title="BookPage · Dashboard">
+  <main>
+    <p class="lab">app.bookpage.app · owner</p>
+    <h1 class="h-display">Today</h1>
+  </main>
+</Base>
+
+<style>
+  main { max-width: 720px; margin: 0 auto; padding: 48px 16px; }
+  h1 { font-size: 48px; margin: 8px 0 0; }
+</style>
