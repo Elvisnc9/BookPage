@@ -1,43 +1,276 @@
 ---
-import { APP_HOST } from 'astro:env/server';
-import Base from '../layouts/Base.astro';
+import Pricing from '../components/marketing/Pricing.astro';
+import { wavePath } from '../components/marketing/wave';
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import { siteLinks } from '../lib/marketing';
 
-const { protocol, port } = Astro.url;
-const signUpUrl = `${protocol}//${APP_HOST}${port ? `:${port}` : ''}/sign-in?new`;
+const links = siteLinks(Astro.url);
+
+// Hero ribbon: each tile is one booking. Columns wave; tiles flip now and then.
+const TILE_COLOURS = ['var(--red)', 'var(--orange)', 'var(--yellow)', 'var(--surface)', 'var(--tint-yellow)', 'var(--tint-orange)'];
+const tiles = Array.from({ length: 64 }, (_, i) => ({
+  i,
+  colour: TILE_COLOURS[(i * 7) % TILE_COLOURS.length],
+  flip: (i * 37) % 11 === 0,
+  height: 40 + ((i * 13) % 5) * 8,
+}));
+
+const channels = ['Instagram bio', 'WhatsApp status', 'Google Business Profile', 'Facebook page', 'TikTok bio', 'Your website'];
+const forCustomers = [
+  'See services, prices and real free times before they come',
+  'Pick a time that is actually free',
+  'No app, no account, no password',
+  'A confirmation now and a reminder the day before',
+];
+const forOwners = [
+  'Every booking emailed to you the moment it happens',
+  'Approve requests yourself, or let them confirm automatically',
+  'Reminders that cut no-shows',
+  "Today's schedule on your phone",
+];
+const builtFor = ['Salons', 'Barbers', 'Spas', 'Nail & lash studios', 'Clinics', 'Physios', 'Tutors', 'Personal trainers', 'Photographers', 'Mechanics', 'Cleaners', 'Event venues'];
+const faqs = [
+  ['Do my customers need to download anything?', 'No. Your page is an ordinary web link. They open it, pick a time, enter their name and email, and they are booked. No app, no account.'],
+  ['How does BookPage know when I am free?', 'From your opening hours, the bookings you already have and your rules, like minimum notice. It only offers times that fit the whole service. Google Calendar sync is on the way.'],
+  ['Can two people book the same time?', 'No. Every booking is checked again at the moment it is made, and the database itself refuses an overlapping one. If someone just took a time, the next customer is asked to pick another.'],
+  ['Can I approve bookings before they are confirmed?', 'Yes. Turn off automatic confirmation and new bookings wait for your OK. The time is held while you decide, and the customer is emailed either way.'],
+  ['What do my customers receive?', 'A confirmation email with a link to change or cancel and add the booking to their calendar, plus a reminder the day before if they want one.'],
+  ['What does it cost?', 'Taking bookings is free, with no limit on bookings. Pro, at $15 a month, adds more looks and your own branding. It is opening soon; join the waitlist to hear first.'],
+  ['What happens to my customers’ details?', 'They are used only to run your bookings: confirmations, reminders and your dashboard. We never sell them, and we delete them on request.'],
+];
+const swing = wavePath(Math.PI * 0.9, 150);
 ---
 
-<Base title="BookPage · Never miss a booking" description="A free booking page with an AI receptionist for every local business.">
-  <main class="stub">
-    <p class="lab">bookpage.app · marketing</p>
-    <h1 class="h-display">Never miss a <span class="scan">booking.</span></h1>
-    <div class="row">
-      <a class="btn btn-ink" href={signUpUrl}>Get your free page</a>
-      <a class="btn" href="/">See an example</a>
-    </div>
-    <div class="box raised card">
-      <p class="lab">Token check</p>
-      <div class="swatches">
-        <span style="background: var(--red)"></span>
-        <span style="background: var(--orange)"></span>
-        <span style="background: var(--yellow)"></span>
-        <span style="background: var(--tint-yellow)"></span>
-        <span style="background: var(--tint-orange)"></span>
-        <span style="background: var(--tint-red)"></span>
+<MarketingLayout title="BookPage · Never miss a booking" description="A free booking page for your local business. Customers see your services, prices and real free times, and book in under a minute.">
+  <section class="mk-hero mk-dots" aria-labelledby="hero-title">
+    <div class="mk-w mk-hero-in">
+      <div class="mk-hero-copy" data-reveal>
+        <p class="mk-pill mono">Free booking pages for local businesses</p>
+        <h1 id="hero-title" class="mk-h1">Never miss<br />a <span class="scan">booking.</span></h1>
+        <p class="mk-lede">One link with your services, prices and real free times. Customers book in under a minute and get a confirmation and a reminder. You get every booking straight to your inbox.</p>
+        <div class="mk-actions">
+          <a class="btn btn-ink mk-btn-lg" href={links.signUp}>Create my free page</a>
+          <a class="btn mk-btn-lg" href={links.example}>See an example ↗</a>
+        </div>
+        <p class="mk-small mono">Free · No card · Ready in about 5 minutes</p>
       </div>
-      <div class="row">
-        <button class="chip" aria-pressed="true">Haircut</button>
-        <button class="chip" aria-pressed="false">Braids</button>
-      </div>
-    </div>
-  </main>
-</Base>
 
-<style>
-  .stub { max-width: 720px; margin: 0 auto; padding: 48px 16px; display: grid; gap: 24px; }
-  h1 { font-size: clamp(44px, 11vw, 96px); margin: 0; }
-  .lab { margin: 0; }
-  .row { display: flex; flex-wrap: wrap; gap: 12px; }
-  .card { padding: 20px; display: grid; gap: 16px; }
-  .swatches { display: flex; gap: 8px; }
-  .swatches span { width: 32px; height: 32px; border: var(--border); border-radius: var(--r-sm); }
-</style>
+      <div class="mk-collage" aria-hidden="true">
+        <div class="box raised mk-card mk-card-page" data-speed="0.85">
+          <div class="mk-browser"><i></i><i></i><i></i><span class="mono">glowstudio.bookpage.app</span></div>
+          <p class="lab">Salon · Brooklyn</p>
+          <p class="mk-card-title">Glow Studio</p>
+          <ul class="mk-card-list">
+            <li><span>Silk press</span><strong>$85</strong></li>
+            <li><span>Knotless braids</span><strong>From $180</strong></li>
+            <li><span>Trim &amp; shape</span><strong>$35</strong></li>
+          </ul>
+          <span class="btn btn-ink mk-card-btn">Book an appointment</span>
+        </div>
+        <div class="box mk-card mk-card-day mk-drift-a" data-speed="0.6">
+          <span class="mono">SAT</span><strong>17</strong><span class="mono">OCT</span>
+        </div>
+        <div class="box mk-card mk-card-note mk-drift-b" data-speed="1.2">
+          <p class="lab">New booking · now</p>
+          <p><strong>Dana W.</strong> booked Silk press</p>
+          <p class="mono">Sat 17 Oct · 10:30 AM · with Maya</p>
+        </div>
+        <div class="box mk-card mk-card-done mk-drift-a" data-speed="1.35">
+          <span class="mk-check">✓</span><span><strong>You're booked</strong><br /><span class="mono">Reminder tomorrow</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mk-ribbon" data-ribbon aria-hidden="true">
+      <div class="mk-tiles">
+        {tiles.map((t) => (
+          <span class="mk-tw" style={`--i:${t.i};--h:${t.height}px`}>
+            <i class={`mk-tile${t.flip ? ' mk-flip' : ''}`} style={`background:${t.colour}`}></i>
+          </span>
+        ))}
+      </div>
+      <span class="mk-ribbon-label mono">Each tile = one booking</span>
+      <span class="mk-ribbon-live mono"><i></i>Bookings flowing in</span>
+    </div>
+  </section>
+
+  <section class="mk-strip grain" aria-label="Where to share your link">
+    <div class="mk-w mk-strip-in">
+      <p class="lab">Share it where your customers already are</p>
+      <ul class="mk-chips">{channels.map((c) => <li class="mono">{c}</li>)}</ul>
+    </div>
+  </section>
+
+  <section id="how" class="mk-sec grain" aria-labelledby="how-title">
+    <span class="mk-art mk-plus mk-drift-a" data-speed="0.6" aria-hidden="true"></span>
+    <span class="mk-art mk-ring mk-drift-b" data-speed="1.3" aria-hidden="true"></span>
+    <div class="mk-w">
+      <div class="mk-sec-head" data-reveal>
+        <h2 id="how-title" class="mk-h2">Set up once. <span class="scan">Get booked.</span></h2>
+        <p class="mk-sub mono">Three steps for you. One minute for your customers.</p>
+      </div>
+      <div class="mk-flow">
+        <svg class="mk-string" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true">
+          <path data-string data-swing={swing} d={wavePath(0, 150)} pathLength="1" fill="none" stroke="#0D0D10" stroke-width="5"
+            stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" stroke-dasharray="1" />
+        </svg>
+        <ol class="mk-steps">
+          <li class="box raised mk-step" data-reveal>
+            <span class="mk-step-n mono">01</span>
+            <h3>Add your business</h3>
+            <p>Services, prices and opening hours. About five minutes, on your phone.</p>
+            <div class="mk-mini">
+              <span><span>Silk press</span><strong>$85</strong></span>
+              <span><span>Knotless braids</span><strong>From $180</strong></span>
+            </div>
+          </li>
+          <li class="box raised mk-step" data-reveal>
+            <span class="mk-step-n mono">02</span>
+            <h3>Set your rules</h3>
+            <p>Notice, how far ahead, approve or auto-confirm. Only times you are open and free are offered, so you can't be double-booked.</p>
+            <div class="mk-mini mk-mini-chips"><span class="chip">2 hours notice</span><span class="chip" aria-pressed="true">Auto-confirm ✓</span></div>
+          </li>
+          <li class="box raised mk-step" data-reveal>
+            <span class="mk-step-n mono">03</span>
+            <h3>Share your link</h3>
+            <p>Put it in your Instagram bio, WhatsApp status and Google listing. Customers book from there.</p>
+            <div class="mk-mini"><span class="mk-url mono">glowstudio.bookpage.app</span></div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="mk-sec mk-tint grain" aria-labelledby="sides-title">
+    <div class="mk-w">
+      <h2 id="sides-title" class="mk-h2" data-reveal>Made for both sides of the <span class="scan">counter</span></h2>
+      <div class="mk-sides">
+        <div class="box raised mk-side" data-reveal>
+          <p class="lab">Your customers</p>
+          <p class="mk-side-title">Book in a minute, any time of day.</p>
+          <ul class="mk-ticks">{forCustomers.map((x) => <li>{x}</li>)}</ul>
+        </div>
+        <div class="box raised mk-side mk-side-owner" data-reveal>
+          <p class="lab">You, the owner</p>
+          <p class="mk-side-title">Stop answering "are you free Saturday?" all day.</p>
+          <ul class="mk-ticks">{forOwners.map((x) => <li>{x}</li>)}</ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mk-sec grain" aria-labelledby="link-title">
+    <span class="mk-art mk-plus mk-drift-b" data-speed="1.25" aria-hidden="true"></span>
+    <div class="mk-w mk-link">
+      <h2 id="link-title" class="mk-h2" data-reveal>Your own <span class="scan">link</span></h2>
+      <p class="mk-sub mono" data-reveal>Type your business name. That is your booking page address, free.</p>
+      <form class="box raised mk-slug" action={links.signUp} method="get" data-reveal data-slug-form>
+        <span class="mono">https://</span>
+        <input class="mono" name="slug" aria-label="Your business name" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourbusiness" data-slug-input />
+        <span class="mono">.bookpage.app</span>
+      </form>
+      <p class="mk-slug-note mono" role="status" data-slug-note>Type a name to check it</p>
+      <a class="btn btn-ink" href={links.signUp} data-reveal>Claim it free</a>
+    </div>
+  </section>
+
+  <section id="templates" class="mk-sec mk-tint grain" aria-labelledby="templates-title">
+    <div class="mk-w mk-tpl">
+      <div class="mk-tpl-copy" data-reveal>
+        <p class="mk-pill mono">Pro · coming soon</p>
+        <h2 id="templates-title" class="mk-h2">Make it look like <span class="scan">you</span></h2>
+        <p class="mk-sub">Pro adds templates, your colours and logo, a video of your space and a gallery of your best work. Try the looks here.</p>
+        <div class="mk-tpl-controls" data-tpl-controls>
+          <p class="lab" id="tpl-label">Template</p>
+          <div class="mk-chips-row" role="radiogroup" aria-labelledby="tpl-label">
+            {['classic', 'bold', 'soft'].map((t, i) => (
+              <button type="button" class="chip" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-tpl={t}>{t[0]!.toUpperCase() + t.slice(1)}</button>
+            ))}
+          </div>
+          <p class="lab" id="colour-label">Your colour</p>
+          <div class="mk-swatches" role="radiogroup" aria-labelledby="colour-label">
+            {[['Ink', 'var(--ink)'], ['Brick', 'var(--red)'], ['Orange', 'var(--orange)'], ['Mustard', 'var(--yellow)']].map(([n, c], i) => (
+              <button type="button" class="mk-swatch" role="radio" aria-checked={i === 1 ? 'true' : 'false'} aria-label={n} data-colour={c} style={`background:${c}`}></button>
+            ))}
+          </div>
+        </div>
+        <a class="btn" href="/pricing#pro">Join the Pro waitlist</a>
+      </div>
+      <div class="box raised mk-pv" data-tpl="classic" style="--accent: var(--red)" data-tpl-preview data-reveal>
+        <div class="mk-browser"><i></i><i></i><i></i><span class="mono">glowstudio.bookpage.app</span></div>
+        <div class="mk-pv-hero">
+          <p class="lab">Salon · Brooklyn</p>
+          <p class="mk-pv-title">Glow Studio</p>
+          <p>Silk presses, braids and colour in a calm little studio.</p>
+          <span class="mk-pv-btn mono">Book an appointment</span>
+        </div>
+        <div class="mk-pv-gallery"><span></span><span></span><span></span><span></span></div>
+        <div class="mk-pv-services">
+          <span><span>Silk press</span><strong>$85</strong></span>
+          <span><span>Braids</span><strong>$180</strong></span>
+          <span><span>Trim</span><strong>$35</strong></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mk-marquee grain" aria-label="Built for">
+    <p class="lab mk-w">Built for</p>
+    <div class="mk-mq"><div class="mk-mq-track">{[...builtFor, ...builtFor].map((b, i) => <span aria-hidden={i >= builtFor.length ? 'true' : undefined}>{b}</span>)}</div></div>
+    <div class="mk-mq"><div class="mk-mq-track mk-mq-rev" aria-hidden="true">{[...builtFor.slice(6), ...builtFor.slice(0, 6), ...builtFor.slice(6), ...builtFor.slice(0, 6)].map((b) => <span>{b}</span>)}</div></div>
+  </section>
+
+  <Pricing from="/" />
+
+  <section id="faq" class="mk-sec mk-tint grain" aria-labelledby="faq-title">
+    <div class="mk-w mk-faq">
+      <h2 id="faq-title" class="mk-h2" data-reveal>Questions, <span class="scan">answered</span></h2>
+      <div class="mk-faq-list">
+        {faqs.map(([q, a]) => (
+          <details class="box mk-qa" data-reveal>
+            <summary>{q}<span class="mono" aria-hidden="true">+</span></summary>
+            <p>{a}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+</MarketingLayout>
+
+<script>
+  // "Your own link": live availability check (the form still works without it).
+  const input = document.querySelector<HTMLInputElement>('[data-slug-input]');
+  const note = document.querySelector<HTMLElement>('[data-slug-note]');
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  input?.addEventListener('input', () => {
+    const slug = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (slug !== input.value) input.value = slug;
+    clearTimeout(timer);
+    if (!note) return;
+    if (!slug) {
+      note.textContent = 'Type a name to check it';
+      note.dataset.tone = '';
+      return;
+    }
+    note.textContent = 'Checking…';
+    timer = setTimeout(async () => {
+      try {
+        const r = (await (await fetch(`/check-slug?slug=${encodeURIComponent(slug)}`)).json()) as { available: boolean; valid: boolean };
+        if (input.value !== slug) return;
+        note.textContent = !r.valid ? 'Use 3–40 letters, numbers or single hyphens' : r.available ? `✓ ${slug}.bookpage.app is available` : `× ${slug}.bookpage.app is taken, try another`;
+        note.dataset.tone = r.valid && r.available ? 'ok' : 'bad';
+      } catch {
+        note.textContent = 'Claim it when you sign up';
+      }
+    }, 350);
+  });
+  document.querySelector('[data-slug-form]')?.addEventListener('submit', (e) => e.preventDefault());
+
+  // Template preview: Classic / Bold / Soft and the accent colour.
+  const preview = document.querySelector<HTMLElement>('[data-tpl-preview]');
+  const choose = (group: NodeListOf<HTMLElement>, picked: HTMLElement) => group.forEach((b) => b.setAttribute('aria-checked', String(b === picked)));
+  const tplButtons = document.querySelectorAll<HTMLElement>('[data-tpl-controls] [data-tpl]');
+  const swatches = document.querySelectorAll<HTMLElement>('[data-colour]');
+  tplButtons.forEach((b) => b.addEventListener('click', () => { choose(tplButtons, b); if (preview) preview.dataset.tpl = b.dataset.tpl!; }));
+  swatches.forEach((b) => b.addEventListener('click', () => { choose(swatches, b); preview?.style.setProperty('--accent', b.dataset.colour!); }));
+</script>

@@ -1,0 +1,88 @@
+---
+import { siteLinks } from '../../lib/marketing';
+
+/** Free and Pro ($15/mo, waitlist only for now), plus what's coming. Used on the home page and /pricing. */
+interface Props {
+  /** Where the waitlist form returns to. */
+  from: string;
+  headingLevel?: 'h1' | 'h2';
+}
+
+const { from, headingLevel = 'h2' } = Astro.props;
+const Heading = headingLevel;
+const links = siteLinks(Astro.url);
+const joined = Astro.url.searchParams.has('joined');
+const error = Astro.url.searchParams.get('waitlist_error');
+
+const free = [
+  'Your own booking page and link',
+  'Unlimited bookings',
+  'Services, prices, hours and team',
+  'No double bookings, ever',
+  'Email confirmations and day-before reminders',
+  'An email for every new booking',
+  'Approve requests or auto-confirm',
+];
+const pro = [
+  'Everything in Free',
+  'More templates, your colours and logo',
+  'A short video of your space',
+  'A gallery of your best work',
+  'Remove the BookPage badge',
+  'Priority support',
+];
+const later = [
+  'AI receptionist that answers customer questions',
+  'Google Calendar sync',
+  'WhatsApp reminders',
+  'Your own domain',
+  'Deposits and online payments',
+];
+---
+
+<section id="pricing" class="mk-sec grain" aria-labelledby="pricing-title">
+  <div class="mk-w">
+    <div class="mk-sec-head" data-reveal>
+      <Heading id="pricing-title" class="mk-h2">Start free. <span class="scan">Grow with Pro.</span></Heading>
+      <p class="mk-sub">Taking bookings is free, for good. Pro is for when you want the page to look and feel like your brand.</p>
+    </div>
+
+    <div class="mk-plans">
+      <article class="box mk-plan" data-reveal>
+        <p class="lab">Free</p>
+        <p class="mk-price"><strong>$0</strong><span class="mono">forever</span></p>
+        <p>Everything you need to start taking bookings.</p>
+        <a class="btn btn-ink" href={links.signUp}>Create my free page</a>
+        <ul class="mk-ticks">{free.map((x) => <li>{x}</li>)}</ul>
+      </article>
+
+      <article id="pro" class="box mk-plan mk-plan-pro" data-reveal>
+        <p class="lab">Pro · <span class="mk-soon">Coming soon</span></p>
+        <p class="mk-price"><strong>$15</strong><span class="mono">/month</span></p>
+        <p>Your page, your brand, your best work on show.</p>
+        {joined ? (
+          <p class="mk-joined" role="status">✓ You're on the list. We'll email you once, when Pro opens.</p>
+        ) : (
+          <form class="mk-waitlist" method="post" action="/waitlist">
+            <input type="hidden" name="from" value={from} />
+            <label class="lab" for="waitlist-email">Get told when it opens</label>
+            <div class="mk-waitlist-row">
+              <input id="waitlist-email" class="mk-input" type="email" name="email" required maxlength="120" autocomplete="email" placeholder="you@business.com"
+                aria-invalid={error ? 'true' : undefined} aria-describedby={error ? 'waitlist-error' : undefined} />
+              <button class="btn" type="submit">Join the waitlist</button>
+            </div>
+            {error && <p id="waitlist-error" class="mk-error" role="alert">{error}</p>}
+            <div class="mk-honey" aria-hidden="true"><label>Company <input name="company" tabindex="-1" autocomplete="off" /></label></div>
+          </form>
+        )}
+        <ul class="mk-ticks">{pro.map((x) => <li>{x}</li>)}</ul>
+      </article>
+
+      <article class="box mk-plan mk-plan-later" data-reveal>
+        <p class="lab">On the way</p>
+        <p class="mk-later-title">What we're building next</p>
+        <ul class="mk-ticks mk-ticks-later">{later.map((x) => <li>{x}</li>)}</ul>
+      </article>
+    </div>
+  </div>
+</section>

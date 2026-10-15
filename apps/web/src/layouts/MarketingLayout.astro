@@ -1,0 +1,81 @@
+---
+import Base from './Base.astro';
+import '../styles/marketing.css';
+import { siteLinks } from '../lib/marketing';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+const links = siteLinks(Astro.url);
+const onHome = Astro.url.pathname === '/';
+const anchor = (id: string) => (onHome ? `#${id}` : `/#${id}`);
+---
+
+<Base title={title} description={description}>
+  <a class="mk-skip" href="#main">Skip to content</a>
+  <header class="mk-header">
+    <div class="mk-w mk-header-in">
+      <a class="mk-logo" href="/" aria-label="BookPage home">
+        <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="4" width="26" height="26" rx="6" fill="#0D0D10"/><rect x="2" y="2" width="26" height="26" rx="6" fill="#E9B949" stroke="#0D0D10" stroke-width="2"/><path d="M10 8h6a3.5 3.5 0 0 1 0 7h-6zm0 7h7a3.5 3.5 0 0 1 0 7h-7z" fill="none" stroke="#0D0D10" stroke-width="2.4" stroke-linejoin="round"/></svg>
+        <span class="mono">BookPage</span>
+      </a>
+      <nav class="mk-nav" aria-label="Main">
+        <a href={anchor('how')}>How it works</a>
+        <a href={anchor('templates')}>Templates</a>
+        <a href="/pricing">Pricing</a>
+        <a href={anchor('faq')}>FAQ</a>
+      </nav>
+      <a class="mk-signin" href={links.signIn}>Sign in</a>
+      <a class="btn btn-ink mk-cta" href={links.signUp}>Create my page</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <slot />
+  </main>
+
+  <footer class="mk-footer grain">
+    <div class="mk-w">
+      <div class="mk-footer-top">
+        <div class="mk-footer-cta">
+          <p class="mk-footer-line">Your diary, <span class="scan">on autopilot</span></p>
+          <a class="btn btn-ink" href={links.signUp}>Create my free page</a>
+        </div>
+        <nav class="mk-footer-nav" aria-label="Footer">
+          <div>
+            <p class="lab">Product</p>
+            <a href={anchor('how')}>How it works</a>
+            <a href={links.example}>Example page</a>
+            <a href="/pricing">Pricing</a>
+            <a href={anchor('faq')}>FAQ</a>
+          </div>
+          <div>
+            <p class="lab">Account</p>
+            <a href={links.signUp}>Create my page</a>
+            <a href={links.signIn}>Sign in</a>
+          </div>
+          <div>
+            <p class="lab">Legal</p>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+          </div>
+        </nav>
+      </div>
+      <p class="mk-wordmark scan" aria-hidden="true">BOOKPAGE</p>
+      <div class="mk-footer-bottom mono">
+        <span>© 2026 BookPage</span>
+        <a href="#main">Back to top ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Motion is an enhancement: only load it when the visitor hasn't asked for less.
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      void import('../scripts/motion');
+    }
+  </script>
+</Base>
