@@ -1,17 +1,30 @@
 ---
 import Base from '../../layouts/Base.astro';
 
-// Reached only via the app. subdomain rewrite in middleware.ts.
+// Reached only via the app-host rewrite in middleware.ts, which guarantees `me`.
+const { user, business } = Astro.locals.me!;
+
+// Finish onboarding before the dashboard (built in step 7).
+if (!business || business.onboardingStep < 5) return Astro.redirect('/onboarding', 303);
 ---
 
-<Base title="BookPage · Dashboard">
+<Base title="Today · BookPage">
   <main>
-    <p class="lab">app.bookpage.app · owner</p>
+    <header class="top">
+      <p class="lab">{business.name}</p>
+      <form method="post" action="/api/auth/logout">
+        <button class="btn" type="submit">Sign out</button>
+      </form>
+    </header>
     <h1 class="h-display">Today</h1>
+    <p class="muted">Signed in as {user.email}</p>
   </main>
 </Base>
 
 <style>
-  main { max-width: 720px; margin: 0 auto; padding: 48px 16px; }
-  h1 { font-size: 48px; margin: 8px 0 0; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .top .lab { margin: 0; }
+  h1 { font-size: 48px; margin: 24px 0 4px; }
+  .muted { color: var(--muted); margin: 0; }
 </style>

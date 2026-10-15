@@ -1,5 +1,9 @@
 ---
+import { APP_HOST } from 'astro:env/server';
 import Base from '../layouts/Base.astro';
+
+const { protocol, port } = Astro.url;
+const signUpUrl = `${protocol}//${APP_HOST}${port ? `:${port}` : ''}/sign-in?new`;
 ---
 
 <Base title="BookPage · Never miss a booking" description="A free booking page with an AI receptionist for every local business.">
@@ -7,7 +11,7 @@ import Base from '../layouts/Base.astro';
     <p class="lab">bookpage.app · marketing</p>
     <h1 class="h-display">Never miss a <span class="scan">booking.</span></h1>
     <div class="row">
-      <a class="btn btn-ink" href="/">Get your free page</a>
+      <a class="btn btn-ink" href={signUpUrl}>Get your free page</a>
       <a class="btn" href="/">See an example</a>
     </div>
     <div class="box raised card">

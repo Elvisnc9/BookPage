@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isInternalPath, resolveSite } from './host';
 
-describe('resolveSite', () => {
+describe('resolveSite in production', () => {
   const root = 'bookpage.app';
 
   it('maps the apex and www to marketing', () => {
@@ -23,10 +23,22 @@ describe('resolveSite', () => {
     expect(resolveSite('evilbookpage.app', root)).toEqual({ kind: 'unknown' });
     expect(resolveSite('example.com', root)).toEqual({ kind: 'unknown' });
   });
+});
 
-  it('works with localhost in dev', () => {
-    expect(resolveSite('localhost', 'localhost')).toEqual({ kind: 'marketing' });
-    expect(resolveSite('glowstudio.localhost', 'localhost')).toEqual({ kind: 'booking', slug: 'glowstudio' });
+describe('resolveSite in dev (app host = localhost)', () => {
+  const site = (host: string) => resolveSite(host, 'localhost', 'localhost');
+
+  it('serves the owner app on plain localhost and marketing on www', () => {
+    expect(site('localhost')).toEqual({ kind: 'app' });
+    expect(site('www.localhost')).toEqual({ kind: 'marketing' });
+  });
+
+  it('still serves booking pages on subdomains', () => {
+    expect(site('glowstudio.localhost')).toEqual({ kind: 'booking', slug: 'glowstudio' });
+  });
+
+  it('does not treat app.localhost as a booking page', () => {
+    expect(site('app.localhost')).toEqual({ kind: 'unknown' });
   });
 });
 

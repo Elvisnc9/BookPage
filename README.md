@@ -19,10 +19,11 @@ docs/            Product docs exported from Claude Docs.
 | `bookpage.app`, `www.` | Marketing | `src/pages/*` |
 | `app.bookpage.app` | Owner app | `src/pages/app/*` |
 | `{slug}.bookpage.app` | Booking page | `src/pages/site/[slug]/*` |
-| `api.bookpage.app` | NestJS API | — |
+| `app.bookpage.app/api/*` | NestJS API, proxied by the web app | `src/pages/app/api/[...path].ts` |
 
 `apps/web/src/middleware.ts` rewrites by host; `/app` and `/site` are never reachable directly.
-The session cookie is host-only on `api.bookpage.app`, so booking subdomains never receive it.
+The session cookie is host-only on `app.bookpage.app` (the API sits behind its `/api/*` proxy),
+so booking subdomains never receive it and no CORS is needed.
 
 ## Develop
 
@@ -35,10 +36,10 @@ pnpm --filter @bookpage/shared build
 pnpm dev
 ```
 
-- Marketing: http://localhost:4321
-- Owner app: http://app.localhost:4321
+- Owner app: http://localhost:4321 (plain localhost because Google OAuth rejects `*.localhost`)
+- Marketing: http://www.localhost:4321
 - Booking page: http://glowstudio.localhost:4321
-- API: http://localhost:3000/health
+- API: http://localhost:3000/health (also http://localhost:4321/api/health)
 
 Copy `apps/*/.env.example` to `.env` (web on Cloudflare reads `.dev.vars` too).
 

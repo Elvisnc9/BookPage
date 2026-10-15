@@ -1,0 +1,28 @@
+---
+import Base from '../../layouts/Base.astro';
+
+// Placeholder until step 4 builds the five onboarding steps.
+const { user } = Astro.locals.me!;
+const firstName = user.name?.split(' ')[0] ?? 'there';
+---
+
+<Base title="Set up your page · BookPage">
+  <main>
+    <header class="top">
+      <p class="lab">Onboarding · step 1 of 5</p>
+      <form method="post" action="/api/auth/logout">
+        <button class="btn" type="submit">Sign out</button>
+      </form>
+    </header>
+    <h1 class="h-display">Hi {firstName}.</h1>
+    <p class="muted">You're signed in as {user.email}. Setting up your page comes next.</p>
+  </main>
+</Base>
+
+<style>
+  main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .top .lab { margin: 0; }
+  h1 { font-size: 48px; margin: 24px 0 4px; }
+  .muted { color: var(--muted); margin: 0; }
+</style>
