@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { type ExecutionContext, Inject, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import type { Response } from 'express';
+import { CONFIG, type Config } from '../config';
 
 /**
  * Starts the Google redirect, and on the callback resolves to the user or null.
@@ -8,6 +10,17 @@ import { AuthGuard } from '@nestjs/passport';
  */
 @Injectable()
 export class GoogleAuthGuard extends AuthGuard('google') {
+  @Inject(CONFIG) private readonly config!: Config;
+
+  override async canActivate(context: ExecutionContext): Promise<boolean> {
+    // Local dev without Google keys: say so instead of sending people to a broken Google page.
+    if (!this.config.google.configured) {
+      context.switchToHttp().getResponse<Response>().redirect(303, `${this.config.appOrigin}/sign-in?error=google_setup`);
+      return false;
+    }
+    return (await super.canActivate(context)) as boolean;
+  }
+
   override getAuthenticateOptions() {
     return { prompt: 'select_account', session: false };
   }

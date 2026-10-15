@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, NotFoundException, Post, Req, Res, UseGuards } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { CONFIG, type Config } from '../config';
 import type { User } from '../generated/prisma/client';
@@ -54,6 +54,35 @@ export class AuthController {
     });
     const { businesses, ...profile } = user;
     return { user: profile, business: businesses[0] ?? null };
+  }
+
+  /**
+   * Local development only (DEV_LOGIN=true, never in production): sign in without
+   * Google, as the seeded demo owner or as a new owner with any email.
+   */
+  @Post('dev-login')
+  async devLogin(@Body() body: { as?: string; email?: string }, @Req() req: Request, @Res() res: Response) {
+    if (!this.config.devLogin) throw new NotFoundException();
+
+    let userId: string;
+    if (body.as === 'demo') {
+      const demo = await this.prisma.user.findUnique({ where: { googleId: 'seed-demo-owner' }, select: { id: true } });
+      if (!demo) return res.redirect(303, `${this.config.appOrigin}/sign-in?error=dev_no_demo`);
+      userId = demo.id;
+    } else {
+      const email = String(body.email ?? '').trim().toLowerCase();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.redirect(303, `${this.config.appOrigin}/sign-in?error=dev_email`);
+      const name = email.split('@')[0]!.replace(/[._-]+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      userId = (await this.prisma.user.upsert({
+        where: { googleId: `dev:${email}` },
+        update: {},
+        create: { googleId: `dev:${email}`, email: `dev+${email}`, name },
+      })).id;
+    }
+
+    const { token, expiresAt } = await this.sessions.create(userId, req.headers['user-agent']);
+    setSessionCookie(res, this.config, token, expiresAt);
+    return res.redirect(303, `${this.config.appOrigin}/`);
   }
 
   @Post('logout')

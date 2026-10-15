@@ -3,6 +3,7 @@
 // Safe to re-run: the demo business is deleted and recreated each time.
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { addDays, localDate, weekdayOf, zonedToUtc } from '@bookpage/shared';
 import { PrismaClient } from '../src/generated/prisma/client';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
@@ -65,20 +66,20 @@ async function main() {
     { name: 'Bridal styling', priceType: 'quote', priceMinor: null, durationMin: 180, bookable: false },
   ] as const;
 
-  const created = [];
+  const created: Awaited<ReturnType<typeof prisma.service.create>>[] = [];
   for (const [position, service] of services.entries()) {
     created.push(await prisma.service.create({ data: { ...service, position, businessId: business.id } }));
   }
 
   const bookable = created.filter((s) => s.bookable);
-  await prisma.staff.create({
+  const maya = await prisma.staff.create({
     data: {
       businessId: business.id,
       name: 'Maya',
       services: { create: bookable.map((s) => ({ serviceId: s.id })) },
     },
   });
-  await prisma.staff.create({
+  const jordan = await prisma.staff.create({
     data: {
       businessId: business.id,
       name: 'Jordan',
@@ -94,7 +95,70 @@ async function main() {
     ].map((faq) => ({ ...faq, businessId: business.id })),
   });
 
-  console.log(`Seeded ${business.name} → ${SLUG}.localhost:4321 (${created.length} services, 2 staff)`);
+  // Local dev only: a few bookings so the dashboard has something to show. Production gets no fake customers.
+  let sample = 0;
+  if (process.env.NODE_ENV !== 'production') {
+    const svc = (name: string) => created.find((s) => s.name === name)!;
+    const tz = business.timezone;
+    const today = localDate(new Date(), tz).date;
+    const open = (from: string, step: 1 | -1) => {
+      for (let d = from; ; d = addDays(d, step)) if (weekdayOf(d) >= 2 && weekdayOf(d) <= 6) return d;
+    };
+    const day0 = open(today, 1);
+    const day1 = open(addDays(day0, 1), 1);
+    const day2 = open(addDays(day1, 1), 1);
+    const past = open(addDays(today, -1), -1);
+    const at = (date: string, h: number, m = 0) => zonedToUtc(date, h * 60 + m, tz);
+
+    const rows = [
+      { who: 'Dana Whitfield', service: 'Silk press', staff: maya, start: at(day0, 11), status: 'confirmed', note: 'Shoulder length, fine hair' },
+      { who: 'Chris Ortiz', service: 'Trim & shape', staff: jordan, start: at(day0, 12, 30), status: 'confirmed' },
+      { who: 'Pat Lee', service: 'Trim & shape', staff: jordan, start: at(day0, 15, 45), status: 'pending' },
+      { who: 'Ama Mensah', service: 'Knotless braids', staff: maya, start: at(day1, 10), status: 'confirmed', note: 'Waist length please' },
+      { who: 'Sam Rivera', service: 'Colour consultation', staff: jordan, start: at(day1, 14), status: 'confirmed' },
+      { who: 'Kim Novak', service: 'Silk press', staff: maya, start: at(day1, 16), status: 'cancelled' },
+      { who: 'Riley Kim', service: 'Silk press', staff: maya, start: at(day2, 10, 30), status: 'pending' },
+      { who: 'Lee Brown', service: 'Trim & shape', staff: jordan, start: at(past, 13), status: 'confirmed' },
+    ] as const;
+
+    for (const r of rows) {
+      const s = svc(r.service);
+      const customer = await prisma.customer.create({
+        data: {
+          businessId: business.id,
+          name: r.who,
+          email: `${r.who.split(' ')[0]!.toLowerCase()}@example.com`,
+          phone: '+17185550123',
+          remindersConsentAt: new Date(),
+        },
+      });
+      const endsAt = new Date(r.start.getTime() + s.durationMin * 60_000);
+      await prisma.booking.create({
+        data: {
+          businessId: business.id,
+          serviceId: s.id,
+          staffId: r.staff.id,
+          customerId: customer.id,
+          status: r.status,
+          startsAt: r.start,
+          endsAt,
+          blockedUntil: new Date(endsAt.getTime() + s.bufferMin * 60_000),
+          serviceName: s.name,
+          durationMin: s.durationMin,
+          priceType: s.priceType,
+          priceMinor: s.priceMinor,
+          currency: business.currency,
+          customerNote: 'note' in r ? r.note : null,
+          confirmedAt: r.status === 'confirmed' ? new Date() : null,
+          cancelledAt: r.status === 'cancelled' ? new Date() : null,
+          cancelReason: r.status === 'cancelled' ? 'Cancelled by customer' : null,
+        },
+      });
+      sample++;
+    }
+  }
+
+  console.log(`Seeded ${business.name} → ${SLUG}.localhost:4321 (${created.length} services, 2 staff, ${sample} sample bookings)`);
 }
 
 main()

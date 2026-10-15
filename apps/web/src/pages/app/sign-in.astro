@@ -1,9 +1,18 @@
 ---
+import { APP_HOST } from 'astro:env/server';
 import Base from '../../layouts/Base.astro';
 
 // One button covers sign-up and sign-in: Google decides who you are.
 const isNew = Astro.url.searchParams.has('new');
-const failed = Astro.url.searchParams.get('error') === 'google';
+const ERRORS: Record<string, string> = {
+  google: "Google sign-in didn't finish. Try again, and make sure the account has a verified email.",
+  google_setup: "Google sign-in isn't set up on this computer yet. Use the developer sign-in below.",
+  dev_no_demo: "The demo business isn't in the database. Run: pnpm --filter @bookpage/api db:seed",
+  dev_email: 'Enter an email address to sign in as a new owner.',
+};
+const error = ERRORS[Astro.url.searchParams.get('error') ?? ''];
+// Local development only: the API refuses dev sign-in in production and unless DEV_LOGIN=true.
+const devLogin = APP_HOST === 'localhost';
 
 const copy = isNew
   ? { kicker: 'Free forever · no card', t1: 'Get', t2: 'booking', sub: 'One click with an account you already have. Your free booking page is about four minutes away.' }
@@ -19,11 +28,7 @@ const copy = isNew
       <h1 id="title" class="h-display">{copy.t1} <span class="scan">{copy.t2}</span></h1>
       <p class="sub">{copy.sub}</p>
 
-      {failed && (
-        <p class="error" role="alert">
-          Google sign-in didn't finish. Try again, and make sure the account has a verified email.
-        </p>
-      )}
+      {error && <p class="error" role="alert">{error}</p>}
 
       <a class="btn btn-ink google" href="/api/auth/google">
         <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
@@ -40,6 +45,22 @@ const copy = isNew
         No passwords to remember. You sign in with an account you already trust, and we never see its password.
       </p>
     </section>
+
+    {devLogin && (
+      <section class="box dev" aria-labelledby="dev-title">
+        <p id="dev-title" class="lab">Developer sign-in · this computer only</p>
+        <form method="post" action="/api/auth/dev-login">
+          <input type="hidden" name="as" value="demo" />
+          <button class="btn dev-btn" type="submit">Glow Studio owner (demo data) →</button>
+        </form>
+        <form method="post" action="/api/auth/dev-login" class="dev-row">
+          <label class="visually-hidden" for="dev-email">Email for a new owner</label>
+          <input id="dev-email" class="dev-input" name="email" type="email" placeholder="new-owner@example.com" required />
+          <button class="btn dev-btn" type="submit">New owner →</button>
+        </form>
+        <p class="note">Needs DEV_LOGIN=true in apps/api/.env. Never shown on the live site.</p>
+      </section>
+    )}
 
     <p class="legal">
       By continuing you agree to the <a href="https://bookpage.app/terms">Terms</a> and <a href="https://bookpage.app/privacy">Privacy Policy</a>.
@@ -88,4 +109,12 @@ const copy = isNew
   .legal a { color: var(--muted); }
   .switch { margin: 0; text-align: center; }
   .switch a { margin-left: 6px; color: var(--ink); font-weight: 600; }
+  .dev { display: grid; gap: 10px; padding: 16px; border-style: dashed; background: var(--surface-2); }
+  .dev .lab { margin: 0; }
+  .dev form { margin: 0; }
+  .dev-row { display: flex; gap: 8px; }
+  .dev-input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 10px; font-size: 16px; border: var(--border); border-radius: var(--r); }
+  .dev-btn { width: 100%; }
+  .dev-row .dev-btn { width: auto; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>

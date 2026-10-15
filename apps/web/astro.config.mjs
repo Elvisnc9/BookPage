@@ -14,7 +14,14 @@ export default defineConfig({
   // *.localhost resolves to 127.0.0.1: localhost:4321 = owner app, www.localhost:4321 = marketing,
   // glowstudio.localhost:4321 = a booking page.
   server: { port: 4321, host: true },
-  vite: { server: { allowedHosts: ['.localhost'] } },
+  vite: {
+    server: { allowedHosts: ['.localhost'] },
+    // Bundle browser deps up front so the first visit to onboarding or the home page
+    // doesn't trigger a mid-session re-optimise and reload in dev.
+    optimizeDeps: {
+      include: ['preact', 'preact/hooks', 'preact/jsx-runtime', 'preact/devtools', 'gsap', 'gsap/ScrollTrigger', 'lenis'],
+    },
+  },
   env: {
     schema: {
       ROOT_DOMAIN: envField.string({ context: 'server', access: 'public', default: 'localhost' }),
