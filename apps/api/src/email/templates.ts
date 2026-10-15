@@ -112,6 +112,42 @@ export function customerConfirmation(d: BookingDetails & { status: 'confirmed' |
   return { subject, ...body };
 }
 
+/** The owner approved a pending booking. */
+export function customerApproved(d: BookingDetails & { manageUrl: string; calendarUrl: string }): Email {
+  const body = layout({
+    preheader: `${d.businessName} confirmed your booking for ${when(d.startsAt, d.timezone)}.`,
+    kicker: '✓ Confirmed',
+    title: `You're confirmed, ${firstName(d.customerName)}.`,
+    intro: `${d.businessName} has confirmed your booking.`,
+    rows: bookingRows(d),
+    button: { label: 'Change or cancel', url: d.manageUrl },
+    secondary: { label: 'Add to calendar', url: d.calendarUrl },
+    footer: `${d.businessName}${d.businessPhone ? ` · ${d.businessPhone}` : ''} · Sent by BookPage on behalf of ${d.businessName}.`,
+  });
+  return { subject: `Confirmed: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}`, ...body };
+}
+
+/** The owner declined a request or cancelled a confirmed booking. */
+export function customerCancelledByBusiness(d: BookingDetails & { declined: boolean; reason: string | null; bookAgainUrl: string }): Email {
+  const body = layout({
+    preheader: d.declined
+      ? `${d.businessName} can't take your booking for ${when(d.startsAt, d.timezone)}.`
+      : `${d.businessName} cancelled your booking for ${when(d.startsAt, d.timezone)}.`,
+    kicker: d.declined ? 'Not available' : 'Cancelled',
+    title: d.declined ? `Sorry, ${firstName(d.customerName)}.` : `Your booking was cancelled.`,
+    intro: d.declined
+      ? `${d.businessName} can't take this booking. Please pick another time.`
+      : `${d.businessName} had to cancel this booking. Please pick another time, or get in touch with them.`,
+    rows: [...bookingRows(d), ...(d.reason && !/by business$/.test(d.reason) ? [{ label: 'Note', value: d.reason }] : [])],
+    button: { label: 'Book another time', url: d.bookAgainUrl },
+    footer: `${d.businessName}${d.businessPhone ? ` · ${d.businessPhone}` : ''} · Sent by BookPage on behalf of ${d.businessName}.`,
+  });
+  return {
+    subject: `${d.declined ? 'Not available' : 'Cancelled'}: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}`,
+    ...body,
+  };
+}
+
 export function customerReminder(d: BookingDetails & { manageUrl: string }): Email {
   const body = layout({
     preheader: `Reminder: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}.`,

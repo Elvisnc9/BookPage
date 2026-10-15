@@ -1,8 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
-import { calendarUrl, dashboardUrl, manageUrl } from './links';
-import { type BookingDetails, customerConfirmation, customerReminder, ownerCancelled, ownerEnquiry, ownerNewBooking } from './templates';
+import { calendarUrl, dashboardUrl, manageUrl, pageOrigin } from './links';
+import {
+  type BookingDetails,
+  customerApproved,
+  customerCancelledByBusiness,
+  customerConfirmation,
+  customerReminder,
+  ownerCancelled,
+  ownerEnquiry,
+  ownerNewBooking,
+} from './templates';
 
 const BOOKING_INCLUDE = {
   business: { include: { owner: { select: { email: true } } } },
@@ -99,6 +108,39 @@ export class NotificationsService {
       replyTo: e.customer.email,
       idempotencyKey: `owner-enquiry/${e.id}`,
       kind: 'owner-enquiry',
+    });
+  }
+
+  /** The owner approved a pending booking. */
+  async bookingApproved(bookingId: string): Promise<void> {
+    const b = await this.prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, include: BOOKING_INCLUDE });
+    if (!b.customer.email) return;
+    await this.email.send({
+      ...customerApproved({ ...toDetails(b), manageUrl: manageUrl(b.business.slug, b.id), calendarUrl: calendarUrl(b.business.slug, b.id) }),
+      to: b.customer.email,
+      fromName: `${b.business.name} via BookPage`,
+      replyTo: b.business.email ?? b.business.owner.email,
+      idempotencyKey: `booking-approved/${b.id}`,
+      kind: 'booking-approved',
+    });
+  }
+
+  /** The owner declined (was pending) or cancelled (was confirmed) a booking. */
+  async bookingCancelledByBusiness(bookingId: string, declined: boolean): Promise<void> {
+    const b = await this.prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, include: BOOKING_INCLUDE });
+    if (!b.customer.email) return;
+    await this.email.send({
+      ...customerCancelledByBusiness({
+        ...toDetails(b),
+        declined,
+        reason: b.cancelReason,
+        bookAgainUrl: `${pageOrigin(b.business.slug)}/#book`,
+      }),
+      to: b.customer.email,
+      fromName: `${b.business.name} via BookPage`,
+      replyTo: b.business.email ?? b.business.owner.email,
+      idempotencyKey: `booking-cancelled-by-business/${b.id}`,
+      kind: declined ? 'booking-declined' : 'booking-cancelled-by-business',
     });
   }
 
