@@ -1,28 +1,30 @@
 ---
+import type { OwnerBusiness } from '@bookpage/shared';
+import { ROOT_DOMAIN } from 'astro:env/server';
+import Onboarding from '../../components/onboarding/Onboarding';
+import '../../components/onboarding/onboarding.css';
 import Base from '../../layouts/Base.astro';
+import { apiFetch } from '../../lib/api';
 
-// Placeholder until step 4 builds the five onboarding steps.
-const { user } = Astro.locals.me!;
-const firstName = user.name?.split(' ')[0] ?? 'there';
+// Reached only via the app-host rewrite in middleware.ts, which guarantees `me`.
+const { business: summary } = Astro.locals.me!;
+if (summary?.publishedAt) return Astro.redirect('/', 303);
+
+const res = await apiFetch('/business', Astro.request);
+if (!res.ok) throw new Error(`GET /business failed: ${res.status}`);
+const { business } = (await res.json()) as { business: OwnerBusiness | null };
+
+const origin = { protocol: Astro.url.protocol, rootDomain: ROOT_DOMAIN, port: Astro.url.port };
 ---
 
 <Base title="Set up your page · BookPage">
+  <header class="ob-top">
+    <a class="ob-brand mono" href="/">BookPage</a>
+    <form method="post" action="/api/auth/logout">
+      <button class="btn ob-signout" type="submit">Sign out</button>
+    </form>
+  </header>
   <main>
-    <header class="top">
-      <p class="lab">Onboarding · step 1 of 5</p>
-      <form method="post" action="/api/auth/logout">
-        <button class="btn" type="submit">Sign out</button>
-      </form>
-    </header>
-    <h1 class="h-display">Hi {firstName}.</h1>
-    <p class="muted">You're signed in as {user.email}. Setting up your page comes next.</p>
+    <Onboarding client:load initial={business} origin={origin} />
   </main>
 </Base>
-
-<style>
-  main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
-  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .top .lab { margin: 0; }
-  h1 { font-size: 48px; margin: 24px 0 4px; }
-  .muted { color: var(--muted); margin: 0; }
-</style>

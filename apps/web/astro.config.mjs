@@ -1,9 +1,12 @@
 // @ts-check
 import { defineConfig, envField } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
+import preact from '@astrojs/preact';
 
 export default defineConfig({
   output: 'server',
+  // Preact islands for the owner app only; booking pages ship (almost) no JS.
+  integrations: [preact()],
   // Images are optimised at build time only; uploads get resized by the API.
   adapter: cloudflare({ imageService: 'compile' }),
   // Auth lives in the API's session cookie; Astro sessions (and their KV binding) aren't used.
