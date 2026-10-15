@@ -1,10 +1,11 @@
 // Runs against the real database (pnpm test:db): the customer booking flow over HTTP.
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { CreatedBooking, PublicBusiness, PublicDay } from '@bookpage/shared';
 import { AppModule } from '../app.module';
+import { CLIENT_IP_HEADER, PROXY_SECRET_HEADER } from '../common/client-ip';
 import { addDays, localDate } from '@bookpage/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -21,10 +22,17 @@ let staffB: string;
 const tomorrow = () => addDays(localDate(new Date(), 'UTC').date, 1);
 const at = (time: string, date = tomorrow()) => `${date}T${time}:00.000Z`;
 
+// Each call comes from a different visitor (as the web app forwards it), so the
+// rate limits don't trip; public-throttler.spec.ts covers those.
+const visitor = () => ({
+  [CLIENT_IP_HEADER]: `10.${randomInt(256)}.${randomInt(256)}.${randomInt(256)}`,
+  [PROXY_SECRET_HEADER]: process.env.PROXY_SECRET!,
+});
+
 async function call(method: string, path: string, body?: unknown) {
   const res = await fetch(`${base}/public/${slug}${path}`, {
     method,
-    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    headers: { ...visitor(), ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   return { status: res.status, json: (await res.json().catch(() => null)) as any };

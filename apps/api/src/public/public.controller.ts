@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   type BookingRequest,
   bookingRequestSchema,
@@ -7,23 +8,30 @@ import {
   enquiryRequestSchema,
 } from '@bookpage/shared';
 import { ZodPipe } from '../common/zod.pipe';
+import { PUBLIC_READ_LIMITS, PublicThrottlerGuard } from './public-throttler.guard';
 import { PublicService } from './public.service';
 
 /**
  * Booking-page endpoints. No session: customers never sign in. The web app
  * calls these server-side from {slug}.bookpage.app, so the slug in the path
  * always matches the page's own host.
+ *
+ * Rate limited per visitor IP and business: writes at 10/min and 60/day,
+ * reads far more loosely. Over the limit is a 429.
  */
 @Controller('public/:slug')
+@UseGuards(PublicThrottlerGuard)
 export class PublicController {
   constructor(private readonly pub: PublicService) {}
 
   @Get()
+  @Throttle(PUBLIC_READ_LIMITS)
   profile(@Param('slug') slug: string) {
     return this.pub.profile(slug);
   }
 
   @Get('availability')
+  @Throttle(PUBLIC_READ_LIMITS)
   availability(
     @Param('slug') slug: string,
     @Query('serviceId', ParseUUIDPipe) serviceId: string,
@@ -41,6 +49,7 @@ export class PublicController {
   }
 
   @Get('bookings/:id')
+  @Throttle(PUBLIC_READ_LIMITS)
   booking(@Param('slug') slug: string, @Param('id', ParseUUIDPipe) id: string, @Query('token') token = '') {
     return this.pub.getBooking(slug, id, token);
   }

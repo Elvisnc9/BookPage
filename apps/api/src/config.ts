@@ -21,6 +21,9 @@ export function loadConfig() {
       clientSecret: required('GOOGLE_CLIENT_SECRET'),
       callbackUrl: `${appOrigin}/api/auth/google/callback`,
     },
+    // Shared with the web app, which sends it alongside the visitor's IP. Without it
+    // (or on a mismatch) a forwarded IP is ignored and rate limits key on the socket IP.
+    proxySecret: process.env.PROXY_SECRET || null,
     cookie: {
       secure,
       // __Host- makes the browser refuse the cookie unless Secure, Path=/ and no Domain.
