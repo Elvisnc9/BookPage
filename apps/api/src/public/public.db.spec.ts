@@ -5,7 +5,7 @@ import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { CreatedBooking, PublicBusiness, PublicDay } from '@bookpage/shared';
 import { AppModule } from '../app.module';
-import { addDays, localDate } from '../availability/zoned';
+import { addDays, localDate } from '@bookpage/shared';
 import { PrismaService } from '../prisma/prisma.service';
 
 let app: INestApplication;

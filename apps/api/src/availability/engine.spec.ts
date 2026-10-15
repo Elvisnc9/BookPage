@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { type AvailabilityInput, findSlots } from './engine';
-import { addDays, localDate, zonedToUtc } from './zoned';
+import { addDays, localDate, zonedToUtc } from '@bookpage/shared';
 
 const h = (hours: number, minutes = 0) => hours * 60 + minutes;
 const NY = 'America/New_York';

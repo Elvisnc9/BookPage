@@ -1,4 +1,4 @@
-import { addDays, localDate, weekdayOf, zonedToUtc } from './zoned';
+import { addDays, localDate, weekdayOf, zonedToUtc } from '@bookpage/shared';
 
 /**
  * Free slots = booking hours − existing bookings − minimum notice, within the

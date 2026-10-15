@@ -12,7 +12,7 @@ import {
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min';
 import { hashToken } from '../auth/session.service';
 import { findSlots } from '../availability/engine';
-import { addDays, isDateString, localDate, zonedToUtc } from '../availability/zoned';
+import { addDays, isDateString, localDate, zonedToUtc } from '@bookpage/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { isSlotTaken } from '../prisma/errors';
