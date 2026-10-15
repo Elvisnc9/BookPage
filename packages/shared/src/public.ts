@@ -1,0 +1,69 @@
+import type { CustomerFields } from './business.js';
+import type { BookingStatus, LocationType, PriceType } from './enums.js';
+
+/**
+ * What the booking page may see. Only [public] fields from the schema, plus the
+ * time zone (needed to show times) and the booking-form settings.
+ */
+export interface PublicBusiness {
+  slug: string;
+  name: string;
+  category: string | null;
+  description: string | null;
+  locationType: LocationType;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  region: string | null;
+  postalCode: string | null;
+  country: string;
+  serviceAreas: string[];
+  phone: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  logoUrl: string | null;
+  template: string;
+  timezone: string;
+  currency: string;
+  hours: { weekday: number; opensAt: number; closesAt: number }[];
+  services: PublicService[];
+  staff: { id: string; name: string; serviceIds: string[] }[];
+  booking: { windowDays: number; customerFields: CustomerFields };
+}
+
+export interface PublicService {
+  id: string;
+  name: string;
+  description: string | null;
+  priceType: PriceType;
+  priceMinor: number | null;
+  durationMin: number;
+  bookable: boolean;
+}
+
+export interface PublicDay {
+  date: string;
+  slots: { start: string; staffIds: string[] }[];
+}
+
+export interface PublicBooking {
+  id: string;
+  status: BookingStatus;
+  businessName: string;
+  timezone: string;
+  serviceName: string;
+  staffName: string;
+  startsAt: string;
+  endsAt: string;
+  priceType: PriceType;
+  priceMinor: number | null;
+  currency: string;
+  customerName: string;
+  cancellable: boolean;
+}
+
+/** The booking plus the secret that lets the customer view or cancel it later. */
+export interface CreatedBooking {
+  booking: PublicBooking;
+  manageToken: string;
+}
