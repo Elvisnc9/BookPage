@@ -1,4 +1,4 @@
-import { randomBytes, timingSafeEqual } from 'node:crypto';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   type BookingRequest,
@@ -12,6 +12,8 @@ import {
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min';
 import { hashToken } from '../auth/session.service';
 import { findSlots } from '../availability/engine';
+import { manageToken } from '../email/links';
+import { NotificationsService } from '../email/notifications.service';
 import { addDays, isDateString, localDate, zonedToUtc } from '@bookpage/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
@@ -38,7 +40,10 @@ export class SlotTakenException extends ConflictException {
 /** Everything a customer can do on a booking page. Only published businesses are visible. */
 @Injectable()
 export class PublicService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async profile(slug: string): Promise<PublicBusiness> {
     return toPublic(await this.load(slug));
@@ -70,7 +75,9 @@ export class PublicService {
     const phone = this.phone(req.customer.phone, fields.phone, b.country);
     const customer = await this.upsertCustomer(b.id, req.customer.name, req.customer.email, phone, req.remindersConsent);
 
-    const manageToken = randomBytes(24).toString('base64url');
+    // The id is chosen here so the manage token (derived from it) can be stored as a hash.
+    const id = randomUUID();
+    const token = manageToken(id);
     const status = b.bookingRules!.autoConfirm ? 'confirmed' : 'pending';
     const endsAt = slot.end;
     const blockedUntil = new Date(endsAt.getTime() + service.bufferMin * 60_000);
@@ -80,6 +87,7 @@ export class PublicService {
       try {
         const booking = await this.prisma.booking.create({
           data: {
+            id,
             businessId: b.id,
             serviceId: service.id,
             staffId,
@@ -95,11 +103,12 @@ export class PublicService {
             priceMinor: service.priceMinor,
             currency: b.currency,
             customerNote: fields.note === 'off' ? null : req.customer.note || null,
-            manageTokenHash: hashToken(manageToken),
+            manageTokenHash: hashToken(token),
             confirmedAt: status === 'confirmed' ? new Date() : null,
           },
         });
-        return { booking: await this.view(booking.id), manageToken };
+        void this.notifications.dispatch('booking emails', () => this.notifications.bookingCreated(booking.id));
+        return { booking: await this.view(booking.id), manageToken: token };
       } catch (error) {
         if (!isSlotTaken(error)) throw error;
       }
@@ -119,6 +128,7 @@ export class PublicService {
       where: { id },
       data: { status: 'cancelled', cancelledAt: new Date(), cancelReason: 'Cancelled by customer' },
     });
+    void this.notifications.dispatch('cancellation email', () => this.notifications.bookingCancelled(id));
     return this.view(id);
   }
 
@@ -127,7 +137,7 @@ export class PublicService {
     if (req.serviceId && !b.services.some((s) => s.id === req.serviceId)) throw new NotFoundException('Unknown service');
     const phone = this.phone(req.customer.phone, 'optional', b.country);
     const customer = await this.upsertCustomer(b.id, req.customer.name, req.customer.email, phone, false);
-    await this.prisma.enquiry.create({
+    const enquiry = await this.prisma.enquiry.create({
       data: {
         businessId: b.id,
         serviceId: req.serviceId ?? null,
@@ -136,6 +146,7 @@ export class PublicService {
         preferredDate: req.preferredDate ? new Date(`${req.preferredDate}T00:00:00Z`) : null,
       },
     });
+    void this.notifications.dispatch('enquiry email', () => this.notifications.enquiryReceived(enquiry.id));
     return { ok: true };
   }
 
