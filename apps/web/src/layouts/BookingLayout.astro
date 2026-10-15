@@ -1,0 +1,37 @@
+---
+import type { PublicBusiness } from '@bookpage/shared';
+import Base from './Base.astro';
+import '../styles/booking.css';
+import { initials } from '../lib/public';
+
+interface Props {
+  business: PublicBusiness;
+  title: string;
+  description?: string | undefined;
+  /** Hide the sticky "Book now" bar (e.g. inside the booking flow). */
+  bar?: boolean;
+  /** Booking-management pages carry a secret token in the URL; keep it out of Referer headers. */
+  noReferrer?: boolean;
+}
+
+const { business: b, title, description, bar = true, noReferrer = false } = Astro.props;
+---
+
+<Base title={title} description={description}>
+  {noReferrer && <meta slot="head" name="referrer" content="no-referrer" />}
+  <div class="bk">
+    {bar && (
+      <div class="bk-bar">
+        <a class="bk-bar-name" href="/">
+          <span class="bk-logo mono" aria-hidden="true">{initials(b.name)}</span>
+          <span>{b.name}</span>
+        </a>
+        <a class="btn btn-ink bk-bar-cta" href="/#book">Book now</a>
+      </div>
+    )}
+    <slot />
+    <footer class="bk-footer">
+      <a class="mono" href="https://bookpage.app/?ref=page">Made with BookPage · Get your free page</a>
+    </footer>
+  </div>
+</Base>

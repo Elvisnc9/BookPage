@@ -1,0 +1,84 @@
+---
+import BookingLayout from '../../../layouts/BookingLayout.astro';
+import { loadBusiness, PublicApiError, sendEnquiry } from '../../../lib/public';
+
+/** Quote-only and not-bookable services: send the business a request instead of booking. */
+const b = await loadBusiness(Astro.params.slug);
+if (b instanceof Response) return b;
+
+const service = b.services.find((s) => s.id === Astro.url.searchParams.get('service')) ?? null;
+let values = { name: '', email: '', phone: '', message: '', date: '' };
+let errors: Record<string, string> = {};
+let sent = false;
+let failure = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const text = (k: string) => String(form.get(k) ?? '').trim();
+  values = { name: text('name'), email: text('email'), phone: text('phone'), message: text('message'), date: text('date') };
+  if (text('company')) return Astro.redirect('/', 303);
+
+  try {
+    await sendEnquiry(b.slug, {
+      ...(service ? { serviceId: service.id } : {}),
+      message: values.message,
+      ...(values.date ? { preferredDate: values.date } : {}),
+      customer: { name: values.name, email: values.email, ...(values.phone ? { phone: values.phone } : {}) },
+    });
+    sent = true;
+  } catch (error) {
+    if (!(error instanceof PublicApiError)) throw error;
+    if (error.status === 400 && error.body.issues?.length) {
+      for (const i of error.body.issues) errors[i.path.replace('customer.', '')] = i.message;
+    } else {
+      failure = "We couldn't send that just now. Please try again.";
+    }
+  }
+}
+---
+
+<BookingLayout business={b} title={`Ask ${b.name}`} bar={false}>
+  <main class="bk-flow">
+    <a class="bk-back mono" href="/#book">← All services</a>
+    {sent ? (
+      <div class="box raised bk-done">
+        <p class="lab">✓ Sent</p>
+        <h1 class="bk-h2">Thanks, {values.name.split(' ')[0]}.</h1>
+        <p class="bk-hint">{b.name} will reply to {values.email}.</p>
+        <a class="btn" href="/">Back to {b.name}</a>
+      </div>
+    ) : (
+      <form method="post" class="bk-form" novalidate>
+        <p class="lab">Ask for a quote</p>
+        <h1 class="bk-step-title">{service ? service.name : `Ask ${b.name}`}</h1>
+        {failure && <p class="bk-alert" role="alert">{failure}</p>}
+        <label class="bk-field">
+          <span class="lab">What do you need?</span>
+          <textarea class="bk-input" name="message" rows="4" maxlength="1000" required aria-invalid={errors.message ? 'true' : undefined}>{values.message}</textarea>
+          {errors.message && <span class="bk-error">{errors.message}</span>}
+        </label>
+        <label class="bk-field">
+          <span class="lab">Preferred date (optional)</span>
+          <input class="bk-input" type="date" name="date" value={values.date} />
+        </label>
+        <label class="bk-field">
+          <span class="lab">Your name</span>
+          <input class="bk-input" name="name" value={values.name} autocomplete="name" required maxlength="80" aria-invalid={errors.name ? 'true' : undefined} />
+          {errors.name && <span class="bk-error">{errors.name}</span>}
+        </label>
+        <label class="bk-field">
+          <span class="lab">Email</span>
+          <input class="bk-input" name="email" type="email" inputmode="email" value={values.email} autocomplete="email" required maxlength="120" aria-invalid={errors.email ? 'true' : undefined} />
+          {errors.email && <span class="bk-error">{errors.email}</span>}
+        </label>
+        <label class="bk-field">
+          <span class="lab">Phone (optional)</span>
+          <input class="bk-input" name="phone" type="tel" inputmode="tel" value={values.phone} autocomplete="tel" maxlength="30" aria-invalid={errors.phone ? 'true' : undefined} />
+          {errors.phone && <span class="bk-error">{errors.phone}</span>}
+        </label>
+        <div class="bk-honey" aria-hidden="true"><label>Company <input name="company" tabindex="-1" autocomplete="off" /></label></div>
+        <button class="btn btn-ink bk-submit" type="submit">Send request →</button>
+      </form>
+    )}
+  </main>
+</BookingLayout>

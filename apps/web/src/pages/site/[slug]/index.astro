@@ -1,18 +1,96 @@
 ---
-import Base from '../../../layouts/Base.astro';
+import { CATEGORIES, type CategoryKey, formatDuration, formatMinutes, WEEKDAY_SHORT } from '@bookpage/shared';
+import BookingLayout from '../../../layouts/BookingLayout.astro';
+import { initials, loadBusiness, openStatus, price } from '../../../lib/public';
 
 // Reached only via the {slug}. subdomain rewrite in middleware.ts.
-const { slug } = Astro.params;
+const b = await loadBusiness(Astro.params.slug);
+if (b instanceof Response) return b;
+
+const category = b.category && b.category in CATEGORIES ? CATEGORIES[b.category as CategoryKey] : null;
+const place = b.locationType === 'online' ? 'Online' : b.locationType === 'mobile' ? 'Comes to you' : b.city;
+const status = openStatus(b);
+const [firstWord, ...rest] = b.name.split(' ');
+const address = [b.addressLine1, b.addressLine2, b.city, b.region, b.postalCode].filter(Boolean).join(', ');
+const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${b.name}, ${address}`)}`;
+const tel = b.phone ? `tel:${b.phone}` : null;
+const whatsapp = b.whatsapp ? `https://wa.me/${b.whatsapp.replace(/\D/g, '')}` : null;
+const hours = WEEKDAY_SHORT.map((d, i) => {
+  const ranges = b.hours.filter((h) => h.weekday === i + 1);
+  return { d, t: ranges.length ? ranges.map((h) => `${formatMinutes(h.opensAt)} – ${h.closesAt === 1440 ? 'Midnight' : formatMinutes(h.closesAt)}`).join(', ') : 'Closed' };
+});
+const showAddress = (b.locationType === 'premises' || b.locationType === 'both') && address;
 ---
 
-<Base title={`${slug} · Book online`}>
-  <main>
-    <p class="lab">{slug} · booking page</p>
-    <h1 class="h-display">Book with {slug}</h1>
-  </main>
-</Base>
+<BookingLayout business={b} title={`${b.name} · Book online`} description={b.description ?? `Book ${b.name} online.`}>
+  <header class="bk-hero">
+    <p class="lab">{[category?.label, place].filter(Boolean).join(' · ')}</p>
+    <h1 class="h-display">
+      {rest.length ? <>{firstWord} <span class="scan">{rest.join(' ')}</span></> : <span class="scan">{b.name}</span>}
+    </h1>
+    {b.description && <p class="bk-tag">{b.description}</p>}
+    <p class="bk-open mono" data-open={status.open}><i aria-hidden="true"></i>{status.text}</p>
+    <div class="bk-actions">
+      <a class="btn btn-ink" href="#book">{category?.cta ?? 'Book now'}</a>
+      {whatsapp ? <a class="btn" href={whatsapp}>WhatsApp us</a> : tel && <a class="btn" href={tel}>Call us</a>}
+    </div>
+  </header>
 
-<style>
-  main { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
-  h1 { font-size: 40px; margin: 8px 0 0; }
-</style>
+  <section id="book" class="bk-sec" aria-labelledby="book-title">
+    <p class="lab">Book online · takes 30 seconds</p>
+    <h2 id="book-title" class="bk-h2">Choose a <span class="scan">service</span></h2>
+    <ul class="bk-services">
+      {b.services.map((s) => (
+        <li>
+          <a class="box bk-service lift" href={s.bookable ? `/book?service=${s.id}` : `/enquire?service=${s.id}`}>
+            <span class="bk-service-main">
+              <strong>{s.name}</strong>
+              <span class="mono">{s.bookable ? formatDuration(s.durationMin) : 'Ask for a quote'}</span>
+              {s.description && <span class="bk-service-desc">{s.description}</span>}
+            </span>
+            <span class="bk-service-side">
+              <strong>{price(s, b.currency)}</strong>
+              <span class="mono" aria-hidden="true">{s.bookable ? 'Book →' : 'Ask →'}</span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  {b.staff.length > 1 && (
+    <section class="bk-sec" aria-labelledby="team-title">
+      <p class="lab">The team</p>
+      <h2 id="team-title" class="bk-h2">Who you'll <span class="scan">meet</span></h2>
+      <ul class="bk-team">
+        {b.staff.map((p) => (
+          <li class="box"><span class="bk-logo mono" aria-hidden="true">{initials(p.name)}</span>{p.name}</li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="bk-sec" aria-labelledby="visit-title">
+    <p class="lab">{showAddress ? 'Visit us' : 'Get in touch'}</p>
+    <h2 id="visit-title" class="bk-h2">{showAddress ? <>Find <span class="scan">us</span></> : <>Say <span class="scan">hello</span></>}</h2>
+    <div class="bk-visit">
+      <div class="box bk-card">
+        {showAddress && (
+          <>
+            <p>{address}</p>
+            <a class="btn btn-ink" href={mapsUrl} rel="noopener">Directions</a>
+          </>
+        )}
+        {b.serviceAreas.length > 0 && <p><span class="lab">We travel to</span><br />{b.serviceAreas.join(', ')}</p>}
+        {b.phone && <p><span class="lab">Phone</span><br /><a href={tel!}>{b.phone}</a></p>}
+        {b.email && <p><span class="lab">Email</span><br /><a href={`mailto:${b.email}`}>{b.email}</a></p>}
+      </div>
+      <div class="box bk-card">
+        <p class="lab">Opening hours</p>
+        <dl class="bk-hours mono">
+          {hours.map((h) => (<div><dt>{h.d}</dt><dd>{h.t}</dd></div>))}
+        </dl>
+      </div>
+    </div>
+  </section>
+</BookingLayout>

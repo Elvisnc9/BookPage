@@ -1,0 +1,67 @@
+---
+import { type PublicBooking } from '@bookpage/shared';
+import BookingLayout from '../../../../layouts/BookingLayout.astro';
+import { cancelBooking, getBooking, loadBusiness, PublicApiError, price, whenLabel } from '../../../../lib/public';
+
+/**
+ * Confirmation and self-service page. The secret ?t= token (also in the
+ * confirmation email) is what lets the customer see and cancel the booking.
+ */
+const b = await loadBusiness(Astro.params.slug);
+if (b instanceof Response) return b;
+
+const id = Astro.params.id ?? '';
+const token = Astro.url.searchParams.get('t') ?? '';
+let booking: PublicBooking;
+try {
+  booking = Astro.request.method === 'POST' ? await cancelBooking(b.slug, id, token) : await getBooking(b.slug, id, token);
+} catch (error) {
+  if (error instanceof PublicApiError && (error.status === 404 || error.status === 400)) {
+    return new Response('Booking not found', { status: 404 });
+  }
+  throw error;
+}
+
+const first = booking.customerName.split(' ')[0];
+const when = whenLabel(booking.startsAt, booking.timezone);
+const address = [b.addressLine1, b.city].filter(Boolean).join(', ');
+const self = `/booked/${id}?t=${encodeURIComponent(token)}`;
+const ics = `/booked/${id}/calendar.ics?t=${encodeURIComponent(token)}`;
+const heading = {
+  confirmed: { kicker: '✓ You are booked', title: `See you soon, ${first}.` },
+  pending: { kicker: 'Request sent', title: `Thanks, ${first}.` },
+  cancelled: { kicker: 'Cancelled', title: 'Your booking is cancelled.' },
+  completed: { kicker: 'Done', title: `Thanks for visiting, ${first}.` },
+  no_show: { kicker: 'Missed', title: 'This booking was marked as missed.' },
+}[booking.status];
+---
+
+<BookingLayout business={b} title={`${heading.kicker} · ${b.name}`} noReferrer>
+  <main class="bk-flow">
+    <div class="box raised bk-done" data-status={booking.status}>
+      <p class="lab">{heading.kicker}</p>
+      <h1 class="bk-h2">{heading.title}</h1>
+      <dl class="bk-receipt">
+        <div><dt class="lab">What</dt><dd>{booking.serviceName} · {price(booking, booking.currency)}</dd></div>
+        <div><dt class="lab">When</dt><dd>{when}</dd></div>
+        <div><dt class="lab">With</dt><dd>{booking.staffName}</dd></div>
+        {address && <div><dt class="lab">Where</dt><dd>{address}</dd></div>}
+      </dl>
+      {booking.status === 'pending' && (
+        <p class="bk-hint">{booking.businessName} will confirm by email. The time is held for you meanwhile.</p>
+      )}
+      {booking.status === 'confirmed' && <p class="bk-hint">A confirmation is on its way to your email.</p>}
+
+      {booking.cancellable && (
+        <div class="bk-actions">
+          <a class="btn" href={ics}>Add to calendar</a>
+          <form method="post" action={self}>
+            <button class="btn bk-cancel" type="submit">Cancel booking</button>
+          </form>
+        </div>
+      )}
+      {booking.status === 'cancelled' && <a class="btn btn-ink" href="/#book">Book another time</a>}
+    </div>
+    <p class="bk-note mono">Keep this page's link to change or cancel later.</p>
+  </main>
+</BookingLayout>

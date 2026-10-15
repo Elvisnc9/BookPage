@@ -1,0 +1,123 @@
+---
+import { formatDuration, localDate } from '@bookpage/shared';
+import BookingLayout from '../../../layouts/BookingLayout.astro';
+import { createBooking, loadBusiness, PublicApiError, price, whenLabel } from '../../../lib/public';
+
+/**
+ * Step 2 of booking: your details. GET shows the form; POST books through the
+ * API and redirects to the confirmation (or back to the times if it was taken).
+ */
+const b = await loadBusiness(Astro.params.slug);
+if (b instanceof Response) return b;
+
+const q = Astro.url.searchParams;
+const service = b.services.find((s) => s.id === q.get('service') && s.bookable);
+const start = q.get('start') ?? '';
+if (!service || Number.isNaN(Date.parse(start))) return Astro.redirect('/#book', 303);
+const staff = b.staff.find((p) => p.id === q.get('staff') && p.serviceIds.includes(service.id)) ?? null;
+const fields = b.booking.customerFields;
+// Back to the same day's times, not the first open day.
+const day = localDate(new Date(start), b.timezone).date;
+
+let values = { name: '', email: '', phone: '', note: '', consent: true };
+let errors: Record<string, string> = {};
+let failure = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const text = (k: string) => String(form.get(k) ?? '').trim();
+  values = { name: text('name'), email: text('email'), phone: text('phone'), note: text('note'), consent: form.get('consent') === 'on' };
+
+  // Bots fill every field; people never see this one.
+  if (text('company')) return Astro.redirect('/', 303);
+
+  try {
+    const { booking, manageToken } = await createBooking(b.slug, {
+      serviceId: service.id,
+      ...(staff ? { staffId: staff.id } : {}),
+      startsAt: start,
+      customer: {
+        name: values.name,
+        email: values.email,
+        ...(fields.phone !== 'off' && values.phone ? { phone: values.phone } : {}),
+        ...(fields.note !== 'off' && values.note ? { note: values.note } : {}),
+      },
+      remindersConsent: values.consent,
+    });
+    return Astro.redirect(`/booked/${booking.id}?t=${encodeURIComponent(manageToken)}`, 303);
+  } catch (error) {
+    if (!(error instanceof PublicApiError)) throw error;
+    if (error.status === 409) {
+      const back = new URLSearchParams({ service: service.id, date: day, taken: '1', ...(staff ? { staff: staff.id } : {}) });
+      return Astro.redirect(`/book?${back}`, 303);
+    }
+    if (error.status === 400 && error.body.issues?.length) {
+      for (const issue of error.body.issues) errors[issue.path.replace('customer.', '')] = issue.message;
+    } else {
+      failure = "We couldn't book that just now. Please try again.";
+    }
+  }
+}
+
+const back = `/book?${new URLSearchParams({ service: service.id, date: day, ...(staff ? { staff: staff.id } : {}) })}`;
+---
+
+<BookingLayout business={b} title={`Your details · ${b.name}`} bar={false}>
+  <main class="bk-flow">
+    <a class="bk-back mono" href={back}>← Change time</a>
+
+    <div class="box bk-summary">
+      <strong>{service.name}</strong>
+      <span class="mono">{whenLabel(start, b.timezone)}</span>
+      <span class="mono">{formatDuration(service.durationMin)} · {price(service, b.currency)}{staff ? ` · with ${staff.name}` : ''}</span>
+    </div>
+
+    <form method="post" class="bk-form" novalidate>
+      <h1 class="bk-step-title">Your details</h1>
+      {failure && <p class="bk-alert" role="alert">{failure}</p>}
+
+      <label class="bk-field">
+        <span class="lab">Your name</span>
+        <input class="bk-input" name="name" value={values.name} autocomplete="name" required maxlength="80"
+          aria-invalid={errors.name ? 'true' : undefined} />
+        {errors.name && <span class="bk-error">{errors.name}</span>}
+      </label>
+
+      <label class="bk-field">
+        <span class="lab">Email</span>
+        <input class="bk-input" name="email" type="email" inputmode="email" value={values.email} autocomplete="email" required maxlength="120"
+          aria-invalid={errors.email ? 'true' : undefined} />
+        <span class="bk-hint">Your confirmation goes here.</span>
+        {errors.email && <span class="bk-error">{errors.email}</span>}
+      </label>
+
+      {fields.phone !== 'off' && (
+        <label class="bk-field">
+          <span class="lab">Phone{fields.phone === 'optional' ? ' (optional)' : ''}</span>
+          <input class="bk-input" name="phone" type="tel" inputmode="tel" value={values.phone} autocomplete="tel" maxlength="30"
+            required={fields.phone === 'required'} aria-invalid={errors.phone ? 'true' : undefined} />
+          {errors.phone && <span class="bk-error">{errors.phone}</span>}
+        </label>
+      )}
+
+      {fields.note !== 'off' && (
+        <label class="bk-field">
+          <span class="lab">Anything we should know? (optional)</span>
+          <textarea class="bk-input" name="note" rows="2" maxlength="500">{values.note}</textarea>
+        </label>
+      )}
+
+      <label class="bk-check">
+        <input type="checkbox" name="consent" checked={values.consent} />
+        <span>Email me a reminder the day before</span>
+      </label>
+
+      <div class="bk-honey" aria-hidden="true">
+        <label>Company <input name="company" tabindex="-1" autocomplete="off" /></label>
+      </div>
+
+      <button class="btn btn-ink bk-submit" type="submit">{service.priceType === 'free' ? 'Book now' : 'Confirm booking'} →</button>
+      <p class="bk-note mono">No payment needed to book</p>
+    </form>
+  </main>
+</BookingLayout>

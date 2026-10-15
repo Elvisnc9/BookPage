@@ -23,7 +23,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
     case 'marketing':
       return isInternalPath(pathname) ? notFound() : next();
     case 'booking':
-      return isValidSlug(site.slug) ? next(`/site/${site.slug}${rest}${search}`) : notFound();
+      if (!isValidSlug(site.slug)) return notFound();
+      // Endpoints (not pages) get empty params after a rewrite, so pass the slug along.
+      context.locals.slug = site.slug;
+      return next(`/site/${site.slug}${rest}${search}`);
     case 'unknown':
       return notFound();
     case 'app':
