@@ -349,3 +349,16 @@ model Faq {
   @@index([businessId, position])
   @@map("faqs")
 }
+
+// ─── Marketing ──────────────────────────────────────────────────────────────
+
+/// People who asked to hear when Pro launches. Emailed once, about that only.
+model WaitlistEntry {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  email     String /// lower-cased
+  kind      String   @default("pro")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([email, kind])
+  @@map("waitlist")
+}
