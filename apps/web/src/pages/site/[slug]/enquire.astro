@@ -1,9 +1,9 @@
 ---
 import BookingLayout from '../../../layouts/BookingLayout.astro';
-import { loadBusiness, PublicApiError, sendEnquiry } from '../../../lib/public';
+import { loadBusiness, PublicApiError, sendEnquiry, TOO_MANY_ATTEMPTS } from '../../../lib/public';
 
 /** Quote-only and not-bookable services: send the business a request instead of booking. */
-const b = await loadBusiness(Astro.params.slug);
+const b = await loadBusiness(Astro.params.slug, Astro.request);
 if (b instanceof Response) return b;
 
 const service = b.services.find((s) => s.id === Astro.url.searchParams.get('service')) ?? null;
@@ -24,11 +24,13 @@ if (Astro.request.method === 'POST') {
       message: values.message,
       ...(values.date ? { preferredDate: values.date } : {}),
       customer: { name: values.name, email: values.email, ...(values.phone ? { phone: values.phone } : {}) },
-    });
+    }, Astro.request);
     sent = true;
   } catch (error) {
     if (!(error instanceof PublicApiError)) throw error;
-    if (error.status === 400 && error.body.issues?.length) {
+    if (error.tooManyAttempts) {
+      failure = TOO_MANY_ATTEMPTS;
+    } else if (error.status === 400 && error.body.issues?.length) {
       for (const i of error.body.issues) errors[i.path.replace('customer.', '')] = i.message;
     } else {
       failure = "We couldn't send that just now. Please try again.";

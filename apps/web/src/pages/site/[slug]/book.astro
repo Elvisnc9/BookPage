@@ -7,7 +7,7 @@ import { dayLabel, getAvailability, loadBusiness, price, timeOf } from '../../..
  * Step 1 of booking: pick who and when. Plain links, no JavaScript, so it is
  * fast and works on any phone. ?service=…&staff=…&date=YYYY-MM-DD
  */
-const b = await loadBusiness(Astro.params.slug);
+const b = await loadBusiness(Astro.params.slug, Astro.request);
 if (b instanceof Response) return b;
 
 const q = Astro.url.searchParams;
@@ -16,7 +16,7 @@ if (!service) return Astro.redirect('/#book', 303);
 
 const team = b.staff.filter((p) => p.serviceIds.includes(service.id));
 const staff = team.find((p) => p.id === q.get('staff')) ?? null;
-const days = await getAvailability(b.slug, service.id, staff?.id ?? null, 14);
+const days = await getAvailability(b.slug, service.id, staff?.id ?? null, Astro.request, 14);
 const firstOpen = days.find((d) => d.slots.length)?.date;
 const date = days.some((d) => d.date === q.get('date')) ? q.get('date')! : firstOpen ?? days[0]?.date;
 const selected = days.find((d) => d.date === date);

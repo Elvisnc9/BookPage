@@ -21,6 +21,8 @@ export default defineConfig({
       // Owner app host. Plain localhost in dev because Google OAuth rejects *.localhost redirect URIs.
       APP_HOST: envField.string({ context: 'server', access: 'public', default: 'localhost' }),
       API_URL: envField.string({ context: 'server', access: 'public', default: 'http://localhost:3000' }),
+      // Shared with the API so it trusts the visitor IP we forward (its rate limits key on it).
+      PROXY_SECRET: envField.string({ context: 'server', access: 'secret', optional: true }),
     },
   },
 });

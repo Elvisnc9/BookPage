@@ -1,20 +1,27 @@
 ---
 import { type PublicBooking } from '@bookpage/shared';
 import BookingLayout from '../../../../layouts/BookingLayout.astro';
-import { cancelBooking, getBooking, loadBusiness, PublicApiError, price, whenLabel } from '../../../../lib/public';
+import { cancelBooking, getBooking, loadBusiness, PublicApiError, price, TOO_MANY_ATTEMPTS, whenLabel } from '../../../../lib/public';
 
 /**
  * Confirmation and self-service page. The secret ?t= token (also in the
  * confirmation email) is what lets the customer see and cancel the booking.
  */
-const b = await loadBusiness(Astro.params.slug);
+const b = await loadBusiness(Astro.params.slug, Astro.request);
 if (b instanceof Response) return b;
 
 const id = Astro.params.id ?? '';
 const token = Astro.url.searchParams.get('t') ?? '';
 let booking: PublicBooking;
+let failure = '';
 try {
-  booking = Astro.request.method === 'POST' ? await cancelBooking(b.slug, id, token) : await getBooking(b.slug, id, token);
+  try {
+    booking = Astro.request.method === 'POST' ? await cancelBooking(b.slug, id, token, Astro.request) : await getBooking(b.slug, id, token, Astro.request);
+  } catch (error) {
+    if (!(error instanceof PublicApiError && error.tooManyAttempts && Astro.request.method === 'POST')) throw error;
+    failure = TOO_MANY_ATTEMPTS;
+    booking = await getBooking(b.slug, id, token, Astro.request);
+  }
 } catch (error) {
   if (error instanceof PublicApiError && (error.status === 404 || error.status === 400)) {
     return new Response('Booking not found', { status: 404 });
@@ -39,6 +46,7 @@ const heading = {
 <BookingLayout business={b} title={`${heading.kicker} · ${b.name}`} noReferrer>
   <main class="bk-flow">
     <div class="box raised bk-done" data-status={booking.status}>
+      {failure && <p class="bk-alert" role="alert">{failure}</p>}
       <p class="lab">{heading.kicker}</p>
       <h1 class="bk-h2">{heading.title}</h1>
       <dl class="bk-receipt">

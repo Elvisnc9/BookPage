@@ -4,7 +4,7 @@ import BookingLayout from '../../../layouts/BookingLayout.astro';
 import { initials, loadBusiness, openStatus, price } from '../../../lib/public';
 
 // Reached only via the {slug}. subdomain rewrite in middleware.ts.
-const b = await loadBusiness(Astro.params.slug);
+const b = await loadBusiness(Astro.params.slug, Astro.request);
 if (b instanceof Response) return b;
 
 const category = b.category && b.category in CATEGORIES ? CATEGORIES[b.category as CategoryKey] : null;

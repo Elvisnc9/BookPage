@@ -1,13 +1,13 @@
 ---
 import { formatDuration, localDate } from '@bookpage/shared';
 import BookingLayout from '../../../layouts/BookingLayout.astro';
-import { createBooking, loadBusiness, PublicApiError, price, whenLabel } from '../../../lib/public';
+import { createBooking, loadBusiness, PublicApiError, price, TOO_MANY_ATTEMPTS, whenLabel } from '../../../lib/public';
 
 /**
  * Step 2 of booking: your details. GET shows the form; POST books through the
  * API and redirects to the confirmation (or back to the times if it was taken).
  */
-const b = await loadBusiness(Astro.params.slug);
+const b = await loadBusiness(Astro.params.slug, Astro.request);
 if (b instanceof Response) return b;
 
 const q = Astro.url.searchParams;
@@ -43,7 +43,7 @@ if (Astro.request.method === 'POST') {
         ...(fields.note !== 'off' && values.note ? { note: values.note } : {}),
       },
       remindersConsent: values.consent,
-    });
+    }, Astro.request);
     return Astro.redirect(`/booked/${booking.id}?t=${encodeURIComponent(manageToken)}`, 303);
   } catch (error) {
     if (!(error instanceof PublicApiError)) throw error;
@@ -51,7 +51,9 @@ if (Astro.request.method === 'POST') {
       const back = new URLSearchParams({ service: service.id, date: day, taken: '1', ...(staff ? { staff: staff.id } : {}) });
       return Astro.redirect(`/book?${back}`, 303);
     }
-    if (error.status === 400 && error.body.issues?.length) {
+    if (error.tooManyAttempts) {
+      failure = TOO_MANY_ATTEMPTS;
+    } else if (error.status === 400 && error.body.issues?.length) {
       for (const issue of error.body.issues) errors[issue.path.replace('customer.', '')] = issue.message;
     } else {
       failure = "We couldn't book that just now. Please try again.";
