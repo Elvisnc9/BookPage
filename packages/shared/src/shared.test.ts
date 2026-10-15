@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { businessPatchSchema, publishIssues, publishSchema, serviceSchema } from './business.js';
+import { businessPatchSchema, publishSchema, serviceSchema } from './business.js';
+import { publishIssues } from './profile.js';
 import { formatMoney, fromMinor, toMinor } from './money.js';
 import { formatDuration, formatMinutes } from './time.js';
 
