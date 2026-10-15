@@ -254,3 +254,23 @@ textarea.ob-input { resize: vertical; min-height: 72px; }
     box-shadow: var(--shadow-sm);
   }
 }
+
+/* My page (dashboard) reuses the onboarding editors inside the app shell. */
+.mp { padding: 0 0 72px; max-width: none; }
+.mp .ap-tabs .chip { cursor: pointer; }
+.mp-body { margin-top: 20px; }
+.mp-status {
+  position: sticky;
+  bottom: 12px;
+  justify-self: start;
+  margin: 24px 0 0;
+  padding: 10px 14px;
+  border: var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.mp-status.bad { background: var(--tint-red); color: var(--ink); }

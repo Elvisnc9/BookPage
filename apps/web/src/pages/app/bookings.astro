@@ -1,0 +1,69 @@
+---
+import { type BookingStatus, localDate, type OwnerBooking } from '@bookpage/shared';
+import BookingCard from '../../components/BookingCard.astro';
+import AppLayout from '../../layouts/AppLayout.astro';
+import { flash, getBookings, getSummary, handleBookingAction } from '../../lib/owner';
+import { dayLabel } from '../../lib/public';
+
+/** All bookings, by view: upcoming, needs OK, past, cancelled. Grouped by day in the business's time zone. */
+const action = await handleBookingAction(Astro);
+if (action) return action;
+
+const VIEWS = {
+  upcoming: { label: 'Upcoming', status: ['pending', 'confirmed'] as BookingStatus[], future: true },
+  pending: { label: 'Needs your OK', status: ['pending'] as BookingStatus[], future: true },
+  past: { label: 'Past', status: ['confirmed', 'completed', 'no_show'] as BookingStatus[], future: false },
+  cancelled: { label: 'Cancelled', status: ['cancelled'] as BookingStatus[], future: null },
+} as const;
+type View = keyof typeof VIEWS;
+
+const view: View = (Astro.url.searchParams.get('view') as View) in VIEWS ? (Astro.url.searchParams.get('view') as View) : 'upcoming';
+const v = VIEWS[view];
+const now = new Date();
+const [summary, bookings] = await Promise.all([
+  getSummary(Astro.request),
+  getBookings(Astro.request, {
+    status: v.status,
+    ...(v.future === true ? { from: now, order: 'asc' as const } : v.future === false ? { to: now, order: 'desc' as const } : { order: 'desc' as const }),
+  }),
+]);
+const tz = summary.timezone;
+
+const groups = new Map<string, OwnerBooking[]>();
+for (const b of bookings) {
+  const { date } = localDate(new Date(b.startsAt), tz);
+  groups.set(date, [...(groups.get(date) ?? []), b]);
+}
+const message = flash(Astro.url);
+const EMPTY: Record<View, string> = {
+  upcoming: 'No upcoming bookings yet. Share your page link to fill your diary.',
+  pending: 'Nothing waiting for your OK.',
+  past: 'No past bookings yet.',
+  cancelled: 'No cancellations.',
+};
+---
+
+<AppLayout title="Bookings" active="bookings" timezone={tz}>
+  <h1 class="h-display ap-h1">Your <span class="scan">bookings</span></h1>
+
+  {message && <p class={`ap-flash ${message.tone}`} role="status">{message.text}</p>}
+
+  <nav class="ap-tabs" aria-label="Filter bookings">
+    {(Object.keys(VIEWS) as View[]).map((k) => (
+      <a class="chip" href={`/bookings?view=${k}`} aria-current={k === view ? 'page' : undefined}>
+        {VIEWS[k].label}{k === 'pending' && summary.pendingCount ? ` · ${summary.pendingCount}` : ''}
+      </a>
+    ))}
+  </nav>
+
+  {groups.size === 0 ? (
+    <p class="ap-empty">{EMPTY[view]}</p>
+  ) : (
+    [...groups].map(([date, list]) => (
+      <section class="ap-section" aria-label={dayLabel(date).long}>
+        <h2 class="ap-day mono">{dayLabel(date).long} · {list.length}</h2>
+        <div class="ap-list">{list.map((b) => <BookingCard booking={b} timezone={tz} />)}</div>
+      </section>
+    ))
+  )}
+</AppLayout>

@@ -44,6 +44,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
     response = context.redirect('/sign-in', 303);
   } else if (me && isPublic) {
     response = context.redirect('/', 303);
+  } else if (me && !me.business?.publishedAt && pathname !== '/onboarding') {
+    // The dashboard needs a live page; finish onboarding first.
+    response = context.redirect('/onboarding', 303);
   } else {
     if (me) context.locals.me = me;
     response = await next(`/app${rest}${search}`);

@@ -22,6 +22,9 @@ export function apiFetch(path: string, request: Request, init: RequestInit = {})
   if (cookie) headers.set('cookie', cookie);
   const userAgent = request.headers.get('user-agent');
   if (userAgent) headers.set('user-agent', userAgent);
+  // Dashboard form posts call the API from here; the API's CSRF check needs the browser's origin.
+  const origin = request.headers.get('origin');
+  if (origin && !headers.has('origin')) headers.set('origin', origin);
   return fetch(`${API_URL}${path}`, { ...init, headers, redirect: 'manual' });
 }
 

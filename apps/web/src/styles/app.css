@@ -1,0 +1,168 @@
+/* Owner dashboard shell. Mobile-first: nav becomes a top bar with tabs; sidebar from 900px. */
+
+.ap { min-height: 100dvh; display: flex; flex-direction: column; }
+
+.ap-side {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 10px 16px 0;
+  background: var(--surface);
+  border-bottom: var(--border);
+}
+.ap-brand { font-weight: 800; letter-spacing: -0.02em; text-decoration: none; padding: 6px 0; }
+.ap-nav {
+  order: 3;
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  margin: 0 -16px;
+  padding: 0 16px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ap-nav-link {
+  display: block;
+  padding: 10px 12px;
+  white-space: nowrap;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+}
+.ap-nav-link[aria-current='page'] { border-bottom-color: var(--orange); }
+.ap-me { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.ap-me-text { display: none; }
+.ap-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: var(--border);
+  border-radius: var(--r);
+  background: var(--yellow);
+  font-size: 12px;
+  font-weight: 800;
+}
+.ap-signout {
+  min-height: 36px;
+  padding: 0 10px;
+  border: var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.ap-main { flex: 1; min-width: 0; }
+.ap-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 14px 16px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+.ap-date { margin-right: auto; }
+.ap-live { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+.ap-live i { width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); outline: 2px solid var(--ink); }
+.ap-link { color: var(--ink); text-transform: none; letter-spacing: 0; }
+
+.ap-content { display: grid; gap: 20px; max-width: 880px; padding: 4px 16px 48px; }
+.ap-h1 { margin: 0; font-size: clamp(36px, 9vw, 60px); }
+.ap-h2 { margin: 0 0 10px; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.ap-day { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.ap-section { display: grid; }
+.ap-empty { margin: 0; color: var(--muted); }
+.ap-flash { margin: 0; padding: 12px 14px; border: var(--border); border-radius: var(--r); font-weight: 600; }
+.ap-flash.ok { background: var(--tint-yellow); }
+.ap-flash.bad { background: var(--tint-red); }
+
+.ap-kpis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.ap-kpi { display: grid; gap: 6px; padding: 14px; text-decoration: none; }
+.ap-kpi .lab { margin: 0; }
+.ap-kpi strong { font-size: 28px; }
+.ap-kpi .ap-kpi-next { font-family: var(--font-sans); font-size: 15px; }
+.ap-kpi-alert { background: var(--tint-orange); box-shadow: var(--shadow-sm); }
+
+.ap-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.ap-tabs .chip { display: inline-flex; align-items: center; min-height: 40px; white-space: nowrap; text-decoration: none; color: var(--ink); text-transform: uppercase; }
+.ap-tabs .chip[aria-current] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+.ap-list { display: grid; gap: 10px; }
+.ap-booking { display: grid; grid-template-columns: 76px 1fr; gap: 12px; padding: 14px; scroll-margin-top: 120px; }
+.ap-booking[data-status='pending'] { background: var(--tint-orange); }
+.ap-booking[data-status='cancelled'], .ap-booking[data-status='no_show'] { opacity: .65; }
+.ap-booking-time { display: grid; align-content: start; gap: 2px; font-size: 12px; }
+.ap-booking-time strong { font-size: 13px; white-space: nowrap; }
+.ap-booking-time span { white-space: nowrap; }
+.ap-booking-time span { color: var(--muted); }
+.ap-booking-main { display: grid; gap: 6px; min-width: 0; }
+.ap-booking-main p { margin: 0; }
+.ap-booking-who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ap-booking-what { font-size: 14px; color: var(--ink-soft); }
+.ap-status {
+  padding: 2px 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  border: 1px solid var(--ink);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+.ap-status[data-status='pending'] { background: var(--orange); }
+.ap-status[data-status='confirmed'] { background: var(--tint-yellow); }
+
+.ap-booking-more summary { cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 4px 0; }
+.ap-booking-more dl { display: grid; gap: 6px; margin: 6px 0 0; font-size: 14px; }
+.ap-booking-more dl div { display: grid; grid-template-columns: 64px 1fr; gap: 8px; }
+.ap-booking-more dt { color: var(--muted); }
+.ap-booking-more dd { margin: 0; overflow-wrap: anywhere; }
+
+.ap-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.ap-actions form { margin: 0; }
+.ap-btn { min-height: 40px; padding: 0 12px; font-size: 11px; }
+.ap-btn-danger { border-color: var(--red); color: var(--red); background: var(--surface); }
+.ap-cancel summary { list-style: none; cursor: pointer; }
+.ap-cancel summary::-webkit-details-marker { display: none; }
+.ap-cancel[open] { flex-basis: 100%; }
+.ap-cancel[open] summary { display: none; }
+.ap-cancel-form { display: grid; gap: 8px; }
+.ap-input { width: 100%; min-height: 44px; padding: 8px 10px; font-size: 16px; border: var(--border); border-radius: var(--r); background: var(--surface); }
+
+@media (min-width: 640px) {
+  .ap-kpis { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (min-width: 900px) {
+  .ap { flex-direction: row; }
+  .ap-side {
+    position: sticky;
+    top: 0;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    width: 240px;
+    height: 100dvh;
+    padding: 20px 16px;
+    border-bottom: 0;
+    border-right: var(--border);
+  }
+  .ap-nav { order: 0; flex-direction: column; margin: 12px 0 0; padding: 0; }
+  .ap-nav-link { border-bottom: 0; border-left: 3px solid transparent; border-radius: var(--r); }
+  .ap-nav-link[aria-current='page'] { border-left-color: var(--orange); background: var(--tint-orange); }
+  .ap-me { margin: auto 0 0; flex-wrap: wrap; }
+  .ap-me-text { display: grid; min-width: 0; font-size: 14px; }
+  .ap-me-text .mono { font-size: 11px; color: var(--muted); }
+  .ap-me form { width: 100%; }
+  .ap-signout { width: 100%; }
+  .ap-top, .ap-content { padding-left: 32px; padding-right: 32px; }
+}

@@ -7,6 +7,8 @@ const PRICE_LABELS: Record<PriceType, string> = { fixed: 'Fixed', from: 'From', 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 180, 240];
 
 export function StepServices(props: {
+  /** Overrides the onboarding heading (used on My page). */
+  heading?: { kicker: string; title: string; intro?: string };
   services: ServiceDraft[];
   onServices: (services: ServiceDraft[]) => void;
   category: CategoryKey | null;
@@ -41,7 +43,7 @@ export function StepServices(props: {
   }, []);
 
   return (
-    <Section kicker="Step 2 · Services" title="What do you offer?" intro="Add what customers can book. You can change these any time.">
+    <Section {...(props.heading ?? { kicker: "Step 2 · Services", title: "What do you offer?", intro: "Add what customers can book. You can change these any time." })}>
       <ol class="ob-services">
         {services.map((s, i) => {
           const check = serviceTo(s);

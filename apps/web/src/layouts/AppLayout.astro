@@ -1,0 +1,62 @@
+---
+import { ROOT_DOMAIN } from 'astro:env/server';
+import { localDate } from '@bookpage/shared';
+import Base from './Base.astro';
+import '../styles/app.css';
+import { dayLabel, initials } from '../lib/public';
+
+interface Props {
+  title: string;
+  active: 'today' | 'bookings' | 'page';
+  /** The business time zone, for the date line. */
+  timezone?: string | undefined;
+}
+
+const { title, active, timezone } = Astro.props;
+const { user, business } = Astro.locals.me!;
+const { protocol, port } = Astro.url;
+const pageHost = business ? `${business.slug}.${ROOT_DOMAIN}${port ? `:${port}` : ''}` : '';
+const pageUrl = `${protocol}//${pageHost}`;
+const today = timezone ? dayLabel(localDate(new Date(), timezone).date).long : '';
+
+const nav = [
+  { key: 'today', label: 'Today', href: '/' },
+  { key: 'bookings', label: 'Bookings', href: '/bookings' },
+  { key: 'page', label: 'My page', href: '/page' },
+] as const;
+---
+
+<Base title={`${title} · BookPage`}>
+  <div class="ap">
+    <nav class="ap-side" aria-label="Dashboard">
+      <a class="ap-brand mono" href="/">BookPage</a>
+      <ul class="ap-nav">
+        {nav.map((n) => (
+          <li><a class="ap-nav-link" href={n.href} aria-current={n.key === active ? 'page' : undefined}>{n.label}</a></li>
+        ))}
+        <li><a class="ap-nav-link" href={pageUrl} target="_blank" rel="noopener">View my page ↗</a></li>
+      </ul>
+      <div class="ap-me">
+        <span class="ap-avatar mono" aria-hidden="true">{initials(user.name ?? user.email)}</span>
+        <span class="ap-me-text">
+          <strong>{user.name ?? user.email}</strong>
+          <span class="mono">{business?.name}</span>
+        </span>
+        <form method="post" action="/api/auth/logout">
+          <button class="ap-signout mono" type="submit">Sign out</button>
+        </form>
+      </div>
+    </nav>
+
+    <div class="ap-main">
+      <header class="ap-top">
+        <span class="mono ap-date">{today}</span>
+        <span class="ap-live mono"><i aria-hidden="true"></i>Page live</span>
+        <a class="ap-link mono" href={pageUrl} target="_blank" rel="noopener">{pageHost}</a>
+      </header>
+      <main class="ap-content">
+        <slot />
+      </main>
+    </div>
+  </div>
+</Base>

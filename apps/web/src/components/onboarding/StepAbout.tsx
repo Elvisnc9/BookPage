@@ -1,7 +1,8 @@
-import { CATEGORIES, CATEGORY_KEYS, CURRENCIES, formatMinutes, WEEKDAY_SHORT } from '@bookpage/shared';
+import { CATEGORIES, CATEGORY_KEYS, CURRENCIES } from '@bookpage/shared';
 import { useState } from 'preact/hooks';
 import type { FieldIssue } from './api';
 import { issueFor } from './autosave';
+import { HoursEditor } from './HoursEditor';
 import { type AboutDraft, COUNTRIES, COUNTRY_ZONES, countryName, type DayDraft, needsAddress, needsAreas, zoneLabel } from './model';
 import { Chips, Field, Section } from './ui';
 
@@ -11,9 +12,6 @@ const LOCATION_OPTIONS = [
   { value: 'online', label: 'Online' },
   { value: 'both', label: 'A mix' },
 ] as const;
-
-/** 6:00 AM … midnight, every 30 minutes. */
-const TIMES = Array.from({ length: 37 }, (_, i) => 360 + i * 30);
 
 export function StepAbout(props: {
   about: AboutDraft;
@@ -30,8 +28,6 @@ export function StepAbout(props: {
     if (value && !about.serviceAreas.includes(value)) onAbout({ serviceAreas: [...about.serviceAreas, value] });
     setArea('');
   };
-  const setDay = (weekday: number, patch: Partial<DayDraft>) =>
-    onDays(days.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)));
 
   return (
     <Section kicker="Step 1 · About" title="Your business" intro="This is what customers see at the top of your page.">
@@ -157,36 +153,7 @@ export function StepAbout(props: {
         </Field>
       </div>
 
-      <fieldset class="ob-hours">
-        <legend class="lab">Opening hours</legend>
-        {days.map((day) => {
-          const name = WEEKDAY_SHORT[day.weekday - 1]!;
-          return (
-            <div class="ob-day" data-open={day.open}>
-              <label class="ob-day-toggle">
-                <input type="checkbox" role="switch" class="ob-switch" checked={day.open}
-                  onChange={(e) => setDay(day.weekday, { open: e.currentTarget.checked })} />
-                <span class="mono">{name}</span>
-              </label>
-              {day.open ? (
-                <div class="ob-day-times">
-                  <select class="ob-input ob-time" aria-label={`${name} opens`} value={day.opensAt}
-                    onChange={(e) => setDay(day.weekday, { opensAt: Number(e.currentTarget.value) })}>
-                    {TIMES.filter((t) => t < 1440).map((t) => <option value={t}>{formatMinutes(t)}</option>)}
-                  </select>
-                  <span aria-hidden="true">–</span>
-                  <select class="ob-input ob-time" aria-label={`${name} closes`} value={day.closesAt}
-                    onChange={(e) => setDay(day.weekday, { closesAt: Number(e.currentTarget.value) })}>
-                    {TIMES.filter((t) => t > day.opensAt).map((t) => <option value={t}>{t === 1440 ? 'Midnight' : formatMinutes(t)}</option>)}
-                  </select>
-                </div>
-              ) : (
-                <span class="ob-closed mono">Closed</span>
-              )}
-            </div>
-          );
-        })}
-      </fieldset>
+      <HoursEditor days={days} onDays={onDays} />
     </Section>
   );
 }

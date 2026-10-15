@@ -20,6 +20,8 @@ const WINDOW = [
 ];
 
 export function StepBooking(props: {
+  /** Overrides the onboarding heading (used on My page). */
+  heading?: { kicker: string; title: string; intro?: string };
   rules: Rules;
   onRules: (patch: Partial<Rules>) => void;
   staff: StaffDraft[];
@@ -32,7 +34,7 @@ export function StepBooking(props: {
   const window_ = WINDOW.some((w) => w.value === rules.windowDays) ? WINDOW : [...WINDOW, { value: rules.windowDays, label: `${rules.windowDays} days` }];
 
   return (
-    <Section kicker="Step 3 · Booking" title="How booking works" intro="Free times on your page come from your hours, minus bookings and these rules.">
+    <Section {...(props.heading ?? { kicker: "Step 3 · Booking", title: "How booking works", intro: "Free times on your page come from your hours, minus bookings and these rules." })}>
       <Chips label="Minimum notice" value={rules.minNoticeMin} options={notice} onChange={(minNoticeMin) => onRules({ minNoticeMin })} />
       <Chips label="How far ahead can people book?" value={rules.windowDays} options={window_} onChange={(windowDays) => onRules({ windowDays })} />
 
