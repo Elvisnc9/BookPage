@@ -4,9 +4,10 @@ import { BusinessModule } from './business/business.module';
 import { ConfigModule } from './config.module';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
-  imports: [ConfigModule, PrismaModule, AuthModule, BusinessModule],
+  imports: [ConfigModule, PrismaModule, AuthModule, BusinessModule, PublicModule],
   controllers: [HealthController],
 })
 export class AppModule {}

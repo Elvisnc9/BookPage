@@ -16,6 +16,9 @@ export class OriginGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest<Request>();
     if (SAFE_METHODS.has(req.method)) return true;
+    // Booking-page endpoints carry no cookie, so there is no session to forge.
+    // The web app calls them server-side, without an Origin header.
+    if (req.path.startsWith('/public/')) return true;
     if (req.headers.origin === this.config.appOrigin) return true;
     throw new ForbiddenException('Cross-origin request blocked');
   }
