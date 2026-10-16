@@ -1,0 +1,31 @@
+---
+/**
+ * The scattered plus / dashed ring / tilted square / spark behind each section,
+ * plus a faint hairline. Colours and positions vary per section.
+ */
+interface Props {
+  /** Colours for plus, ring, square and spark. */
+  colors: [string, string, string, string];
+  /** CSS positions for plus, ring, square and spark. */
+  at: [string, string, string, string];
+  hair: 'left' | 'right' | 'top';
+}
+
+const { colors, at, hair } = Astro.props;
+const [plus, ring, square, spark] = colors;
+const hairStyle = hair === 'top' ? 'left:0;right:0;top:64px;height:1px' : `${hair}:6%;top:0;bottom:0;width:1px`;
+---
+
+<span class="mk-hair" style={hairStyle} aria-hidden="true"></span>
+<span class="mk-art dr1" data-speed="0.6" style={at[0]} aria-hidden="true">
+  <svg width="26" height="26" viewBox="0 0 26 26"><path d="M13 2v22M2 13h22" stroke={plus} stroke-width="4" stroke-linecap="round" /></svg>
+</span>
+<span class="mk-art dr2" data-speed="0.9" style={at[1]} aria-hidden="true">
+  <svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke={ring} stroke-width="3" stroke-dasharray="5 5" /></svg>
+</span>
+<span class="mk-art dr1" data-speed="0.4" style={at[2]} aria-hidden="true">
+  <span class="mk-art-sq" style={`background:${square}`}></span>
+</span>
+<span class="mk-art dr3" data-speed="0.7" style={at[3]} aria-hidden="true">
+  <svg width="30" height="30" viewBox="0 0 30 30"><path d="M15 2l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill={spark} stroke="#0D0D10" stroke-width="1.5" /></svg>
+</span>

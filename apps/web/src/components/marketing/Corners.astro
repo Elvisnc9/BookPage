@@ -1,0 +1,22 @@
+---
+/** Registration-mark corners with tiny mono labels, like a print proof. Decorative. */
+interface Props {
+  /** Top-left, top-right, bottom-left, bottom-right. A trailing "▮" blinks. */
+  labels: [string, string, string, string];
+}
+
+const { labels } = Astro.props;
+const spots = ['tl', 'tr', 'bl', 'br'] as const;
+const turn = { tl: 0, tr: 90, bl: 270, br: 180 };
+---
+
+{spots.map((s, i) => {
+  const text = labels[i] ?? '';
+  const blink = text.endsWith('▮');
+  return (
+    <span class={`mk-corner mk-corner-${s}`} aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 22 22" style={`transform:rotate(${turn[s]}deg)`}><path d="M1 21V1h20" fill="none" stroke="#0D0D10" stroke-width="2" /></svg>
+      <span class="mono">{blink ? text.slice(0, -1) : text}{blink && <span class="blink">▮</span>}</span>
+    </span>
+  );
+})}

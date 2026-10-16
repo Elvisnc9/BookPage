@@ -1,0 +1,73 @@
+---
+/**
+ * Sticker decorations for the marketing page: calendar badges, price tags,
+ * gears, stars, the little robot and friends. Purely decorative (aria-hidden).
+ * Position with `style`; `rot` tilts the sticker; `anim` picks a drift loop.
+ */
+type Kind = 'cal' | 'price' | 'bot' | 'gear' | 'star' | 'clock' | 'robot' | 'tag';
+
+interface Props {
+  kind: Kind;
+  style?: string;
+  class?: string;
+  rot?: number;
+  anim?: 'dr1' | 'dr2' | 'dr3' | 'bob' | '';
+  speed?: number;
+  /** cal: month label; price: amount; bot: title; tag: title */
+  label?: string;
+  /** cal: day; bot / tag: second line */
+  sub?: string;
+  /** Accent colour (cal header, bot eyes, gear fill, star fill, tag background) */
+  color?: string;
+  /** Shadow colour for stickers */
+  shadow?: string;
+  /** price: show the PAID pill; tag: light text */
+  flag?: boolean;
+  size?: number;
+}
+
+const { kind, style = '', class: cls = '', rot = 0, anim = '', speed, label = '', sub = '', color = '#E9B949', shadow = '#0D0D10', flag = false, size } = Astro.props;
+const teeth = (size ?? 66) >= 100 ? 10 : 8;
+---
+
+<span class:list={['dk', anim, cls]} style={style} data-speed={speed} aria-hidden="true">
+  <span class="dk-r" style={rot ? `transform:rotate(${rot}deg)` : undefined}>
+    {kind === 'cal' && (
+      <span class="dk-cal" style={`box-shadow:5px 5px 0 ${shadow}`}><span style={`background:${color}`}>{label}</span><b>{sub}</b></span>
+    )}
+    {kind === 'price' && (
+      <span class="dk-price" style={`background:${flag ? '#FFFFFF' : color};box-shadow:5px 5px 0 ${shadow}`}>
+        <i style={`background:${flag ? color : '#FFFFFF'}`}>{label.charAt(0)}</i>{label.slice(1)}{flag && <em>PAID</em>}
+      </span>
+    )}
+    {kind === 'bot' && (
+      <span class="dk-bot" style={`box-shadow:5px 5px 0 ${shadow}`}>
+        <svg width="34" height="34" viewBox="0 0 34 34"><line x1="17" y1="2" x2="17" y2="8" stroke="#0D0D10" stroke-width="2.5" /><circle cx="17" cy="3" r="3" fill={color} stroke="#0D0D10" stroke-width="2" /><rect x="3" y="8" width="28" height="22" rx="6" fill="#0D0D10" /><rect class="dk-eye" x="10" y="15" width="4" height="7" rx="2" fill={color} /><rect class="dk-eye" x="20" y="15" width="4" height="7" rx="2" fill={color} /></svg>
+        <span><b>{label}</b><small>{sub}</small></span>
+      </span>
+    )}
+    {kind === 'gear' && (
+      <span class={teeth === 10 ? 'dk-spin' : 'dk-spin dk-rev'}>
+        <svg width={size ?? 66} height={size ?? 66} viewBox="-50 -50 100 100">
+          <g fill={color} stroke="#0D0D10" stroke-width="4" stroke-linejoin="round">
+            {Array.from({ length: teeth }, (_, i) => <rect x="-7" y="-46" width="14" height="18" rx="2" transform={`rotate(${(360 / teeth) * i})`} />)}
+            <circle r="30" />
+          </g>
+          <circle r="10" fill="#FFFFFF" stroke="#0D0D10" stroke-width="4" />
+        </svg>
+      </span>
+    )}
+    {kind === 'star' && (
+      <svg width={size ?? 46} height={size ?? 46} viewBox="0 0 30 30"><path d="M15 2l3.6 7.8 8.4.9-6.3 5.7 1.8 8.3L15 20.4 7.5 24.7l1.8-8.3L3 10.7l8.4-.9z" fill={color} stroke="#0D0D10" stroke-width="2" /></svg>
+    )}
+    {kind === 'clock' && (
+      <svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="#FFFFFF" stroke="#0D0D10" stroke-width="3" /><path d="M22 12v11l7 4" stroke={color} stroke-width="3.5" stroke-linecap="round" fill="none" /></svg>
+    )}
+    {kind === 'robot' && (
+      <svg width={size ?? 70} height={Math.round((size ?? 70) * 1.14)} viewBox="0 0 132 150"><line x1="66" y1="14" x2="66" y2="34" stroke="#0D0D10" stroke-width="5" /><circle cx="66" cy="11" r="8" fill="#E9B949" stroke="#0D0D10" stroke-width="4" /><rect x="18" y="34" width="96" height="70" rx="18" fill="#FFFFFF" stroke="#0D0D10" stroke-width="5" /><rect x="30" y="48" width="72" height="40" rx="10" fill="#0D0D10" /><rect x="46" y="60" width="9" height="14" rx="4.5" fill="#E9B949" /><rect x="77" y="60" width="9" height="14" rx="4.5" fill="#E9B949" /><rect x="36" y="104" width="60" height="36" rx="10" fill={color} stroke="#0D0D10" stroke-width="5" /></svg>
+    )}
+    {kind === 'tag' && (
+      <span class="dk-tag" style={`background:${color};color:${flag ? '#FFFFFF' : '#0D0D10'};box-shadow:5px 5px 0 ${shadow}`}><b>{label}</b><small>{sub}</small></span>
+    )}
+  </span>
+</span>
