@@ -28,6 +28,8 @@ export interface PublicBusiness {
   hours: { weekday: number; opensAt: number; closesAt: number }[];
   services: PublicService[];
   staff: { id: string; name: string; serviceIds: string[] }[];
+  /** Approved questions, in the owner's order. */
+  faqs: { question: string; answer: string }[];
   booking: { windowDays: number; customerFields: CustomerFields };
 }
 

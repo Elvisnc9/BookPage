@@ -27,6 +27,7 @@ const BUSINESS_VIEW = {
   hours: { orderBy: [{ weekday: 'asc' }, { opensAt: 'asc' }] },
   services: { where: { archivedAt: null }, orderBy: { position: 'asc' } },
   staff: { where: { archivedAt: null }, orderBy: { position: 'asc' }, include: { services: { select: { serviceId: true } } } },
+  faqs: { where: { approved: true }, orderBy: { position: 'asc' }, select: { question: true, answer: true } },
 } satisfies Prisma.BusinessInclude;
 
 type LoadedBusiness = Prisma.BusinessGetPayload<{ include: typeof BUSINESS_VIEW }>;
@@ -291,6 +292,7 @@ function toPublic(b: LoadedBusiness): PublicBusiness {
       bookable: s.bookable && s.priceType !== 'quote',
     })),
     staff: b.staff.map((s) => ({ id: s.id, name: s.name, serviceIds: s.services.map((l) => l.serviceId) })),
+    faqs: b.faqs,
     booking: { windowDays: rules.windowDays, customerFields: customerFieldsSchema.parse(rules.customerFields) },
   };
 }
