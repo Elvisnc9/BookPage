@@ -1,7 +1,8 @@
 ---
 import { formatDuration, localDate } from '@bookpage/shared';
 import BookingLayout from '../../../layouts/BookingLayout.astro';
-import { createBooking, loadBusiness, PublicApiError, price, TOO_MANY_ATTEMPTS, whenLabel } from '../../../lib/public';
+import Icon from '../../../components/booking/Icon.astro';
+import { createBooking, initials, loadBusiness, PublicApiError, price, TOO_MANY_ATTEMPTS, whenLabel } from '../../../lib/public';
 
 /**
  * Step 2 of booking: your details. GET shows the form; POST books through the
@@ -13,7 +14,7 @@ if (b instanceof Response) return b;
 const q = Astro.url.searchParams;
 const service = b.services.find((s) => s.id === q.get('service') && s.bookable);
 const start = q.get('start') ?? '';
-if (!service || Number.isNaN(Date.parse(start))) return Astro.redirect('/#book', 303);
+if (!service || Number.isNaN(Date.parse(start))) return Astro.redirect('/#services', 303);
 const staff = b.staff.find((p) => p.id === q.get('staff') && p.serviceIds.includes(service.id)) ?? null;
 const fields = b.booking.customerFields;
 // Back to the same day's times, not the first open day.
@@ -66,27 +67,30 @@ const back = `/book?${new URLSearchParams({ service: service.id, date: day, ...(
 
 <BookingLayout business={b} title={`Your details · ${b.name}`} bar={false}>
   <main class="bk-flow">
-    <a class="bk-back mono" href={back}>← Change time</a>
+    <a class="bk-back" href={back}><Icon name="back" size={14} /> Change time</a>
+    <h1 class="bk-flow-title">Your details</h1>
 
-    <div class="box bk-summary">
-      <strong>{service.name}</strong>
-      <span class="mono">{whenLabel(start, b.timezone)}</span>
-      <span class="mono">{formatDuration(service.durationMin)} · {price(service, b.currency)}{staff ? ` · with ${staff.name}` : ''}</span>
+    <div class="bk-summary">
+      <span class="bk-thumb" data-tint="0" aria-hidden="true">{initials(service.name)}</span>
+      <span>
+        <strong>{service.name}</strong>
+        <small>{whenLabel(start, b.timezone)}</small>
+        <small>{formatDuration(service.durationMin)} · {price(service, b.currency)}{staff ? ` · with ${staff.name}` : ''}</small>
+      </span>
     </div>
 
-    <form method="post" class="bk-form" novalidate>
-      <h1 class="bk-step-title">Your details</h1>
+    <form method="post" class="bk-form bk-panel" novalidate>
       {failure && <p class="bk-alert" role="alert">{failure}</p>}
 
       <label class="bk-field">
-        <span class="lab">Your name</span>
+        <span class="bk-label">Your name</span>
         <input class="bk-input" name="name" value={values.name} autocomplete="name" required maxlength="80"
           aria-invalid={errors.name ? 'true' : undefined} />
         {errors.name && <span class="bk-error">{errors.name}</span>}
       </label>
 
       <label class="bk-field">
-        <span class="lab">Email</span>
+        <span class="bk-label">Email</span>
         <input class="bk-input" name="email" type="email" inputmode="email" value={values.email} autocomplete="email" required maxlength="120"
           aria-invalid={errors.email ? 'true' : undefined} />
         <span class="bk-hint">Your confirmation goes here.</span>
@@ -95,7 +99,7 @@ const back = `/book?${new URLSearchParams({ service: service.id, date: day, ...(
 
       {fields.phone !== 'off' && (
         <label class="bk-field">
-          <span class="lab">Phone{fields.phone === 'optional' ? ' (optional)' : ''}</span>
+          <span class="bk-label">Phone{fields.phone === 'optional' ? ' (optional)' : ''}</span>
           <input class="bk-input" name="phone" type="tel" inputmode="tel" value={values.phone} autocomplete="tel" maxlength="30"
             required={fields.phone === 'required'} aria-invalid={errors.phone ? 'true' : undefined} />
           {errors.phone && <span class="bk-error">{errors.phone}</span>}
@@ -104,7 +108,7 @@ const back = `/book?${new URLSearchParams({ service: service.id, date: day, ...(
 
       {fields.note !== 'off' && (
         <label class="bk-field">
-          <span class="lab">Anything we should know? (optional)</span>
+          <span class="bk-label">Anything we should know? (optional)</span>
           <textarea class="bk-input" name="note" rows="2" maxlength="500">{values.note}</textarea>
         </label>
       )}
@@ -118,8 +122,8 @@ const back = `/book?${new URLSearchParams({ service: service.id, date: day, ...(
         <label>Company <input name="company" tabindex="-1" autocomplete="off" /></label>
       </div>
 
-      <button class="btn btn-ink bk-submit" type="submit">{service.priceType === 'free' ? 'Book now' : 'Confirm booking'} →</button>
-      <p class="bk-note mono">No payment needed to book</p>
+      <button class="btn btn-ink bk-submit" type="submit">{service.priceType === 'free' ? 'Book now' : 'Confirm booking'} <Icon name="arrow" size={16} /></button>
+      <p class="bk-note">No payment needed to book</p>
     </form>
   </main>
 </BookingLayout>

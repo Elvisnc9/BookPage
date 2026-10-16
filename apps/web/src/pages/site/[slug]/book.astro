@@ -1,7 +1,8 @@
 ---
 import { formatDuration } from '@bookpage/shared';
 import BookingLayout from '../../../layouts/BookingLayout.astro';
-import { dayLabel, getAvailability, loadBusiness, price, timeOf } from '../../../lib/public';
+import Icon from '../../../components/booking/Icon.astro';
+import { dayLabel, getAvailability, initials, loadBusiness, price, timeOf } from '../../../lib/public';
 
 /**
  * Step 1 of booking: pick who and when. Plain links, no JavaScript, so it is
@@ -12,7 +13,7 @@ if (b instanceof Response) return b;
 
 const q = Astro.url.searchParams;
 const service = b.services.find((s) => s.id === q.get('service') && s.bookable);
-if (!service) return Astro.redirect('/#book', 303);
+if (!service) return Astro.redirect('/#services', 303);
 
 const team = b.staff.filter((p) => p.serviceIds.includes(service.id));
 const staff = team.find((p) => p.id === q.get('staff')) ?? null;
@@ -33,18 +34,23 @@ const detailsLink = (start: string) =>
 
 <BookingLayout business={b} title={`Book ${service.name} · ${b.name}`} bar={false}>
   <main class="bk-flow">
-    <a class="bk-back mono" href="/#book">← All services</a>
+    <a class="bk-back" href="/#services"><Icon name="back" size={14} /> All services</a>
+    <h1 class="bk-flow-title">Pick a time</h1>
 
-    <div class="box bk-summary">
-      <strong>{service.name}</strong>
-      <span class="mono">{formatDuration(service.durationMin)} · {price(service, b.currency)}</span>
+    <div class="bk-summary">
+      <span class="bk-thumb" data-tint="0" aria-hidden="true">{initials(service.name)}</span>
+      <span>
+        <strong>{service.name}</strong>
+        <small>{formatDuration(service.durationMin)} · {price(service, b.currency)}</small>
+      </span>
     </div>
 
     {taken && <p class="bk-alert" role="alert">Sorry, that time was just taken. Please pick another.</p>}
 
+    <div class="bk-panel">
     {team.length > 1 && (
       <section class="bk-step" aria-labelledby="who">
-        <h1 id="who" class="bk-step-title">Who would you like?</h1>
+        <h2 id="who" class="bk-step-title">Who would you like?</h2>
         <div class="bk-chips">
           <a class="chip" aria-current={staff ? undefined : 'true'} href={link({ staff: null })}>Anyone</a>
           {team.map((p) => (
@@ -75,7 +81,7 @@ const detailsLink = (start: string) =>
       {selected && selected.slots.length ? (
         <ul class="bk-times">
           {selected.slots.map((s) => (
-            <li><a class="bk-time mono" href={detailsLink(s.start)}>{timeOf(s.start, b.timezone)}</a></li>
+            <li><a class="bk-time" href={detailsLink(s.start)}>{timeOf(s.start, b.timezone)}</a></li>
           ))}
         </ul>
       ) : (
@@ -83,7 +89,8 @@ const detailsLink = (start: string) =>
           {firstOpen ? 'No free times that day. Pick another day above.' : `No free times in the next two weeks.${b.phone ? ` Call ${b.phone} to ask.` : ''}`}
         </p>
       )}
-      <p class="bk-note mono">Times shown in {b.timezone.split('/').pop()!.replace(/_/g, ' ')} time</p>
+      <p class="bk-note">Times shown in {b.timezone.split('/').pop()!.replace(/_/g, ' ')} time</p>
     </section>
+    </div>
   </main>
 </BookingLayout>

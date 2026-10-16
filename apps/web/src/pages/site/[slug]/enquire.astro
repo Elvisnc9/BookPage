@@ -1,5 +1,6 @@
 ---
 import BookingLayout from '../../../layouts/BookingLayout.astro';
+import Icon from '../../../components/booking/Icon.astro';
 import { loadBusiness, PublicApiError, sendEnquiry, TOO_MANY_ATTEMPTS } from '../../../lib/public';
 
 /** Quote-only and not-bookable services: send the business a request instead of booking. */
@@ -41,45 +42,45 @@ if (Astro.request.method === 'POST') {
 
 <BookingLayout business={b} title={`Ask ${b.name}`} bar={false}>
   <main class="bk-flow">
-    <a class="bk-back mono" href="/#book">← All services</a>
+    <a class="bk-back" href="/#services"><Icon name="back" size={14} /> All services</a>
     {sent ? (
-      <div class="box raised bk-done">
-        <p class="lab">✓ Sent</p>
-        <h1 class="bk-h2">Thanks, {values.name.split(' ')[0]}.</h1>
+      <div class="bk-done" data-status="sent">
+        <p class="bk-badge"><i><Icon name="check" size={14} /></i>Sent</p>
+        <h1 class="bk-flow-title">Thanks, {values.name.split(' ')[0]}.</h1>
         <p class="bk-hint">{b.name} will reply to {values.email}.</p>
         <a class="btn" href="/">Back to {b.name}</a>
       </div>
     ) : (
-      <form method="post" class="bk-form" novalidate>
-        <p class="lab">Ask for a quote</p>
-        <h1 class="bk-step-title">{service ? service.name : `Ask ${b.name}`}</h1>
+      <p class="bk-kicker">{service ? 'Ask for a quote' : 'Ask a question'}</p>
+      <h1 class="bk-flow-title">{service ? service.name : `Ask ${b.name}`}</h1>
+      <form method="post" class="bk-form bk-panel" novalidate>
         {failure && <p class="bk-alert" role="alert">{failure}</p>}
         <label class="bk-field">
-          <span class="lab">What do you need?</span>
+          <span class="bk-label">What do you need?</span>
           <textarea class="bk-input" name="message" rows="4" maxlength="1000" required aria-invalid={errors.message ? 'true' : undefined}>{values.message}</textarea>
           {errors.message && <span class="bk-error">{errors.message}</span>}
         </label>
         <label class="bk-field">
-          <span class="lab">Preferred date (optional)</span>
+          <span class="bk-label">Preferred date (optional)</span>
           <input class="bk-input" type="date" name="date" value={values.date} />
         </label>
         <label class="bk-field">
-          <span class="lab">Your name</span>
+          <span class="bk-label">Your name</span>
           <input class="bk-input" name="name" value={values.name} autocomplete="name" required maxlength="80" aria-invalid={errors.name ? 'true' : undefined} />
           {errors.name && <span class="bk-error">{errors.name}</span>}
         </label>
         <label class="bk-field">
-          <span class="lab">Email</span>
+          <span class="bk-label">Email</span>
           <input class="bk-input" name="email" type="email" inputmode="email" value={values.email} autocomplete="email" required maxlength="120" aria-invalid={errors.email ? 'true' : undefined} />
           {errors.email && <span class="bk-error">{errors.email}</span>}
         </label>
         <label class="bk-field">
-          <span class="lab">Phone (optional)</span>
+          <span class="bk-label">Phone (optional)</span>
           <input class="bk-input" name="phone" type="tel" inputmode="tel" value={values.phone} autocomplete="tel" maxlength="30" aria-invalid={errors.phone ? 'true' : undefined} />
           {errors.phone && <span class="bk-error">{errors.phone}</span>}
         </label>
         <div class="bk-honey" aria-hidden="true"><label>Company <input name="company" tabindex="-1" autocomplete="off" /></label></div>
-        <button class="btn btn-ink bk-submit" type="submit">Send request →</button>
+        <button class="btn btn-ink bk-submit" type="submit">Send request <Icon name="arrow" size={16} /></button>
       </form>
     )}
   </main>

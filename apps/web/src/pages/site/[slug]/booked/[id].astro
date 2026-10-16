@@ -1,6 +1,7 @@
 ---
 import { type PublicBooking } from '@bookpage/shared';
 import BookingLayout from '../../../../layouts/BookingLayout.astro';
+import Icon from '../../../../components/booking/Icon.astro';
 import { cancelBooking, getBooking, loadBusiness, PublicApiError, price, TOO_MANY_ATTEMPTS, whenLabel } from '../../../../lib/public';
 
 /**
@@ -45,15 +46,15 @@ const heading = {
 
 <BookingLayout business={b} title={`${heading.kicker} · ${b.name}`} noReferrer>
   <main class="bk-flow">
-    <div class="box raised bk-done" data-status={booking.status}>
+    <div class="bk-done" data-status={booking.status}>
       {failure && <p class="bk-alert" role="alert">{failure}</p>}
-      <p class="lab">{heading.kicker}</p>
-      <h1 class="bk-h2">{heading.title}</h1>
+      <p class="bk-badge"><i><Icon name={booking.status === 'cancelled' || booking.status === 'no_show' ? 'undo' : 'check'} size={14} /></i>{heading.kicker.replace('✓ ', '')}</p>
+      <h1 class="bk-flow-title">{heading.title}</h1>
       <dl class="bk-receipt">
-        <div><dt class="lab">What</dt><dd>{booking.serviceName} · {price(booking, booking.currency)}</dd></div>
-        <div><dt class="lab">When</dt><dd>{when}</dd></div>
-        <div><dt class="lab">With</dt><dd>{booking.staffName}</dd></div>
-        {address && <div><dt class="lab">Where</dt><dd>{address}</dd></div>}
+        <div><dt>What</dt><dd>{booking.serviceName} · {price(booking, booking.currency)}</dd></div>
+        <div><dt>When</dt><dd>{when}</dd></div>
+        <div><dt>With</dt><dd>{booking.staffName}</dd></div>
+        {address && <div><dt>Where</dt><dd>{address}</dd></div>}
       </dl>
       {booking.status === 'pending' && (
         <p class="bk-hint">{booking.businessName} will confirm by email. The time is held for you meanwhile.</p>
@@ -68,8 +69,8 @@ const heading = {
           </form>
         </div>
       )}
-      {booking.status === 'cancelled' && <a class="btn btn-ink" href="/#book">Book another time</a>}
+      {booking.status === 'cancelled' && <a class="btn btn-ink" href="/#services">Book another time</a>}
     </div>
-    <p class="bk-note mono">Keep this page's link to change or cancel later.</p>
+    <p class="bk-note">Keep this page's link to change or cancel later.</p>
   </main>
 </BookingLayout>

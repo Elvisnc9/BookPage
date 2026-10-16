@@ -438,6 +438,7 @@ textarea.bk-input { resize: vertical; }
   .bk-person .bk-round { position: static; background: transparent; border-color: var(--ink); }
   .bk-faqs { grid-template-columns: 1fr 1fr; }
   .bk-panel, .bk-done { padding: 28px; }
+  .bk-days { margin: 0 -28px; padding: 2px 28px 8px; scroll-padding: 0 28px; }
   .bk-flow { padding-top: 32px; }
 }
 
