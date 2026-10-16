@@ -1,6 +1,7 @@
 ---
 import type { PublicBusiness } from '@bookpage/shared';
 import Base from './Base.astro';
+import Icon from '../components/booking/Icon.astro';
 import '../styles/booking.css';
 import { initials } from '../lib/public';
 
@@ -8,30 +9,81 @@ interface Props {
   business: PublicBusiness;
   title: string;
   description?: string | undefined;
-  /** Hide the sticky "Book now" bar (e.g. inside the booking flow). */
+  /** Show the nav links and "Book now" (off inside the booking flow). */
   bar?: boolean;
+  /** Section links for the header and footer; only sections the page actually has. */
+  nav?: { href: string; label: string }[];
   /** Booking-management pages carry a secret token in the URL; keep it out of Referer headers. */
   noReferrer?: boolean;
 }
 
-const { business: b, title, description, bar = true, noReferrer = false } = Astro.props;
+const { business: b, title, description, bar = true, nav = [], noReferrer = false } = Astro.props;
+const whatsapp = b.whatsapp ? `https://wa.me/${b.whatsapp.replace(/\D/g, '')}` : null;
+const contacts = [
+  whatsapp && { href: whatsapp, label: 'WhatsApp', icon: 'chat' as const },
+  b.phone && { href: `tel:${b.phone}`, label: 'Call', icon: 'phone' as const },
+  b.email && { href: `mailto:${b.email}`, label: 'Email', icon: 'mail' as const },
+].filter((c) => !!c);
 ---
 
 <Base title={title} description={description}>
   {noReferrer && <meta slot="head" name="referrer" content="no-referrer" />}
   <div class="bk">
-    {bar && (
-      <div class="bk-bar">
-        <a class="bk-bar-name" href="/">
-          <span class="bk-logo mono" aria-hidden="true">{initials(b.name)}</span>
-          <span>{b.name}</span>
+    <header class="bk-head" data-flow={!bar || undefined}>
+      <div class="bk-wrap bk-head-in">
+        <a class="bk-brand" href="/">
+          <span class="bk-logo" aria-hidden="true">
+            {b.logoUrl ? <img src={b.logoUrl} alt="" width="36" height="36" /> : initials(b.name)}
+          </span>
+          <span class="bk-brand-name">{b.name}</span>
         </a>
-        <a class="btn btn-ink bk-bar-cta" href="/#book">Book now</a>
+        {bar && (
+          <>
+            {nav.length > 0 && (
+              <nav class="bk-nav" aria-label="Sections">
+                {nav.map((l) => <a href={`/${l.href}`}>{l.label}</a>)}
+              </nav>
+            )}
+            <a class="btn btn-ink bk-head-cta" href="/#services">Book now <Icon name="arrow" size={16} /></a>
+            {nav.length > 0 && (
+              <details class="bk-menu">
+                <summary aria-label="Menu"><Icon name="menu" size={22} /></summary>
+                <nav class="bk-menu-panel" aria-label="Sections">
+                  {nav.map((l) => <a href={`/${l.href}`}>{l.label}<Icon name="arrow" size={16} /></a>)}
+                </nav>
+              </details>
+            )}
+          </>
+        )}
+        {!bar && <a class="bk-head-back" href="/"><Icon name="back" size={16} /> Back to {b.name}</a>}
       </div>
-    )}
+    </header>
+
     <slot />
-    <footer class="bk-footer">
-      <a class="mono" href="https://bookpage.app/?ref=page">Made with BookPage · Get your free page</a>
+
+    <footer class="bk-foot">
+      <div class="bk-wrap bk-foot-in">
+        <a class="bk-brand" href="/">
+          <span class="bk-logo" aria-hidden="true">
+            {b.logoUrl ? <img src={b.logoUrl} alt="" width="36" height="36" /> : initials(b.name)}
+          </span>
+          <span class="bk-brand-name">{b.name}</span>
+        </a>
+        {nav.length > 0 && (
+          <nav class="bk-foot-nav" aria-label="Footer">
+            <a href="/">Home</a>
+            {nav.map((l) => <a href={`/${l.href}`}>{l.label}</a>)}
+          </nav>
+        )}
+        {contacts.length > 0 && (
+          <ul class="bk-foot-contact" aria-label="Contact">
+            {contacts.map((c) => (
+              <li><a href={c.href} aria-label={c.label}><Icon name={c.icon} size={20} /></a></li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <p class="bk-made"><a href="https://bookpage.app/?ref=page">Made with BookPage · Get your free page</a></p>
     </footer>
   </div>
 </Base>
