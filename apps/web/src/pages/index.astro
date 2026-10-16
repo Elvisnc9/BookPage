@@ -1,24 +1,39 @@
 ---
+import Corners from '../components/marketing/Corners.astro';
+import Deco from '../components/marketing/Deco.astro';
 import Pricing from '../components/marketing/Pricing.astro';
-import { wavePath } from '../components/marketing/wave';
+import SectionArt from '../components/marketing/SectionArt.astro';
+import { swing, waveDownPath, wavePath } from '../components/marketing/wave';
 import MarketingLayout from '../layouts/MarketingLayout.astro';
 import { siteLinks } from '../lib/marketing';
 
 const links = siteLinks(Astro.url);
 
-// Hero ribbon: each tile is one booking. Columns wave; tiles flip now and then.
-const TILE_COLOURS = ['var(--red)', 'var(--orange)', 'var(--yellow)', 'var(--surface)', 'var(--tint-yellow)', 'var(--tint-orange)'];
-const tiles = Array.from({ length: 64 }, (_, i) => ({
-  i,
-  colour: TILE_COLOURS[(i * 7) % TILE_COLOURS.length],
-  flip: (i * 37) % 11 === 0,
-  height: 40 + ((i * 13) % 5) * 8,
-}));
+const ICON = {
+  instagram: 'M7.03.084c-1.277.06-2.149.264-2.911.563-.789.308-1.458.72-2.123 1.388-.665.668-1.075 1.337-1.38 2.127-.296.764-.496 1.637-.552 2.914-.056 1.278-.069 1.688-.063 4.947.006 3.259.021 3.667.083 4.947.061 1.277.264 2.148.563 2.911.308.789.72 1.457 1.388 2.123.668.665 1.337 1.074 2.129 1.38.763.295 1.636.496 2.913.552 1.277.056 1.688.069 4.946.063 3.258-.006 3.668-.021 4.948-.081 1.28-.061 2.147-.265 2.91-.563.789-.309 1.458-.72 2.123-1.388.665-.668 1.074-1.338 1.379-2.129.296-.763.497-1.636.552-2.912.056-1.281.069-1.69.063-4.948-.006-3.258-.021-3.667-.082-4.947-.06-1.28-.264-2.148-.563-2.911-.308-.789-.72-1.457-1.388-2.123C21.298 1.33 20.628.921 19.838.617 19.074.321 18.202.12 16.924.065 15.647.009 15.236-.005 11.977.001 8.718.008 8.31.022 7.03.084m.14 21.693c-1.17-.051-1.805-.245-2.229-.408-.56-.216-.96-.477-1.382-.895-.422-.418-.681-.819-.9-1.378-.164-.423-.362-1.058-.417-2.228-.06-1.264-.072-1.644-.079-4.848-.007-3.204.005-3.583.061-4.848.05-1.169.246-1.805.408-2.228.216-.561.476-.96.895-1.382.419-.422.818-.681 1.378-.9.423-.165 1.058-.361 2.227-.417 1.266-.06 1.645-.072 4.848-.079 3.203-.007 3.584.005 4.85.061 1.169.051 1.805.245 2.228.408.561.216.96.475 1.382.895.422.419.682.818.9 1.379.166.422.362 1.056.417 2.226.06 1.266.074 1.645.08 4.848.006 3.203-.006 3.583-.061 4.848-.051 1.17-.245 1.806-.408 2.23-.216.56-.476.96-.895 1.381-.419.421-.818.681-1.378.9-.423.165-1.058.362-2.226.417-1.266.06-1.645.072-4.85.079-3.204.007-3.582-.006-4.848-.061M16.953 5.586A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.442M5.839 12.012c.007 3.403 2.77 6.156 6.173 6.149 3.403-.006 6.157-2.77 6.151-6.173-.007-3.403-2.771-6.157-6.174-6.15-3.403.007-6.156 2.771-6.15 6.174M8 12.008a4 4 0 1 1 4.008 3.992A3.999 3.999 0 0 1 8 12.008',
+  whatsapp: 'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z',
+  facebook: 'M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z',
+  pin: 'M12 1.5a7.5 7.5 0 0 0-7.5 7.5c0 5.6 7.5 13.5 7.5 13.5s7.5-7.9 7.5-13.5A7.5 7.5 0 0 0 12 1.5zm0 10.2a2.7 2.7 0 1 1 0-5.4 2.7 2.7 0 0 1 0 5.4z',
+};
 
-const channels = ['Instagram bio', 'WhatsApp status', 'Google Business Profile', 'Facebook page', 'TikTok bio', 'Your website'];
+const channels = [
+  { n: 'Instagram bio', d: ICON.instagram, c: '#FF0069' },
+  { n: 'WhatsApp status', d: ICON.whatsapp, c: '#25D366' },
+  { n: 'Facebook page', d: ICON.facebook, c: '#0866FF' },
+  { n: 'Google listing', d: ICON.pin, c: '#4285F4' },
+];
+
+// The robot's speech bubble and the "new booking" card cycle through these (see the script below).
+const bubbles = ['Saturday 10:30 is free. Want it?', 'Booked! Confirmation sent.', 'Reminder sent for tomorrow.', 'Moved to Friday 4pm. Done.'];
+const bookings = [
+  { t: 'Silk press · Dana W.', w: 'SAT 17 OCT · 10:30 TO 12:00', who: 'WITH MAYA · BOOKED AT 11:43PM', c: '#C8553D' },
+  { t: 'Skin fade · Luca R.', w: 'SAT 17 OCT · 2:00 TO 2:45PM', who: 'WITH SAM · BOOKED AT 9:12PM', c: '#E07A3F' },
+  { t: 'Lash lift · Sofia M.', w: 'MON 19 OCT · 10:00 TO 11:00AM', who: 'WITH ADA · BOOKED AT 7:05AM', c: '#E9B949' },
+];
+
 const forCustomers = [
   'See services, prices and real free times before they come',
-  'Pick a time that is actually free',
+  'Pick a time that is actually free, day or night',
   'No app, no account, no password',
   'A confirmation now and a reminder the day before',
 ];
@@ -28,7 +43,37 @@ const forOwners = [
   'Reminders that cut no-shows',
   "Today's schedule on your phone",
 ];
-const builtFor = ['Salons', 'Barbers', 'Spas', 'Nail & lash studios', 'Clinics', 'Physios', 'Tutors', 'Personal trainers', 'Photographers', 'Mechanics', 'Cleaners', 'Event venues'];
+
+const how = swing(wavePath, [200, 170, 210]);
+const howDown = swing(waveDownPath, [150, 130, 155]);
+
+const stories = [
+  { q: 'Saturday bookings stop living in your DMs. Clients tap the link in your bio and pick a free time, even at midnight.', n: 'Hair salons', r: 'SILK PRESS · BRAIDS · COLOUR', tag: 'SALON', stat: 'BOOKED WHILE YOU SLEEP', bg: '#FFFFFF', fg: '#0D0D10', w: 440, rot: -2, big: true, acc: '#E9B949', ini: 'HS' },
+  { q: 'Set it up between two clients. Your page is live before the next fade.', n: 'Barbers', r: 'FADES · BEARDS · KIDS CUTS', tag: 'BARBER', stat: 'LIVE IN ABOUT 5 MIN', bg: '#E9B949', fg: '#0D0D10', w: 300, rot: 3, big: false, acc: '#FFFFFF', ini: 'BA' },
+  { q: 'Patients see real free times and grab the morning slot without phoning the front desk.', n: 'Clinics & physios', r: 'CHECK-UPS · ASSESSMENTS', tag: 'CLINIC', stat: 'NO MORE PHONE TAG', bg: '#0D0D10', fg: '#F2F2F3', w: 320, rot: -3, big: false, acc: '#C8553D', ini: 'CP' },
+  { q: 'Parents book a trial lesson themselves. You just show up and teach.', n: 'Tutors & coaches', r: 'LESSONS · SESSIONS', tag: 'TUTOR', stat: 'TRIAL LESSONS, SORTED', bg: '#FCE9DC', fg: '#0D0D10', w: 300, rot: 2, big: false, acc: '#E07A3F', ini: 'TC' },
+  { q: 'Prices sit right on the page, so nobody is surprised at the door.', n: 'Spas & massage', r: 'MASSAGE · FACIALS', tag: 'SPA', stat: 'PRICES UP FRONT', bg: '#FFFFFF', fg: '#0D0D10', w: 300, rot: -1.5, big: false, acc: '#E07A3F', ini: 'SM' },
+  { q: 'A reminder goes out the day before, so people actually turn up.', n: 'Photographers', r: 'MINI SHOOTS · PORTRAITS', tag: 'PHOTO', stat: 'DAY-BEFORE REMINDERS', bg: '#C8553D', fg: '#FFFFFF', w: 320, rot: 2.5, big: false, acc: '#E9B949', ini: 'PH' },
+  { q: 'It looks like you paid a designer. You paid nothing.', n: 'Nail & lash studios', r: 'GEL SETS · LASH LIFTS', tag: 'NAILS', stat: 'FREE PLAN', bg: '#FBF3DC', fg: '#0D0D10', w: 280, rot: -2.5, big: false, acc: '#C8553D', ini: 'NL' },
+];
+const dark = (bg: string) => bg === '#0D0D10' || bg === '#C8553D';
+const onAccent = (c: string) => (c === '#E9B949' || c === '#FFFFFF' ? '#0D0D10' : '#FFFFFF');
+
+const rowA = [
+  ['Hair salons', 'SILK PRESS · $85', '#C8553D', '✂'], ['Barbers', 'SKIN FADE · €25', '#E9B949', '✂'], ['Clinics', 'CHECK-UP · $60', '#E07A3F', '+'],
+  ['Tutors', 'TRIAL LESSON · FREE', '#0D0D10', 'A'], ['Spas', 'MASSAGE · €70', '#C8553D', '✿'], ['Photographers', 'MINI SHOOT · $150', '#E07A3F', '◉'],
+  ['Nail studios', 'GEL SET · €35', '#E9B949', '✦'], ['Dog groomers', 'FULL GROOM · $65', '#C8553D', '◆'], ['Physios', 'ASSESSMENT · €55', '#0D0D10', '+'],
+  ['Lash studios', 'CLASSIC SET · $120', '#E07A3F', '✦'],
+];
+const rowB = [
+  ['Personal trainers', 'PT SESSION · €40', '#E9B949', '▲'], ['Dentists', 'CLEANING · $90', '#C8553D', '+'], ['Brow bars', 'BROW LAMI · €45', '#E07A3F', '✦'],
+  ['Music teachers', 'PIANO LESSON · $50', '#0D0D10', '♪'], ['Tattoo studios', 'CONSULT · FREE', '#E9B949', '✎'], ['Yoga studios', 'DROP-IN · €15', '#C8553D', '◉'],
+  ['Mechanics', 'OIL CHANGE · $70', '#E07A3F', '⚙'], ['Driving instructors', 'LESSON · €45', '#E9B949', '▲'], ['Massage therapists', '60 MIN · $95', '#0D0D10', '✿'],
+  ['Cleaners', 'HOME CLEAN · €60', '#C8553D', '⌂'],
+];
+
+const swatches = [['Ink', '#0D0D10'], ['Brick', '#C8553D'], ['Orange', '#E07A3F'], ['Mustard', '#E9B949']] as const;
+
 const faqs = [
   ['Do my customers need to download anything?', 'No. Your page is an ordinary web link. They open it, pick a time, enter their name and email, and they are booked. No app, no account.'],
   ['How does BookPage know when I am free?', 'From your opening hours, the bookings you already have and your rules, like minimum notice. It only offers times that fit the whole service. Google Calendar sync is on the way.'],
@@ -38,198 +83,284 @@ const faqs = [
   ['What does it cost?', 'Taking bookings is free, with no limit on bookings. Pro, at $15 a month, adds more looks and your own branding. It is opening soon; join the waitlist to hear first.'],
   ['What happens to my customers’ details?', 'They are used only to run your bookings: confirmations, reminders and your dashboard. We never sell them, and we delete them on request.'],
 ];
-const swing = wavePath(Math.PI * 0.9, 150);
 ---
 
 <MarketingLayout title="BookPage · Never miss a booking" description="A free booking page for your local business. Customers see your services, prices and real free times, and book in under a minute.">
+  <!-- Hero -->
   <section class="mk-hero mk-dots" aria-labelledby="hero-title">
     <div class="mk-w mk-hero-in">
-      <div class="mk-hero-copy" data-reveal>
-        <p class="mk-pill mono">Free booking pages for local businesses</p>
-        <h1 id="hero-title" class="mk-h1">Never miss<br />a <span class="scan">booking.</span></h1>
+      <Corners labels={['A1 · BOOKPAGE/HERO', 'OPEN 24/7 ▮', 'V1.0 · LAUNCH', 'X 1280 · Y 640']} />
+      <div class="mk-hero-copy">
+        <span class="mk-pilltag" style="--dot:#C8553D">Free booking pages for local businesses</span>
+        <h1 id="hero-title" class="mk-h1"><span>Never miss</span><br /><span>a <span class="scan">booking</span></span></h1>
         <p class="mk-lede">One link with your services, prices and real free times. Customers book in under a minute and get a confirmation and a reminder. You get every booking straight to your inbox.</p>
         <div class="mk-actions">
           <a class="btn btn-ink mk-btn-lg" href={links.signUp}>Create my free page</a>
           <a class="btn mk-btn-lg" href={links.example}>See an example ↗</a>
         </div>
-        <p class="mk-small mono">Free · No card · Ready in about 5 minutes</p>
+        <span class="mk-small mono">Free · No card · Ready in about 5 minutes</span>
       </div>
 
-      <div class="mk-collage" aria-hidden="true">
-        <div class="box raised mk-card mk-card-page" data-speed="0.85">
-          <div class="mk-browser"><i></i><i></i><i></i><span class="mono">glowstudio.bookpage.app</span></div>
-          <p class="lab">Salon · Brooklyn</p>
-          <p class="mk-card-title">Glow Studio</p>
-          <ul class="mk-card-list">
-            <li><span>Silk press</span><strong>$85</strong></li>
-            <li><span>Knotless braids</span><strong>From $180</strong></li>
-            <li><span>Trim &amp; shape</span><strong>$35</strong></li>
-          </ul>
-          <span class="btn btn-ink mk-card-btn">Book an appointment</span>
-        </div>
-        <div class="box mk-card mk-card-day mk-drift-a" data-speed="0.6">
-          <span class="mono">SAT</span><strong>17</strong><span class="mono">OCT</span>
-        </div>
-        <div class="box mk-card mk-card-note mk-drift-b" data-speed="1.2">
-          <p class="lab">New booking · now</p>
-          <p><strong>Dana W.</strong> booked Silk press</p>
-          <p class="mono">Sat 17 Oct · 10:30 AM · with Maya</p>
-        </div>
-        <div class="box mk-card mk-card-done mk-drift-a" data-speed="1.35">
-          <span class="mk-check">✓</span><span><strong>You're booked</strong><br /><span class="mono">Reminder tomorrow</span></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="mk-ribbon" data-ribbon aria-hidden="true">
-      <div class="mk-tiles">
-        {tiles.map((t) => (
-          <span class="mk-tw" style={`--i:${t.i};--h:${t.height}px`}>
-            <i class={`mk-tile${t.flip ? ' mk-flip' : ''}`} style={`background:${t.colour}`}></i>
+      <div class="mk-collage" role="img" aria-label="Bookings arriving on a BookPage booking page">
+        <Deco kind="bot" class="ci" style="left:6%;top:30%" rot={-4} anim="dr2" speed={0.6} label="PAGE 01" sub="BOOKING · SAT 10:30" color="#E9B949" shadow="#E9B949" />
+        <Deco kind="price" class="ci" style="right:2%;top:0" rot={5} anim="dr1" speed={0.5} label="$85" color="#E9B949" />
+        <Deco kind="cal" class="ci" style="left:34%;top:2%" rot={-8} anim="dr2" speed={0.7} label="OCT" sub="17" color="#C8553D" />
+        <span class="ci bob mk-robot" data-speed="0.8" aria-hidden="true">
+          <span class="box mk-bubble" data-bubble>“{bubbles[0]}”</span>
+          <svg width="120" height="136" viewBox="0 0 132 150" class="mk-bot"><line x1="66" y1="14" x2="66" y2="34" stroke="#0D0D10" stroke-width="3" /><circle cx="66" cy="11" r="7" fill="#E9B949" stroke="#0D0D10" stroke-width="2.5" class="ant" /><rect x="18" y="34" width="96" height="70" rx="18" fill="#FFFFFF" stroke="#0D0D10" stroke-width="3" /><rect x="30" y="48" width="72" height="40" rx="10" fill="#0D0D10" /><g class="eyes"><rect x="46" y="60" width="9" height="14" rx="4.5" fill="#E9B949" /><rect x="77" y="60" width="9" height="14" rx="4.5" fill="#E9B949" /></g><path d="M60 80 Q66 85 72 80" stroke="#E9B949" stroke-width="2.5" fill="none" stroke-linecap="round" /><rect x="10" y="58" width="9" height="22" rx="4" fill="#E07A3F" stroke="#0D0D10" stroke-width="2.5" /><rect x="113" y="58" width="9" height="22" rx="4" fill="#E07A3F" stroke="#0D0D10" stroke-width="2.5" /><rect x="36" y="104" width="60" height="36" rx="10" fill="#C8553D" stroke="#0D0D10" stroke-width="3" /><rect x="52" y="113" width="28" height="18" rx="3" fill="#FFFFFF" stroke="#0D0D10" stroke-width="2" /><line x1="52" y1="119" x2="80" y2="119" stroke="#0D0D10" stroke-width="2" /><path d="M66 128 L61 123 A3 3 0 0 1 66 119 A3 3 0 0 1 71 123 Z" fill="#E9B949" /></svg>
+        </span>
+        <Deco kind="price" class="ci" style="right:0;top:52%" rot={-3} anim="dr2" speed={0.6} label="€40" color="#E9B949" shadow="#C8553D" flag />
+        <Deco kind="clock" class="ci" style="left:2%;top:58%" rot={8} anim="dr1" speed={0.9} color="#C8553D" />
+        <Deco kind="star" class="ci" style="right:22%;top:18%" rot={12} anim="dr3" speed={0.7} color="#E07A3F" />
+        <Deco kind="bot" class="ci" style="left:12%;bottom:4%" rot={3} anim="dr1" speed={0.8} label="REMINDER" sub="SENT · FRI 9:00AM" color="#E07A3F" shadow="#E07A3F" />
+        <span class="ci mk-newcard" data-speed="0.4" aria-hidden="true">
+          <span class="box">
+            <span class="mk-newcard-head"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M2 5h20v14H2z" fill="#FFFFFF" stroke="#0D0D10" stroke-width="2" stroke-linejoin="round" /><path d="M2 5l10 8 10-8" fill="none" stroke="#C8553D" stroke-width="2" stroke-linejoin="round" /></svg><span class="mono">NEW BOOKING · EMAILED TO YOU</span></span>
+            <span class="mk-newcard-body pop" data-booking>
+              <i style={`background:${bookings[0]!.c}`}></i>
+              <span><b>{bookings[0]!.t}</b><small class="mono">{bookings[0]!.w}</small><small class="mono">{bookings[0]!.who}</small></span>
+            </span>
           </span>
-        ))}
+        </span>
+        <Deco kind="gear" class="mk-gear-a" style="left:40%;bottom:-40px" color="#E07A3F" size={110} />
+        <Deco kind="gear" class="mk-gear-b" style="left:60%;bottom:10px" color="#E9B949" size={66} />
       </div>
-      <span class="mk-ribbon-label mono">Each tile = one booking</span>
-      <span class="mk-ribbon-live mono"><i></i>Bookings flowing in</span>
+    </div>
+    <div class="mk-band" aria-hidden="true">
+      <span class="mk-band-a mono">No app · No account · No password</span>
+      <span class="mk-band-b mono"><i class="blink"></i>Bookings flowing in</span>
     </div>
   </section>
 
-  <section class="mk-strip grain" aria-label="Where to share your link">
-    <div class="mk-w mk-strip-in">
-      <p class="lab">Share it where your customers already are</p>
-      <ul class="mk-chips">{channels.map((c) => <li class="mono">{c}</li>)}</ul>
+  <!-- Channels -->
+  <section class="mk-fx mk-white mk-channels" aria-label="Where to share your link">
+    <SectionArt colors={['#C8553D', '#E9B949', '#E07A3F', '#C8553D']} at={['left:3%;top:90px', 'right:4%;top:140px', 'right:10%;bottom:60px', 'left:8%;bottom:90px']} hair="left" />
+    <div class="mk-w mk-channels-in">
+      <span class="lab">Share it where your customers already are</span>
+      <ul>
+        {channels.map((c) => (
+          <li><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d={c.d} fill={c.c} /></svg>{c.n}</li>
+        ))}
+      </ul>
     </div>
   </section>
 
-  <section id="how" class="mk-sec grain" aria-labelledby="how-title">
-    <span class="mk-art mk-plus mk-drift-a" data-speed="0.6" aria-hidden="true"></span>
-    <span class="mk-art mk-ring mk-drift-b" data-speed="1.3" aria-hidden="true"></span>
-    <div class="mk-w">
-      <div class="mk-sec-head" data-reveal>
+  <!-- How it works -->
+  <section id="how" class="mk-fx mk-sec mk-grid" aria-labelledby="how-title">
+    <SectionArt colors={['#E07A3F', '#0D0D10', '#E9B949', '#E07A3F']} at={['left:10%;top:103px', 'right:9%;top:169px', 'right:13%;bottom:77px', 'left:12%;bottom:113px']} hair="right" />
+    <div class="mk-w mk-stack">
+      <Corners labels={['FLOW.01 · SETUP', '3 STEPS · 1 LINK', 'T+05:00 MIN', 'STATUS: READY ▮']} />
+      <Deco kind="gear" class="mk-side-art" style="right:-30px;bottom:-40px;z-index:0" color="#C8553D" size={120} />
+      <Deco kind="gear" class="mk-side-art" style="right:78px;bottom:30px;z-index:0" color="#E9B949" size={66} />
+      <Deco kind="bot" class="mk-side-art mk-hide-sm" style="right:4%;top:70px" rot={3} anim="dr2" speed={0.6} label="YOUR PAGE" sub="SETTING UP · 72%" color="#E07A3F" shadow="#E07A3F" />
+      <Deco kind="cal" class="mk-side-art mk-hide-sm" style="left:58%;top:40px" rot={-8} anim="dr1" speed={0.7} label="SAT" sub="17" color="#E07A3F" />
+      <Deco kind="price" class="mk-side-art" style="left:3%;bottom:70px" rot={6} anim="dr2" speed={0.5} label="$35" color="#E9B949" />
+
+      <div class="mk-head" data-reveal>
         <h2 id="how-title" class="mk-h2">Set up once. <span class="scan">Get booked.</span></h2>
         <p class="mk-sub mono">Three steps for you. One minute for your customers.</p>
       </div>
       <div class="mk-flow">
-        <svg class="mk-string" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true">
-          <path data-string data-swing={swing} d={wavePath(0, 150)} pathLength="1" fill="none" stroke="#0D0D10" stroke-width="5"
-            stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" stroke-dasharray="1" />
+        <svg class="mk-str mk-str-h" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true">
+          <path class="mk-strline" pathLength="1" d={how.d} fill="none" stroke="#0D0D10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><animate attributeName="d" dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1" values={how.values} /></path>
         </svg>
-        <ol class="mk-steps">
-          <li class="box raised mk-step" data-reveal>
-            <span class="mk-step-n mono">01</span>
+        <svg class="mk-str mk-str-h mk-str-front" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true">
+          <defs><clipPath id="str-h" clipPathUnits="userSpaceOnUse"><rect x="0" y="-100" width="193" height="800" /><rect x="406" y="-100" width="193" height="800" /><rect x="812" y="-100" width="194" height="800" /></clipPath></defs>
+          <g clip-path="url(#str-h)"><path class="mk-strline" pathLength="1" d={how.d} fill="none" stroke="#0D0D10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><animate attributeName="d" dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1" values={how.values} /></path></g>
+        </svg>
+        <svg class="mk-str mk-str-v" viewBox="0 0 400 1200" preserveAspectRatio="none" aria-hidden="true">
+          <path class="mk-strline" pathLength="1" d={howDown.d} fill="none" stroke="#0D0D10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><animate attributeName="d" dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1" values={howDown.values} /></path>
+        </svg>
+        <svg class="mk-str mk-str-v mk-str-front" viewBox="0 0 400 1200" preserveAspectRatio="none" aria-hidden="true">
+          <defs><clipPath id="str-v" clipPathUnits="userSpaceOnUse"><rect x="-100" y="0" width="600" height="200" /><rect x="-100" y="400" width="600" height="200" /><rect x="-100" y="800" width="600" height="200" /></clipPath></defs>
+          <g clip-path="url(#str-v)"><path class="mk-strline" pathLength="1" d={howDown.d} fill="none" stroke="#0D0D10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><animate attributeName="d" dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1" values={howDown.values} /></path></g>
+        </svg>
+        <ol class="mk-steps" data-reveal>
+          <li class="box mk-step">
+            <span class="mk-step-n mono" style="background:#C8553D">01</span>
             <h3>Add your business</h3>
-            <p>Services, prices and opening hours. About five minutes, on your phone.</p>
-            <div class="mk-mini">
-              <span><span>Silk press</span><strong>$85</strong></span>
-              <span><span>Knotless braids</span><strong>From $180</strong></span>
-            </div>
+            <p class="mono">Services, prices and opening hours. About five minutes, on your phone.</p>
+            <span class="mk-step-foot" style="background:#FBE4DE">
+              <span class="mk-row mono"><span>Silk press</span><span>$85</span></span>
+              <span class="mk-row mono"><span>Knotless braids</span><span>$180</span></span>
+            </span>
           </li>
-          <li class="box raised mk-step" data-reveal>
-            <span class="mk-step-n mono">02</span>
+          <li class="box mk-step">
+            <span class="mk-step-n mono" style="background:#E07A3F">02</span>
             <h3>Set your rules</h3>
-            <p>Notice, how far ahead, approve or auto-confirm. Only times you are open and free are offered, so you can't be double-booked.</p>
-            <div class="mk-mini mk-mini-chips"><span class="chip">2 hours notice</span><span class="chip" aria-pressed="true">Auto-confirm ✓</span></div>
+            <p class="mono">Notice, how far ahead, approve or auto-confirm. Only times you are free are offered, so no double bookings.</p>
+            <span class="mk-step-foot mk-step-foot-row" style="background:#FCE9DC">
+              <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3" fill="#FFFFFF" stroke="#0D0D10" stroke-width="2" /><path d="M3 9.5h18M8 2.5v4M16 2.5v4" stroke="#0D0D10" stroke-width="2" stroke-linecap="round" /><path d="M8.5 15l2.5 2.5 4.5-5" stroke="#E07A3F" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <span><b>Auto-confirm</b><small class="mono">● ON · 2 HOURS NOTICE</small></span>
+            </span>
           </li>
-          <li class="box raised mk-step" data-reveal>
-            <span class="mk-step-n mono">03</span>
+          <li class="box mk-step">
+            <span class="mk-step-n mono" style="background:#E9B949">03</span>
             <h3>Share your link</h3>
-            <p>Put it in your Instagram bio, WhatsApp status and Google listing. Customers book from there.</p>
-            <div class="mk-mini"><span class="mk-url mono">glowstudio.bookpage.app</span></div>
+            <p class="mono">Put it in your Instagram bio, WhatsApp status and Google listing. Customers book from there.</p>
+            <span class="mk-step-foot" style="background:#FBF3DC"><span class="mk-url mono">glowstudio.bookpage.app</span></span>
           </li>
         </ol>
       </div>
     </div>
   </section>
 
-  <section class="mk-sec mk-tint grain" aria-labelledby="sides-title">
-    <div class="mk-w">
-      <h2 id="sides-title" class="mk-h2" data-reveal>Made for both sides of the <span class="scan">counter</span></h2>
-      <div class="mk-sides">
-        <div class="box raised mk-side" data-reveal>
-          <p class="lab">Your customers</p>
-          <p class="mk-side-title">Book in a minute, any time of day.</p>
-          <ul class="mk-ticks">{forCustomers.map((x) => <li>{x}</li>)}</ul>
+  <!-- Both sides -->
+  <section class="mk-fx mk-sec mk-white mk-ruled" aria-labelledby="sides-title">
+    <SectionArt colors={['#E9B949', '#C8553D', '#0D0D10', '#E9B949']} at={['left:7%;top:116px', 'right:5%;top:198px', 'right:16%;bottom:94px', 'left:16%;bottom:136px']} hair="top" />
+    <div class="mk-w mk-stack">
+      <h2 id="sides-title" class="mk-h2" style="max-width:15ch" data-reveal>Made for both sides of the <span class="scan">counter</span></h2>
+      <div class="mk-sides" data-reveal>
+        <div class="box mk-side" style="background:#FBF3DC;box-shadow:8px 8px 0 #E9B949">
+          <span class="lab">Your customers</span>
+          <span class="mk-side-title">Book in a minute, any time of day.</span>
+          <ul class="mk-dots-list" style="--b:#E07A3F">{forCustomers.map((x) => <li>{x}</li>)}</ul>
         </div>
-        <div class="box raised mk-side mk-side-owner" data-reveal>
-          <p class="lab">You, the owner</p>
-          <p class="mk-side-title">Stop answering "are you free Saturday?" all day.</p>
-          <ul class="mk-ticks">{forOwners.map((x) => <li>{x}</li>)}</ul>
+        <div class="box mk-side mk-side-dark" style="box-shadow:8px 8px 0 #C8553D">
+          <span class="lab">You, the owner</span>
+          <span class="mk-side-title">Stop answering “are you free Saturday?” all day.</span>
+          <ul class="mk-dots-list" style="--b:#E9B949">{forOwners.map((x) => <li>{x}</li>)}</ul>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="mk-sec grain" aria-labelledby="link-title">
-    <span class="mk-art mk-plus mk-drift-b" data-speed="1.25" aria-hidden="true"></span>
+  <!-- Your own link -->
+  <section class="mk-fx mk-sec mk-cream mk-ruled" aria-labelledby="link-title">
+    <SectionArt colors={['#C8553D', '#E9B949', '#E07A3F', '#C8553D']} at={['left:11%;top:142px', 'right:6%;top:256px', 'right:10%;bottom:128px', 'left:14%;bottom:182px']} hair="right" />
     <div class="mk-w mk-link">
+      <Deco kind="tag" class="mk-side-art" style="left:6%;top:70px;z-index:0" rot={-8} anim="dr1" speed={0.6} label="BOOKED ✓" sub="SAT 10:30AM · SILK PRESS" color="#FFFFFF" />
+      <Deco kind="cal" class="mk-side-art" style="right:7%;top:90px;z-index:0" rot={10} anim="dr2" speed={0.8} label="OCT" sub="17" color="#C8553D" />
+      <Deco kind="price" class="mk-side-art" style="left:10%;bottom:70px;z-index:0" rot={6} anim="dr2" speed={0.5} label="€45" color="#E9B949" />
+      <Deco kind="robot" class="mk-side-art" style="right:9%;bottom:60px;z-index:0" rot={-6} anim="dr1" speed={0.7} color="#E07A3F" />
+      <Deco kind="star" class="mk-side-art mk-hide-sm" style="left:44%;top:30px;z-index:0" rot={-14} anim="dr2" speed={0.9} color="#E07A3F" />
+      <Deco kind="tag" class="mk-side-art mk-hide-sm" style="right:30%;bottom:30px;z-index:0" rot={7} anim="dr1" speed={0.6} label="NEW BOOKING" sub="JUST NOW" color="#C8553D" flag />
+
       <h2 id="link-title" class="mk-h2" data-reveal>Your own <span class="scan">link</span></h2>
       <p class="mk-sub mono" data-reveal>Type your business name. That is your booking page address, free.</p>
-      <form class="box raised mk-slug" action={links.signUp} method="get" data-reveal data-slug-form>
+      <form class="box mk-slug" action={links.signUp} method="get" data-reveal data-slug-form>
         <span class="mono">https://</span>
-        <input class="mono" name="slug" aria-label="Your business name" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourbusiness" data-slug-input />
+        <input class="mono" name="slug" value="lunanails" aria-label="Your business name" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourbusiness" data-slug-input />
         <span class="mono">.bookpage.app</span>
       </form>
       <p class="mk-slug-note mono" role="status" data-slug-note>Type a name to check it</p>
-      <a class="btn btn-ink" href={links.signUp} data-reveal>Claim it free</a>
     </div>
   </section>
 
-  <section id="templates" class="mk-sec mk-tint grain" aria-labelledby="templates-title">
+  <!-- Templates -->
+  <section id="templates" class="mk-fx mk-sec" aria-labelledby="templates-title">
+    <SectionArt colors={['#E07A3F', '#0D0D10', '#E9B949', '#E07A3F']} at={['left:8%;top:95px', 'right:11%;top:165px', 'right:13%;bottom:65px', 'left:8%;bottom:105px']} hair="top" />
     <div class="mk-w mk-tpl">
       <div class="mk-tpl-copy" data-reveal>
-        <p class="mk-pill mono">Pro · coming soon</p>
+        <span class="mk-pilltag" style="--dot:#E9B949">Pro · $15 a month · coming soon</span>
         <h2 id="templates-title" class="mk-h2">Make it look like <span class="scan">you</span></h2>
-        <p class="mk-sub">Pro adds templates, your colours and logo, a video of your space and a gallery of your best work. Try the looks here.</p>
-        <div class="mk-tpl-controls" data-tpl-controls>
-          <p class="lab" id="tpl-label">Template</p>
+        <p class="mk-sub mono">Pick a template, choose your colours, add a video of your space and a gallery of your best work. Try it here.</p>
+        <div class="mk-ctl" data-tpl-controls>
+          <span class="lab" id="tpl-label">Template</span>
           <div class="mk-chips-row" role="radiogroup" aria-labelledby="tpl-label">
-            {['classic', 'bold', 'soft'].map((t, i) => (
-              <button type="button" class="chip" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-tpl={t}>{t[0]!.toUpperCase() + t.slice(1)}</button>
+            {['Classic', 'Bold', 'Soft'].map((t, i) => (
+              <button type="button" class="chip" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-tpl={t.toLowerCase()}>{t.toUpperCase()}</button>
             ))}
           </div>
-          <p class="lab" id="colour-label">Your colour</p>
+        </div>
+        <div class="mk-ctl">
+          <span class="lab" id="colour-label">Your colour</span>
           <div class="mk-swatches" role="radiogroup" aria-labelledby="colour-label">
-            {[['Ink', 'var(--ink)'], ['Brick', 'var(--red)'], ['Orange', 'var(--orange)'], ['Mustard', 'var(--yellow)']].map(([n, c], i) => (
+            {swatches.map(([n, c], i) => (
               <button type="button" class="mk-swatch" role="radio" aria-checked={i === 1 ? 'true' : 'false'} aria-label={n} data-colour={c} style={`background:${c}`}></button>
             ))}
           </div>
         </div>
-        <a class="btn" href="/pricing#pro">Join the Pro waitlist</a>
-      </div>
-      <div class="box raised mk-pv" data-tpl="classic" style="--accent: var(--red)" data-tpl-preview data-reveal>
-        <div class="mk-browser"><i></i><i></i><i></i><span class="mono">glowstudio.bookpage.app</span></div>
-        <div class="mk-pv-hero">
-          <p class="lab">Salon · Brooklyn</p>
-          <p class="mk-pv-title">Glow Studio</p>
-          <p>Silk presses, braids and colour in a calm little studio.</p>
-          <span class="mk-pv-btn mono">Book an appointment</span>
+        <div class="mk-addons">
+          {[['Business video', 'Show your space in 30 to 60 seconds', 'vid'], ['Premium gallery', 'Up to 50 HD photos of your work', 'gal']].map(([t, s, k]) => (
+            <div class="mk-addon">
+              <span><b>{t}</b><small class="mono">{s}</small></span>
+              <button type="button" class="mk-switch" role="switch" aria-checked="true" aria-label={t} data-addon={k}><span></span></button>
+            </div>
+          ))}
         </div>
-        <div class="mk-pv-gallery"><span></span><span></span><span></span><span></span></div>
-        <div class="mk-pv-services">
-          <span><span>Silk press</span><strong>$85</strong></span>
-          <span><span>Braids</span><strong>$180</strong></span>
-          <span><span>Trim</span><strong>$35</strong></span>
+      </div>
+      <div class="mk-tpl-pv" data-reveal>
+        <div class="box mk-pv" data-tpl="classic" data-vid="on" data-gal="on" style="--accent:#C8553D;--on-accent:#FFFFFF" data-tpl-preview>
+          <div class="mk-browser"><i style="background:#C8553D"></i><i style="background:#E9B949"></i><i style="background:#0D0D10"></i><span class="mono">glowstudio.bookpage.app</span></div>
+          <div class="mk-pv-hero">
+            <span class="mono">Hair, lashes and nails · Brooklyn</span>
+            <span class="mk-pv-title">Glow Studio</span>
+            <span class="mk-pv-lede">Braids, silk presses and lashes in a calm studio.</span>
+            <span class="mk-pv-btn mono">Book an appointment</span>
+          </div>
+          <div class="mk-pv-video">
+            <span class="mk-pv-v1"></span><span class="mk-pv-v2"></span>
+            <span class="mk-pv-live mono">● Video</span>
+            <span class="mk-pv-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0D0D10" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg></span>
+            <span class="mk-pv-cap mono">A day at Glow Studio · 0:42</span>
+          </div>
+          <div class="mk-pv-gallery"><span></span><span></span><span></span><span></span></div>
+          <div class="mk-pv-services">
+            {[['Braids', '$180'], ['Silk press', '$85'], ['Lashes', '$120']].map(([n, p]) => <span class="mono"><span>{n}</span><span>{p}</span></span>)}
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="mk-marquee grain" aria-label="Built for">
-    <p class="lab mk-w">Built for</p>
-    <div class="mk-mq"><div class="mk-mq-track">{[...builtFor, ...builtFor].map((b, i) => <span aria-hidden={i >= builtFor.length ? 'true' : undefined}>{b}</span>)}</div></div>
-    <div class="mk-mq"><div class="mk-mq-track mk-mq-rev" aria-hidden="true">{[...builtFor.slice(6), ...builtFor.slice(0, 6), ...builtFor.slice(6), ...builtFor.slice(0, 6)].map((b) => <span>{b}</span>)}</div></div>
+  <!-- Who it's for -->
+  <section id="stories" class="mk-fx mk-sec mk-stories" aria-labelledby="stories-title">
+    <SectionArt colors={['#E9B949', '#C8553D', '#0D0D10', '#E9B949']} at={['left:5%;top:108px', 'right:7%;top:194px', 'right:16%;bottom:82px', 'left:12%;bottom:128px']} hair="left" />
+    <div class="mk-w mk-stack mk-stories-in">
+      <div class="mk-stories-head" data-reveal>
+        <div>
+          <span class="mk-pilltag" style="--dot:#E9B949">Who it's for</span>
+          <h2 id="stories-title" class="mk-h2">Stop <span class="scan">missing bookings</span></h2>
+        </div>
+        <span class="box mk-rating"><b>5 min</b><span class="mono">To go live · free, no card</span></span>
+      </div>
+      <div class="mk-cards" data-reveal>
+        {stories.map((s) => {
+          const d = dark(s.bg);
+          const line = d ? '#FFFFFF' : '#0D0D10';
+          return (
+            <figure class:list={['mk-story', { 'mk-story-big': s.big }]} style={`flex-basis:${s.w}px;background:${s.bg};color:${s.fg};--rot:${s.rot}deg;--lift:${s.rot * 4}px`}>
+              <span class="mk-story-top"><span class="mono">★ Built for</span><span class="mono mk-story-tag" style={`border-color:${line};background:${s.acc};color:${onAccent(s.acc)}`}>{s.tag}</span></span>
+              <blockquote>“{s.q}”</blockquote>
+              <span class="mono mk-story-stat" style={`border-color:${line};background:${d ? 'transparent' : '#FFFFFF'}`}>{s.stat}</span>
+              <figcaption>
+                <span class="mk-story-av" style={`border-color:${line};background:${s.acc};color:${onAccent(s.acc)}`} aria-hidden="true">{s.ini}</span>
+                <span><b>{s.n}</b><small class="mono">{s.r}</small></span>
+              </figcaption>
+            </figure>
+          );
+        })}
+      </div>
+    </div>
+    <div class="mk-mq" aria-label="Businesses BookPage is built for">
+      {[rowA, rowB].map((row, r) => (
+        <div class="mk-mq-row">
+          <div class:list={['mk-mq-track', { 'mk-mq-rev': r === 1 }]}>
+            {[...row, ...row].map(([n, k, c, ic], i) => (
+              <span class="mk-biz" aria-hidden={i >= row.length || r === 1 ? 'true' : undefined}>
+                <span class="mk-biz-ic" style={`background:${c};color:${c === '#E9B949' ? '#0D0D10' : '#FFFFFF'}`} aria-hidden="true">{ic}</span>
+                <b>{n}</b><span class="mono">{k}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   </section>
 
   <Pricing from="/" />
 
-  <section id="faq" class="mk-sec mk-tint grain" aria-labelledby="faq-title">
+  <!-- FAQ -->
+  <section id="faq" class="mk-fx mk-sec mk-white mk-ruled" aria-labelledby="faq-title">
+    <SectionArt colors={['#C8553D', '#E9B949', '#E07A3F', '#C8553D']} at={['left:9%;top:134px', 'right:8%;top:252px', 'right:10%;bottom:116px', 'left:10%;bottom:174px']} hair="top" />
     <div class="mk-w mk-faq">
       <h2 id="faq-title" class="mk-h2" data-reveal>Questions, <span class="scan">answered</span></h2>
-      <div class="mk-faq-list">
-        {faqs.map(([q, a]) => (
-          <details class="box mk-qa" data-reveal>
+      <div class="mk-faq-list" data-reveal>
+        {faqs.map(([q, a], i) => (
+          <details class="mk-qa" name="faq" open={i === 0}>
             <summary>{q}<span class="mono" aria-hidden="true">+</span></summary>
-            <p>{a}</p>
+            <p class="mono">{a}</p>
           </details>
         ))}
       </div>
@@ -237,16 +368,40 @@ const swing = wavePath(Math.PI * 0.9, 150);
   </section>
 </MarketingLayout>
 
+<script define:vars={{ bubbles, bookings }}>
+  // Hero: the robot's bubble and the new-booking card take turns, like a live feed.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const bubble = document.querySelector('[data-bubble]');
+    const card = document.querySelector('[data-booking]');
+    let i = 0;
+    setInterval(() => {
+      i++;
+      if (bubble) bubble.textContent = `“${bubbles[i % bubbles.length]}”`;
+      if (card) {
+        const b = bookings[i % bookings.length];
+        card.querySelector('i').style.background = b.c;
+        const [t, w, who] = card.querySelectorAll('b, small');
+        t.textContent = b.t;
+        w.textContent = b.w;
+        who.textContent = b.who;
+        card.classList.remove('pop');
+        void card.offsetWidth;
+        card.classList.add('pop');
+      }
+    }, 2600);
+  }
+</script>
+
 <script>
   // "Your own link": live availability check (the form still works without it).
   const input = document.querySelector<HTMLInputElement>('[data-slug-input]');
   const note = document.querySelector<HTMLElement>('[data-slug-note]');
   let timer: ReturnType<typeof setTimeout> | undefined;
-  input?.addEventListener('input', () => {
+  const check = () => {
+    if (!input || !note) return;
     const slug = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     if (slug !== input.value) input.value = slug;
     clearTimeout(timer);
-    if (!note) return;
     if (!slug) {
       note.textContent = 'Type a name to check it';
       note.dataset.tone = '';
@@ -263,14 +418,28 @@ const swing = wavePath(Math.PI * 0.9, 150);
         note.textContent = 'Claim it when you sign up';
       }
     }, 350);
-  });
+  };
+  input?.addEventListener('input', check);
+  check();
   document.querySelector('[data-slug-form]')?.addEventListener('submit', (e) => e.preventDefault());
 
-  // Template preview: Classic / Bold / Soft and the accent colour.
+  // Template preview: Classic / Bold / Soft, the accent colour, and the two add-ons.
   const preview = document.querySelector<HTMLElement>('[data-tpl-preview]');
   const choose = (group: NodeListOf<HTMLElement>, picked: HTMLElement) => group.forEach((b) => b.setAttribute('aria-checked', String(b === picked)));
   const tplButtons = document.querySelectorAll<HTMLElement>('[data-tpl-controls] [data-tpl]');
   const swatches = document.querySelectorAll<HTMLElement>('[data-colour]');
-  tplButtons.forEach((b) => b.addEventListener('click', () => { choose(tplButtons, b); if (preview) preview.dataset.tpl = b.dataset.tpl!; }));
-  swatches.forEach((b) => b.addEventListener('click', () => { choose(swatches, b); preview?.style.setProperty('--accent', b.dataset.colour!); }));
+  tplButtons.forEach((b) => b.addEventListener('click', () => {
+    choose(tplButtons, b);
+    if (preview) preview.dataset.tpl = b.dataset.tpl!;
+  }));
+  swatches.forEach((b) => b.addEventListener('click', () => {
+    choose(swatches, b);
+    preview?.style.setProperty('--accent', b.dataset.colour!);
+    preview?.style.setProperty('--on-accent', b.dataset.colour === '#E9B949' ? '#0D0D10' : '#FFFFFF');
+  }));
+  document.querySelectorAll<HTMLElement>('[data-addon]').forEach((b) => b.addEventListener('click', () => {
+    const on = b.getAttribute('aria-checked') !== 'true';
+    b.setAttribute('aria-checked', String(on));
+    if (preview) preview.dataset[b.dataset.addon!] = on ? 'on' : 'off';
+  }));
 </script>

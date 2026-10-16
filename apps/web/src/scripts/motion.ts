@@ -1,7 +1,8 @@
 /**
  * Marketing-site motion: Lenis smooth scroll, GSAP ScrollTrigger reveals,
- * data-speed parallax on the floating pieces, and the swinging string in
- * "How it works". CSS handles the always-on loops (tile wave, drift, marquee).
+ * data-speed parallax on the floating stickers, and the workflow string
+ * drawing itself in. CSS and SMIL handle the always-on loops (drift, swing,
+ * marquee).
  *
  * Loaded only when the visitor hasn't asked for reduced motion. Nothing is
  * hidden by CSS, so the page reads fine without this script.
@@ -41,25 +42,11 @@ for (const el of gsap.utils.toArray<HTMLElement>('[data-speed]')) {
   });
 }
 
-// The workflow string draws itself in, then keeps swinging between two waves.
-const string = document.querySelector<SVGPathElement>('[data-string]');
-if (string) {
-  gsap.fromTo(string, { strokeDashoffset: 1 }, {
+// The workflow string draws itself in as "How it works" scrolls into view.
+for (const line of gsap.utils.toArray<SVGPathElement>('.mk-strline')) {
+  gsap.fromTo(line, { strokeDashoffset: 1 }, {
     strokeDashoffset: 0,
     ease: 'none',
-    scrollTrigger: { trigger: string.closest('section'), start: 'top 75%', end: 'center 55%', scrub: true },
-  });
-  const swing = string.dataset.swing;
-  if (swing) gsap.to(string, { attr: { d: swing }, duration: 3, ease: 'sine.inOut', repeat: -1, yoyo: true });
-}
-
-// The tile wave pauses while off screen to save battery.
-const ribbon = document.querySelector<HTMLElement>('[data-ribbon]');
-if (ribbon) {
-  ScrollTrigger.create({
-    trigger: ribbon,
-    start: 'top bottom',
-    end: 'bottom top',
-    onToggle: (self) => ribbon.classList.toggle('is-paused', !self.isActive),
+    scrollTrigger: { trigger: line.closest('section'), start: 'top 75%', end: 'center 55%', scrub: true },
   });
 }
