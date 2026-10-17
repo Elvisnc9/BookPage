@@ -3,6 +3,7 @@ import { CATEGORY_KEYS } from './categories.js';
 import { LOCATION_TYPES, PRICE_TYPES } from './enums.js';
 import { CURRENCIES } from './money.js';
 import { isValidSlug } from './slug.js';
+import { siteThemePatchSchema } from './templates.js';
 
 /**
  * Request bodies for the owner's business endpoints. Onboarding autosaves
@@ -28,10 +29,15 @@ export const businessPatchSchema = z
     serviceAreas: z.array(text(60).min(1)).max(20),
     /** Free-form as typed; the API normalises it to E.164 using `country`. */
     phone: optionalText(30),
+    /** Same rules as phone; null hides the WhatsApp button. */
+    whatsapp: optionalText(30),
     email: z.union([z.email().max(120), z.literal('')]).nullable().optional(),
     timezone: z.string().min(1).max(64),
     currency: z.enum(CURRENCIES),
-    template: z.enum(['classic']),
+    /** A row in site_templates. The API checks it exists and is active. */
+    templateId: z.uuid(),
+    /** Colour and font on top of the template's defaults. Never changes the layout. */
+    theme: siteThemePatchSchema,
     onboardingStep: z.number().int().min(0).max(5),
   })
   .partial()

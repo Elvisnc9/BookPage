@@ -1,5 +1,7 @@
 import type { CustomerFields } from './business.js';
 import type { BookingStatus, LocationType, PriceType } from './enums.js';
+import type { SiteImage } from './media.js';
+import type { ResolvedSite } from './site.js';
 
 /**
  * What the booking page may see. Only [public] fields from the schema, plus the
@@ -21,13 +23,16 @@ export interface PublicBusiness {
   phone: string | null;
   whatsapp: string | null;
   email: string | null;
-  logoUrl: string | null;
-  template: string;
+  logo: SiteImage | null;
+  hero: SiteImage | null;
+  gallery: SiteImage[];
+  /** The template and theme the page renders with (already resolved; see resolveSite). */
+  site: ResolvedSite;
   timezone: string;
   currency: string;
   hours: { weekday: number; opensAt: number; closesAt: number }[];
   services: PublicService[];
-  staff: { id: string; name: string; serviceIds: string[] }[];
+  staff: { id: string; name: string; serviceIds: string[]; photo: SiteImage | null }[];
   /** Approved questions, in the owner's order. */
   faqs: { question: string; answer: string }[];
   booking: { windowDays: number; customerFields: CustomerFields };
@@ -41,6 +46,7 @@ export interface PublicService {
   priceMinor: number | null;
   durationMin: number;
   bookable: boolean;
+  image: SiteImage | null;
 }
 
 export interface PublicDay {
