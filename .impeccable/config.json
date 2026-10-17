@@ -20,6 +20,15 @@
         ],
         "createdAt": "2026-10-17T05:54:01.946Z",
         "reason": "BookPage brand: the striped 'scan' word (hard 0/transparent stripes, same as .scan in styles/base.css and the design-refs/onboarding references), not a colour gradient"
+      },
+      {
+        "rule": "overused-font",
+        "value": "font-family: 'geist",
+        "files": [
+          "apps/web/src/components/onboarding/onboarding.css"
+        ],
+        "createdAt": "2026-10-17T06:25:21.818Z",
+        "reason": "Geist is BookPage's established brand face (styles/tokens.css); here it previews the 'Grotesk' option"
       }
     ]
   }
