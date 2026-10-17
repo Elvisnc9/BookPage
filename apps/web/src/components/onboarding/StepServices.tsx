@@ -77,7 +77,7 @@ export function StepServices(props: {
                     blocked={s.id ? undefined : 'input' in check ? 'Saving…' : 'Name and price first'} />
                 )}
                 <div class="ob-service-fields">
-                  <Chips label="Price" value={s.priceType}
+                  <Chips label="How it's priced" value={s.priceType}
                     options={PRICE_TYPES.map((p) => ({ value: p, label: PRICE_LABELS[p] }))}
                     onChange={(priceType) => update(s.key, { priceType, bookable: priceType === 'quote' ? false : s.bookable || s.priceType === 'quote' })} />
                   <div class="ob-grid ob-grid-2">

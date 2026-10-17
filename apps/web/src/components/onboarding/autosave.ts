@@ -10,7 +10,10 @@ export type SaveState = 'idle' | 'saving' | 'saved' | 'invalid' | 'error';
  * - Network failures retry with backoff; validation errors wait for the next edit.
  */
 export function useAutosave<T>(save: (value: T) => Promise<void>, delay = 700) {
-  const [state, setState] = useState<SaveState>('idle');
+  const [state, setStateNow] = useState<SaveState>('idle');
+  // Mirrors `state` for callers that await a save and must see its outcome, not the last render's.
+  const latest = useRef<SaveState>('idle');
+  const setState = (s: SaveState) => { latest.current = s; setStateNow(s); };
   const [issues, setIssues] = useState<FieldIssue[]>([]);
   const pending = useRef<{ value: T } | null>(null);
   const running = useRef(false);
@@ -54,10 +57,11 @@ export function useAutosave<T>(save: (value: T) => Promise<void>, delay = 700) {
     timer.current = setTimeout(() => void flush(), delay);
   };
 
-  /** Save now (e.g. before moving to the next step). Resolves once nothing is pending. */
-  const now = async () => {
+  /** Save now (e.g. before moving to the next step). Resolves, once nothing is pending, with how it went. */
+  const now = async (): Promise<SaveState> => {
     await flush();
     while (running.current) await new Promise((r) => setTimeout(r, 50));
+    return latest.current;
   };
 
   // Don't lose the last edit when the tab closes.

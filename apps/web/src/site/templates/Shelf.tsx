@@ -7,7 +7,11 @@ import { ContactList, FaqList, Hint, HoursList, Icon, Logo, MadeWith, Name, NoSe
 export function Shelf({ site }: { site: SiteModel }) {
   const nav = navFor(site);
   const products = take(site.services, site.layout.services.limit);
-  const featured = take(site.services, 2);
+  // The cover photo leads the featured pair when there is one; services fill the rest.
+  const featured: ({ kind: 'hero' } | { kind: 'service'; s: SiteModel['services'][number] })[] = [
+    ...(site.hero ? [{ kind: 'hero' as const }] : []),
+    ...take(site.services, site.hero ? 1 : 2).map((s) => ({ kind: 'service' as const, s })),
+  ];
   const infoAt = site.layout.sections.findIndex((s) => s === 'contact' || s === 'hours');
 
   const section = (key: SiteSection, i: number) => {
@@ -116,11 +120,15 @@ export function Shelf({ site }: { site: SiteModel }) {
             <a class="s-btn s-btn-accent" href="#services">{site.cta} <Icon name="arrow" size={16} /></a>
           </div>
           <div class="ts-feature">
-            {(featured.length ? featured : [null, null]).map((s, n) => (
-              <a class="ts-feature-card" href={s?.href ?? '#services'} aria-label={s ? `${s.name}, ${s.price}` : undefined}>
-                <Photo site={site} img={s?.image ?? (n === 0 ? site.hero : null)} alt="" slot={s ? 'photo' : 'service'} tint={n + 1} mono={s?.initials} />
-                {s && <span class="ts-feature-tag"><strong>{s.name}</strong><span>{s.price}</span></span>}
+            {featured.length ? featured.map((f, n) => f.kind === 'hero' ? (
+              <div class="ts-feature-card"><Photo site={site} img={site.hero} alt={`Inside ${site.name}`} slot="cover photo" eager /></div>
+            ) : (
+              <a class="ts-feature-card" href={f.s.href} aria-label={`${f.s.name}, ${f.s.price}`}>
+                <Photo site={site} img={f.s.image} alt="" slot="photo" tint={n + 1} mono={f.s.initials} />
+                <span class="ts-feature-tag"><strong>{f.s.name}</strong><span>{f.s.price}</span></span>
               </a>
+            )) : [1, 2].map((n) => (
+              <div class="ts-feature-card"><Photo site={site} img={null} alt="" slot={n === 1 ? 'cover photo' : 'service photo'} tint={n} /></div>
             ))}
           </div>
         </section>

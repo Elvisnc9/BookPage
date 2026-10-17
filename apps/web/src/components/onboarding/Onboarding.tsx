@@ -66,7 +66,22 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   };
 
   // ─── Autosave, one saver per section ───────────────────────────────────
-  const aboutSave = useAutosave<AboutDraft>(async (d) => onBiz(await api('PATCH', '/business', aboutTo(d))));
+  const aboutSave = useAutosave<AboutDraft>(async (d) => {
+    const patch = aboutTo(d);
+    try {
+      onBiz(await api('PATCH', '/business', patch));
+    } catch (error) {
+      // A phone or email the API won't accept shouldn't hold back the name, address and the rest:
+      // save those, then still report the field so the owner fixes it.
+      const contact = ['phone', 'whatsapp', 'email'];
+      if (error instanceof ApiError && error.status === 400 && error.issues.length && error.issues.every((i) => contact.includes(i.path))) {
+        const rest: Record<string, unknown> = { ...patch };
+        for (const i of error.issues) delete rest[i.path];
+        onBiz(await api('PATCH', '/business', rest));
+      }
+      throw error;
+    }
+  });
   const hoursSave = useAutosave<DayDraft[]>(async (d) => onBiz(await api('PUT', '/business/hours', hoursTo(d))));
   const rulesSave = useAutosave<OwnerBusiness['rules']>(async (r) => onBiz(await api('PATCH', '/business/rules', r)));
   const designSave = useAutosave<DesignDraft>(
@@ -100,6 +115,8 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   });
 
   const savers = [designSave, aboutSave, hoursSave, servicesSave, staffSave, rulesSave];
+  /** The step whose fields each saver holds, so a problem can send the owner to the right place. */
+  const SAVER_STEP = [1, 2, 4, 3, 4, 4];
   const saveState = combine(savers.map((s) => s.state));
   const flushAll = () => Promise.all(savers.map((s) => s.now()));
 
@@ -207,9 +224,15 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   const next = async () => {
     const problem = stepProblem(step);
     if (problem) return setNavError(problem);
-    await flushAll();
-    if (savers.some((s) => s.state === 'invalid')) return setNavError('Fix the highlighted fields first');
-    if (savers.some((s) => s.state === 'error')) return setNavError("We couldn't save your last changes. Check your connection, then try again.");
+    // Use the outcome of these saves, not the state from the last render.
+    const states = await flushAll();
+    const invalidAt = states.findIndex((s) => s === 'invalid');
+    if (invalidAt >= 0) {
+      const at = SAVER_STEP[invalidAt]!;
+      if (at !== step) goTo(at);
+      return setNavError(at === step ? 'Fix the highlighted field first' : `Fix the highlighted field on ${ONBOARDING_STEPS[at - 1]} first`);
+    }
+    if (states.includes('error')) return setNavError("We couldn't save your last changes. Check your connection, then try again.");
 
     if (step < 5) {
       try {
@@ -312,7 +335,9 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
             <button type="button" class="btn ob-nav-preview" onClick={() => setSheet(true)}>Preview</button>
             <p class={`ob-nav-msg${navError ? ' bad' : ''}`} role="status" aria-live="polite">{navError}</p>
             <button type="submit" class="btn btn-ink ob-continue" disabled={publishing} data-busy={publishing || undefined}>
-              {step === 5 ? (publishing ? 'Publishing…' : 'Publish my page') : `Continue to ${ONBOARDING_STEPS[step]!.toLowerCase()}`}
+              {step === 5 ? (publishing ? 'Publishing…' : 'Publish my page') : (
+                <><span class="ob-continue-long">Continue to {ONBOARDING_STEPS[step]!.toLowerCase()}</span><span class="ob-continue-short">Continue</span></>
+              )}
               <Icon name="arrow" size={16} />
             </button>
           </div>

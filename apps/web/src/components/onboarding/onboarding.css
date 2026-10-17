@@ -42,7 +42,7 @@ body:has(dialog.ob-sheet[open]) { overflow: hidden; }
 
 .ob-steps { position: relative; min-width: 0; }
 .ob-steps ol { display: none; }
-.ob-steps-compact { margin: 0; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.ob-steps-compact { margin: 0; overflow: hidden; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; text-overflow: ellipsis; }
 .ob-steps-bar { position: absolute; left: 0; right: 0; bottom: -10px; height: 3px; background: var(--ob-sand); overflow: hidden; }
 .ob-steps-bar i { display: block; height: 100%; background: var(--orange); transform-origin: left; transition: transform 420ms var(--ease-out); }
 
@@ -51,8 +51,8 @@ body:has(dialog.ob-sheet[open]) { overflow: hidden; }
 .ob-save[data-state='saved'] .ob-save-icon, .ob-save[data-state='idle'] .ob-save-icon { color: var(--ob-ok); }
 .ob-save[data-state='saved'] .ob-save-icon svg { animation: ob-pop 260ms var(--ease-out); }
 .ob-save[data-state='error'], .ob-save[data-state='invalid'] { color: var(--red); }
-.ob-save-text { display: none; }
-.ob-save[data-state='error'] .ob-save-text, .ob-save[data-state='invalid'] .ob-save-text { display: inline; }
+/* On phones the pill is an icon; the words stay for screen readers. */
+.ob-save-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .ob-spin { width: 10px; height: 10px; border: 1.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: ob-spin 700ms linear infinite; }
 .ob-bang { width: 2px; height: 9px; background: currentColor; border-radius: 1px; box-shadow: 0 4px 0 -0.5px transparent; position: relative; }
 .ob-bang::after { content: ''; position: absolute; left: 0; bottom: -4px; width: 2px; height: 2px; background: currentColor; }
@@ -78,7 +78,8 @@ body:has(dialog.ob-sheet[open]) { overflow: hidden; }
 @keyframes ob-step-back { from { opacity: 0; transform: translateX(-14px); } }
 
 /* ─── Headings & sections ────────────────────────────────────────────── */
-.ob-section { display: grid; gap: 18px; }
+/* minmax(0, 1fr): a long unbreakable value (an address, a URL) wraps instead of widening the page. */
+.ob-section { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .ob-section-head { display: grid; gap: 10px; margin-bottom: 6px; }
 .ob-title { margin: 0; font-size: clamp(40px, 9vw, 68px); font-weight: 900; line-height: .92; letter-spacing: -0.05em; text-wrap: balance; outline: none; }
 .ob-scan {
@@ -91,7 +92,7 @@ body:has(dialog.ob-sheet[open]) { overflow: hidden; }
 .ob-section .lab { display: block; }
 
 .ob-card {
-  display: grid; gap: 18px; padding: 18px;
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; padding: 18px;
   background: var(--surface); border: var(--border); border-radius: var(--r-xl);
   transition: box-shadow 200ms var(--ease-out), transform 200ms var(--ease-out);
 }
@@ -304,7 +305,7 @@ fieldset.ob-team { border: 0; }
 .ob-closed { font-size: 12px; text-transform: uppercase; letter-spacing: var(--track-label); color: var(--faint); }
 
 /* ─── Review & publish ───────────────────────────────────────────────── */
-.ob-ready { display: flex; align-items: center; gap: 14px; padding: 16px; border: var(--border); border-radius: var(--r-xl); background: var(--surface); }
+.ob-ready { display: flex; align-items: center; gap: 14px; min-width: 0; overflow-wrap: anywhere; padding: 16px; border: var(--border); border-radius: var(--r-xl); background: var(--surface); }
 .ob-ready[data-ready='false'] { display: grid; gap: 6px; background: var(--tint-red); }
 .ob-ready ul { margin: 0; padding-left: 18px; }
 .ob-ready p { margin: 2px 0 0; color: var(--muted); }
@@ -313,10 +314,11 @@ fieldset.ob-team { border: 0; }
 .ob-slug { display: flex; align-items: center; gap: 6px; }
 .ob-slug .ob-input { flex: 1; min-width: 0; }
 .ob-slug span { font-size: 14px; color: var(--muted); white-space: nowrap; }
-.ob-slug-note { display: flex; align-items: center; gap: 6px; margin: -8px 0 0; font-size: 12px; letter-spacing: .02em; color: var(--muted); }
+.ob-slug-note { display: flex; align-items: center; gap: 6px; margin: -8px 0 0; font-size: 12px; letter-spacing: .02em; color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
+.ob-slug-note svg { flex: none; }
 .ob-slug-note.ok { color: var(--ob-ok); }
 .ob-slug-note.bad { color: var(--red); }
-.ob-review { display: grid; gap: 14px; }
+.ob-review { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .ob-review-card { gap: 12px; align-content: start; }
 .ob-review-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .ob-edit { min-height: 36px; padding: 0 12px; border: var(--border); border-radius: var(--r); background: var(--surface); font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; transition: transform var(--dur-fast) var(--ease-out), background-color 140ms ease, color 140ms ease; }
@@ -364,6 +366,8 @@ fieldset.ob-team { border: 0; }
 }
 .ob-nav .btn { min-height: 48px; padding: 0 14px; }
 .ob-continue { grid-column: 3; justify-self: end; }
+.ob-continue-long { display: none; }
+.ob-nav > * { min-width: 0; }
 .ob-continue[data-busy] { opacity: .7; }
 .ob-nav-msg { grid-column: 1 / -1; grid-row: 1; margin: 0; font-size: 13px; font-weight: 600; text-align: center; }
 .ob-nav-msg:empty { display: none; }
@@ -431,7 +435,9 @@ fieldset.ob-team { border: 0; }
   .ob-brand-name { display: inline; }
   .ob-later-long { display: inline; }
   .ob-later-short { display: none; }
-  .ob-save-text { display: inline; }
+  .ob-save-text { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+  .ob-continue-long { display: inline; }
+  .ob-continue-short { display: none; }
   .ob-shell { padding: 36px 24px 140px; }
   .ob-card { padding: 22px; }
   .ob-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
