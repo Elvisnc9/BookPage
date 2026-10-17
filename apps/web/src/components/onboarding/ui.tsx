@@ -83,15 +83,40 @@ export function Switch(props: { label: string; note?: string; checked: boolean; 
   );
 }
 
-export function Section(props: { kicker: string; title: string; intro?: string; children: ComponentChildren }) {
+/**
+ * A step's heading and body. `scan` names one word of the title to set in the
+ * striped BookPage display style (static here: no looping motion in the app).
+ */
+export function Section(props: { title: string; scan?: string; intro?: string; kicker?: string; children: ComponentChildren }) {
+  const at = props.scan ? props.title.lastIndexOf(props.scan) : -1;
   return (
     <section class="ob-section" aria-labelledby="ob-step-title">
-      <p class="lab">{props.kicker}</p>
-      <h1 id="ob-step-title" class="h-display">
-        {props.title}
-      </h1>
-      {props.intro && <p class="ob-intro">{props.intro}</p>}
+      <header class="ob-section-head">
+        <h1 id="ob-step-title" class="ob-title" tabIndex={-1}>
+          {at >= 0 ? (
+            <>
+              {props.title.slice(0, at)}
+              <span class="ob-scan">{props.scan}</span>
+              {props.title.slice(at + props.scan!.length)}
+            </>
+          ) : props.title}
+        </h1>
+        {props.intro && <p class="ob-intro">{props.intro}</p>}
+      </header>
       {props.children}
     </section>
+  );
+}
+
+/** A titled group of fields: the form's building block. */
+export function Card(props: { title: string; hint?: string; children: ComponentChildren; class?: string; id?: string }) {
+  return (
+    <div class={`ob-card ${props.class ?? ''}`} id={props.id}>
+      <div class="ob-card-head">
+        <h2 class="ob-card-title">{props.title}</h2>
+        {props.hint && <p class="ob-hint">{props.hint}</p>}
+      </div>
+      {props.children}
+    </div>
   );
 }

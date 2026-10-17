@@ -76,7 +76,7 @@ export default function MyPage(props: { initial: OwnerBusiness; tab: string }) {
       <div class="mp-body">
         {tab === 'services' && (
           <StepServices services={services} category={props.initial.category as never} currency={props.initial.currency}
-            onServices={(next) => { setServices(next); servicesSave.queue(next); }}
+            onServices={(update) => setServices((cur) => { const next = update(cur); servicesSave.queue(next); return next; })}
             heading={{ kicker: 'My page · Services', title: 'Services', intro: 'Changes show on your page straight away. Removed services stay on past bookings.' }} />
         )}
         {tab === 'hours' && (
@@ -84,13 +84,13 @@ export default function MyPage(props: { initial: OwnerBusiness; tab: string }) {
             <p class="lab">My page · Hours</p>
             <h1 class="h-display">Opening hours</h1>
             <p class="ob-intro">Customers can book inside these hours. Existing bookings are never moved.</p>
-            <HoursEditor days={days} onDays={(next) => { setDays(next); hoursSave.queue(next); }} />
+            <HoursEditor days={days} onDays={(update) => setDays((cur) => { const next = update(cur); hoursSave.queue(next); return next; })} />
           </section>
         )}
         {tab === 'booking' && (
           <StepBooking rules={rules} staff={staff}
             onRules={(patch) => setRules((cur) => { const next = { ...cur, ...patch }; rulesSave.queue(next); return next; })}
-            onStaff={(next) => { setStaff(next); staffSave.queue(next); }}
+            onStaff={(update) => setStaff((cur) => { const next = update(cur); staffSave.queue(next); return next; })}
             heading={{ kicker: 'My page · Booking rules', title: 'How booking works', intro: 'Free times on your page come from your hours, minus bookings and these rules.' }} />
         )}
       </div>

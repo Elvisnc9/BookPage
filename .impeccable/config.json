@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-10-14T21:01:37.406Z",
         "reason": "Project brief and design/README.md specify the striped 'scan' headline word (stripe background clipped to text)"
+      },
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "apps/web/src/components/onboarding/onboarding.css"
+        ],
+        "createdAt": "2026-10-17T05:54:01.946Z",
+        "reason": "BookPage brand: the striped 'scan' word (hard 0/transparent stripes, same as .scan in styles/base.css and the design-refs/onboarding references), not a colour gradient"
       }
     ]
   }

@@ -1,12 +1,20 @@
 import {
   type BusinessPatch,
   type CategoryKey,
+  CLASSIC_FALLBACK,
+  CLASSIC_THEME,
   type Currency,
+  FALLBACK_TEMPLATE_SLUG,
   fromMinor,
   type HoursInput,
+  mergeTheme,
   type OwnerBusiness,
   type PriceType,
+  type PublicBusiness,
+  type ResolvedSite,
   type ServiceInput,
+  type SiteTemplate,
+  type SiteTheme,
   toMinor,
   WEEKDAYS,
 } from '@bookpage/shared';
@@ -67,6 +75,7 @@ export interface AboutDraft {
   country: string;
   serviceAreas: string[];
   phone: string;
+  whatsapp: string;
   email: string;
   currency: string;
   timezone: string;
@@ -83,6 +92,7 @@ export const aboutFrom = (b: OwnerBusiness): AboutDraft => ({
   country: b.country,
   serviceAreas: b.serviceAreas,
   phone: b.phone ?? '',
+  whatsapp: b.whatsapp ?? '',
   email: b.email ?? '',
   currency: b.currency,
   timezone: b.timezone,
@@ -103,6 +113,7 @@ export const aboutTo = (d: AboutDraft): BusinessPatch => ({
   country: d.country,
   serviceAreas: d.serviceAreas,
   ...(phoneLooksDone(d.phone) ? { phone: d.phone } : {}),
+  ...(phoneLooksDone(d.whatsapp) ? { whatsapp: d.whatsapp } : {}),
   ...(emailLooksDone(d.email) ? { email: d.email.trim() } : {}),
   currency: d.currency as Currency,
   timezone: d.timezone,
@@ -110,6 +121,12 @@ export const aboutTo = (d: AboutDraft): BusinessPatch => ({
 
 export const needsAddress = (t: AboutDraft['locationType']) => t === 'premises' || t === 'both';
 export const needsAreas = (t: AboutDraft['locationType']) => t === 'mobile' || t === 'both';
+
+/**
+ * List editors take an updater, so two edits in one frame (a fast tap after
+ * typing) both land instead of the second overwriting the first.
+ */
+export type ListEdit<T> = (update: (current: T[]) => T[]) => void;
 
 // ─── Hours (one range per day in the UI) ────────────────────────────────────
 
@@ -135,6 +152,7 @@ export interface ServiceDraft {
   key: string;
   id?: string | undefined;
   name: string;
+  description: string;
   priceType: PriceType;
   price: string;
   durationMin: number;
@@ -150,6 +168,7 @@ export const servicesFrom = (b: OwnerBusiness): ServiceDraft[] =>
     key: newKey(),
     id: s.id,
     name: s.name,
+    description: s.description ?? '',
     priceType: s.priceType,
     price: s.priceMinor === null ? '' : fromMinor(s.priceMinor),
     durationMin: s.durationMin,
@@ -167,6 +186,7 @@ export function serviceTo(d: ServiceDraft): { input: ServiceInput } | { problem:
     input: {
       ...(d.id ? { id: d.id } : {}),
       name: d.name.trim(),
+      description: d.description.trim() || null,
       priceType: d.priceType,
       priceMinor,
       durationMin: d.durationMin,
@@ -195,3 +215,97 @@ export const suggestSlug = (name: string) =>
     .replace(/&/g, 'and')
     .replace(/[^a-z0-9]+/g, '')
     .slice(0, 40);
+
+// ─── Design (template + theme) ─────────────────────────────────────────────
+
+export interface DesignDraft {
+  /** null: never picked, which means Classic. */
+  templateId: string | null;
+  theme: Partial<SiteTheme>;
+}
+
+export const designFrom = (b: OwnerBusiness): DesignDraft => ({ templateId: b.templateId, theme: b.theme });
+
+/**
+ * The template the preview draws, from the gallery list and the owner's pick.
+ * Mirrors the API's resolveSite: a pick that isn't offered keeps the server's
+ * resolution (Classic plus a notice), never a silent swap.
+ */
+export function draftSite(templates: SiteTemplate[], design: DesignDraft, saved: OwnerBusiness): ResolvedSite {
+  const picked = design.templateId
+    ? templates.find((t) => t.id === design.templateId)
+    : templates.find((t) => t.slug === FALLBACK_TEMPLATE_SLUG);
+  if (picked) {
+    const { id, slug, name, version, schemaVersion, layout } = picked;
+    return { template: { id, slug, name, version, schemaVersion, layout }, theme: mergeTheme(picked.defaultTheme, design.theme), notice: null };
+  }
+  if (design.templateId === saved.templateId) return { ...saved.site, theme: mergeTheme(saved.site.theme, design.theme) };
+  return { template: CLASSIC_FALLBACK, theme: mergeTheme(CLASSIC_THEME, design.theme), notice: null };
+}
+
+/**
+ * The owner's unsaved draft as the booking page's own data shape, so the preview
+ * goes through buildSite and the template components exactly like the live page.
+ * Half-finished services are left out, as they would be on the page.
+ */
+export function previewBusiness(input: {
+  saved: OwnerBusiness;
+  about: AboutDraft;
+  days: DayDraft[];
+  services: ServiceDraft[];
+  staff: StaffDraft[];
+  site: ResolvedSite;
+}): PublicBusiness {
+  const { saved, about, site } = input;
+  const services = input.services.flatMap((d, i) => {
+    const r = serviceTo(d);
+    if (!('input' in r)) return [];
+    const stored = d.id ? saved.services.find((s) => s.id === d.id) : undefined;
+    return [{
+      id: d.id ?? `draft-${i}`,
+      name: r.input.name,
+      description: r.input.description ?? null,
+      priceType: r.input.priceType,
+      priceMinor: r.input.priceMinor,
+      durationMin: r.input.durationMin,
+      bookable: r.input.bookable && r.input.priceType !== 'quote',
+      image: stored?.image ?? null,
+    }];
+  });
+  const bookableIds = services.filter((s) => s.bookable).map((s) => s.id);
+  const phone = about.phone.trim();
+  return {
+    slug: saved.slug,
+    name: about.name,
+    category: about.category,
+    description: about.description.trim() || null,
+    locationType: about.locationType,
+    addressLine1: about.addressLine1.trim() || null,
+    addressLine2: null,
+    city: about.city.trim() || null,
+    region: null,
+    postalCode: about.postalCode.trim() || null,
+    country: about.country,
+    serviceAreas: about.serviceAreas,
+    phone: phone || null,
+    whatsapp: about.whatsapp.trim() || null,
+    email: about.email.trim() || null,
+    logo: saved.logo,
+    hero: saved.hero,
+    gallery: saved.gallery,
+    site,
+    timezone: about.timezone,
+    currency: about.currency,
+    hours: hoursTo(input.days),
+    services,
+    // Everyone takes every bookable service until per-person services exist (the API does the same).
+    staff: input.staff.filter((p) => p.name.trim()).map((p, i) => ({
+      id: p.id ?? `draft-staff-${i}`,
+      name: p.name.trim(),
+      serviceIds: bookableIds,
+      photo: (p.id && saved.staff.find((s) => s.id === p.id)?.photo) || null,
+    })),
+    faqs: [],
+    booking: { windowDays: saved.rules.windowDays, customerFields: saved.rules.customerFields },
+  };
+}

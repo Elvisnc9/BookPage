@@ -1,14 +1,14 @@
 import { formatMinutes, WEEKDAY_SHORT } from '@bookpage/shared';
-import type { DayDraft } from './model';
+import type { DayDraft, ListEdit } from './model';
 
 /** 6:00 AM … midnight, every 30 minutes. */
 const TIMES = Array.from({ length: 37 }, (_, i) => 360 + i * 30);
 
 /** One opening range per day, with an open/closed switch. Used in onboarding and on My page. */
-export function HoursEditor(props: { days: DayDraft[]; onDays: (days: DayDraft[]) => void; legend?: string }) {
+export function HoursEditor(props: { days: DayDraft[]; onDays: ListEdit<DayDraft>; legend?: string }) {
   const { days, onDays } = props;
   const setDay = (weekday: number, patch: Partial<DayDraft>) =>
-    onDays(days.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)));
+    onDays((cur) => cur.map((d) => (d.weekday === weekday ? { ...d, ...patch } : d)));
 
   return (
     <fieldset class="ob-hours">

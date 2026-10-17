@@ -1,55 +1,128 @@
-import { CATEGORIES, type CategoryKey, formatDuration, formatMoney } from '@bookpage/shared';
-import type { AboutDraft, ServiceDraft } from './model';
-import { serviceTo } from './model';
+import type { ComponentChildren } from 'preact';
+import { memo } from 'preact/compat';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import type { SiteModel } from '../../site/model';
+import { Icon } from '../../site/parts';
+import { rendererFor } from '../../site/registry';
+import { Site } from '../../site/Site';
 
-/** A small live mock of the booking page, shown beside the form on wide screens. */
-export function Preview(props: { about: AboutDraft; services: ServiceDraft[] }) {
-  const { about } = props;
-  const name = about.name.trim() || 'Your business';
-  const category = about.category ? CATEGORIES[about.category as CategoryKey] : null;
-  const initials = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-  const place = about.locationType === 'online' ? 'Online' : about.locationType === 'mobile' ? 'Comes to you' : about.city.trim();
+export type Device = 'desktop' | 'phone';
+const WIDTH: Record<Device, number> = { desktop: 1280, phone: 390 };
 
-  const services = props.services
-    .map((s) => ('input' in serviceTo(s) ? s : null))
-    .filter((s): s is ServiceDraft => !!s)
-    .slice(0, 4);
+/**
+ * Draws children on a fixed-width canvas (a real desktop or phone width, so the
+ * template's container queries pick the right layout) scaled to fit the space
+ * it's given. Height follows the scaled content unless `aspect` clips it.
+ */
+export function Scaled(props: { width: number; aspect?: string; children: ComponentChildren; class?: string }) {
+  const outer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ scale: 0, height: 0, left: 0 });
 
-  const price = (s: ServiceDraft) => {
-    const result = serviceTo(s);
-    if (!('input' in result)) return '';
-    const { priceType, priceMinor } = result.input;
-    if (priceType === 'quote') return 'Quote';
-    if (priceType === 'free') return 'Free';
-    return `${priceType === 'from' ? 'From ' : ''}${formatMoney(priceMinor!, about.currency)}`;
-  };
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (!outer.current || !inner.current) return;
+      const available = outer.current.clientWidth;
+      const scale = Math.min(1, available / props.width);
+      setBox({ scale, height: inner.current.offsetHeight * scale, left: Math.max(0, (available - props.width * scale) / 2) });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(outer.current!);
+    ro.observe(inner.current!);
+    return () => ro.disconnect();
+  }, [props.width]);
 
   return (
-    <aside class="ob-preview" aria-label="Preview of your booking page">
-      <p class="lab">Preview</p>
-      <div class="box raised ob-pv">
-        <div class="ob-pv-head">
-          <span class="ob-pv-logo mono" aria-hidden="true">{initials}</span>
-          <div>
-            <strong>{name}</strong>
-            <p class="lab">{[category?.label, place].filter(Boolean).join(' · ') || 'Category · City'}</p>
-          </div>
-        </div>
-        <p class="ob-pv-desc">{about.description.trim() || 'Your one-line description shows here.'}</p>
-        <ul class="ob-pv-services">
-          {services.length === 0 && <li class="ob-hint">Your services show here.</li>}
-          {services.map((s) => (
-            <li>
-              <span>
-                {s.name}
-                {s.priceType !== 'quote' && <small> · {formatDuration(s.durationMin)}</small>}
-              </span>
-              <strong>{price(s)}</strong>
-            </li>
-          ))}
-        </ul>
-        <span class="btn btn-ink ob-pv-cta" aria-hidden="true">{category?.cta ?? 'Book now'}</span>
+    <div ref={outer} class={`ob-scaled ${props.class ?? ''}`} style={props.aspect ? { aspectRatio: props.aspect } : { height: `${box.height}px` }}>
+      <div ref={inner} class="ob-scaled-in" style={{ width: `${props.width}px`, transform: `translateX(${box.left}px) scale(${box.scale})`, visibility: box.scale ? 'visible' : 'hidden' }}>
+        {props.children}
       </div>
-    </aside>
+    </div>
+  );
+}
+
+/** Same value, at most every `ms` (trailing), so typing doesn't re-render the page preview on every key. */
+export function useThrottled<T>(value: T, ms: number): T {
+  const [shown, setShown] = useState(value);
+  const last = useRef(0);
+  useEffect(() => {
+    const wait = Math.max(0, last.current + ms - Date.now());
+    const timer = setTimeout(() => { last.current = Date.now(); setShown(value); }, wait);
+    return () => clearTimeout(timer);
+  }, [value, ms]);
+  return shown;
+}
+
+/** The template itself, inert (a picture of the page, not a second copy to tab through). */
+const Canvas = memo(function Canvas(props: { site: SiteModel; device: Device }) {
+  return (
+    <Scaled width={WIDTH[props.device]}>
+      <div class="ob-canvas" key={`${props.site.template.slug}-${props.device}`} inert>
+        <Site site={props.site} />
+      </div>
+    </Scaled>
+  );
+});
+
+export function PreviewPanel(props: {
+  site: SiteModel;
+  host: string;
+  device: Device;
+  onDevice: (d: Device) => void;
+  /** "Saving…" / "Saved" etc. from the wizard, so the preview says when it matches the server. */
+  saving: boolean;
+  onClose?: (() => void) | undefined;
+}) {
+  const site = useThrottled(props.site, 120);
+  const stale = site !== props.site;
+  const fallback = rendererFor(site.template).notice;
+
+  return (
+    <section class="ob-pv" aria-labelledby="ob-pv-title">
+      <div class="ob-pv-bar">
+        <h2 id="ob-pv-title" class="ob-pv-title mono">Live preview</h2>
+        <span class="ob-pv-sync mono" data-busy={stale || props.saving || undefined}>
+          <i aria-hidden="true" />{stale ? 'Updating' : props.saving ? 'Saving' : 'Up to date'}
+        </span>
+        <div class="ob-seg" role="group" aria-label="Preview size">
+          {(['desktop', 'phone'] as const).map((d) => (
+            <button type="button" aria-pressed={props.device === d} onClick={() => props.onDevice(d)}>{d === 'desktop' ? 'Desktop' : 'Phone'}</button>
+          ))}
+        </div>
+        {props.onClose && (
+          <button type="button" class="ob-pv-close" onClick={props.onClose} aria-label="Close preview"><Icon name="plus" size={20} /></button>
+        )}
+      </div>
+      {fallback && (
+        <p class="ob-notice" role="status">This template can't be drawn here yet, so the preview shows Classic. Pick another template to change it.</p>
+      )}
+      <div class="ob-pv-frame" data-device={props.device}>
+        <div class="ob-pv-url mono" aria-hidden="true"><span class="ob-pv-lock" />{props.host}</div>
+        <div class="ob-pv-scroll" aria-label={`Preview of your page with the ${site.template.name} template`} role="img">
+          <Canvas site={site} device={props.device} />
+        </div>
+      </div>
+      <p class="ob-pv-legend"><span class="ob-pv-key" aria-hidden="true" />Dashed tags mark placeholders. They're never published.</p>
+    </section>
+  );
+}
+
+/**
+ * On phones the preview opens as a full-height sheet (a modal dialog: focus is
+ * trapped, Escape closes, the page behind can't scroll).
+ */
+export function PreviewSheet(props: { open: boolean; onClose: () => void; children: ComponentChildren }) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = dialog.current;
+    if (!d) return;
+    if (props.open && !d.open) d.showModal();
+    if (!props.open && d.open) d.close();
+  }, [props.open]);
+  return (
+    <dialog ref={dialog} class="ob-sheet" aria-label="Preview your page" onClose={props.onClose} onCancel={props.onClose}>
+      {props.open && props.children}
+    </dialog>
   );
 }
