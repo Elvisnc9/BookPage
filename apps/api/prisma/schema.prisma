@@ -86,8 +86,13 @@ model Business {
   phone    String? /// [public] E.164
   whatsapp String? /// [public] E.164
   email    String? /// [public] contact email shown on the page (not the owner's login)
-  logoUrl  String? @map("logo_url") /// [public]
-  template String  @default("classic") /// [public]
+
+  /// [public] the website template; null = never picked, renders Classic.
+  /// Templates are retired with isActive, never deleted, hence Restrict.
+  templateId String?       @map("template_id") @db.Uuid
+  template   SiteTemplate? @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  /// [public] owner's colour/font on top of the template's defaultTheme: { accent?, font? }
+  theme      Json          @default("{}")
 
   timezone String @default("America/New_York") /// [private] IANA zone, detected at onboarding
   currency String @default("USD") @db.Char(3) /// [public] ISO 4217
@@ -107,8 +112,10 @@ model Business {
   bookings     Booking[]
   enquiries    Enquiry[]
   faqs         Faq[]
+  media        MediaAsset[]
 
   @@index([ownerId])
+  @@index([templateId])
   @@map("businesses")
 }
 
@@ -164,6 +171,7 @@ model Service {
   staff     StaffService[]
   bookings  Booking[]
   enquiries Enquiry[]
+  media     MediaAsset[]
 
   @@index([businessId, position])
   @@map("services")
@@ -182,6 +190,7 @@ model Staff {
   business Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
   services StaffService[]
   bookings Booking[]
+  media    MediaAsset[]
 
   @@index([businessId])
   @@map("staff")
@@ -348,6 +357,73 @@ model Faq {
 
   @@index([businessId, position])
   @@map("faqs")
+}
+
+// ─── Website templates & media ──────────────────────────────────────────────
+
+/// What templates exist and which are offered. The database decides availability,
+/// order and defaults; the web app's code registry (keyed by slug) decides how a
+/// template is drawn. Rows hold data only and are validated with zod
+/// (@bookpage/shared parseTemplate) before anything renders them.
+model SiteTemplate {
+  id                  String   @id @default(uuid(7)) @db.Uuid
+  slug                String   @unique /// registry key in apps/web/src/site/registry.ts
+  name                String
+  description         String
+  category            String /// TEMPLATE_GROUPS key: beauty, food, fitness, creative, professional, retail, home
+  thumbnailUrl        String?  @map("thumbnail_url") /// optional static card image; the gallery renders a live sample otherwise
+  previewImageUrl     String?  @map("preview_image_url")
+  version             Int      @default(1) /// bumped when the template's look changes
+  isActive            Boolean  @default(true) @map("is_active") /// false = retired: not offered, pages fall back to Classic with a notice
+  isPremium           Boolean  @default(false) @map("is_premium")
+  supportedSections   String[] @map("supported_sections")
+  defaultTheme        Json     @map("default_theme") /// { accent: "#RRGGBB", font }
+  layoutConfiguration Json     @map("layout_configuration") /// LayoutConfig for schemaVersion
+  schemaVersion       Int      @default(1) @map("schema_version")
+  position            Int      @default(0) /// gallery order
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  businesses Business[]
+
+  @@index([isActive, position])
+  @@map("site_templates")
+}
+
+enum MediaKind {
+  logo
+  hero
+  gallery
+  service /// one per service (serviceId)
+  staff /// one per person (staffId)
+
+  @@map("media_kind")
+}
+
+/// Uploaded images, resized and re-encoded in the browser, stored here until object
+/// storage exists. Served (immutable) at /media/{id}. [public] once attached.
+model MediaAsset {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  businessId  String    @map("business_id") @db.Uuid
+  kind        MediaKind
+  serviceId   String?   @map("service_id") @db.Uuid
+  staffId     String?   @map("staff_id") @db.Uuid
+  contentType String    @map("content_type")
+  width       Int?
+  height      Int?
+  byteSize    Int       @map("byte_size")
+  data        Bytes
+  position    Int       @default(0) /// gallery order
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  service  Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  staff    Staff?   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, kind, position])
+  @@index([serviceId])
+  @@index([staffId])
+  @@map("media_assets")
 }
 
 // ─── Marketing ──────────────────────────────────────────────────────────────

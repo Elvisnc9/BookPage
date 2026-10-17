@@ -5,13 +5,23 @@ import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { addDays, localDate, weekdayOf, zonedToUtc } from '@bookpage/shared';
 import { PrismaClient } from '../src/generated/prisma/client';
+import { TEMPLATE_CATALOGUE, toRow } from './templates';
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) });
 
 const SLUG = 'glowstudio';
 const h = (hours: number, minutes = 0) => hours * 60 + minutes;
 
+/** Keeps dev in step with the launch catalogue. Production gets its rows from migrations. */
+async function syncTemplates() {
+  for (const [position, entry] of TEMPLATE_CATALOGUE.entries()) {
+    const { id, ...row } = toRow(entry, position);
+    await prisma.siteTemplate.upsert({ where: { slug: row.slug }, update: row, create: { id, ...row } });
+  }
+}
+
 async function main() {
+  await syncTemplates();
   const owner = await prisma.user.upsert({
     where: { googleId: 'seed-demo-owner' },
     update: {},
@@ -45,6 +55,8 @@ async function main() {
       currency: 'USD',
       onboardingStep: 5,
       publishedAt: new Date(),
+      // Glow Studio is the page the Classic template was designed from.
+      templateId: TEMPLATE_CATALOGUE.find((t) => t.slug === 'classic')!.id,
       bookingRules: { create: {} },
     },
   });
