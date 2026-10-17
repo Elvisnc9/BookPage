@@ -1,0 +1,94 @@
+/* Billboard: poster type, near-black and concrete grey, one loud accent. */
+.t-billboard { --paper: #F2F0EC; --ink: #111110; --muted: #5E5A55; --line: #D9D5CF; }
+
+.tb-head { position: relative; z-index: 3; background: var(--ink); color: #F2F0EC; }
+.tb-head-in { display: flex; align-items: center; gap: 16px; min-height: 64px; }
+.tb-brand { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; text-decoration: none; }
+.tb-brand .s-logo { width: 34px; height: 34px; border-radius: 0; }
+.tb-brand span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 22px; font-weight: 800; text-transform: uppercase; letter-spacing: .01em; }
+.tb-nav { display: none; }
+.tb-call { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-weight: 600; text-decoration: none; color: var(--accent); }
+.tb-call span { display: none; }
+
+.tb-hero { position: relative; isolation: isolate; display: grid; min-height: 560px; color: #fff; background: var(--ink); overflow: hidden; }
+.tb-hero-bg { position: absolute; inset: 0; z-index: -1; }
+.tb-hero-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 10, 9, .35), rgba(10, 10, 9, .78)); }
+.tb-hero-bg .s-ph { background: #1E1D1B; }
+.tb-hero-bg .s-ph-tag { bottom: auto; top: 12px; }
+.tb-hero-in { display: grid; justify-items: center; align-content: center; gap: 16px; padding-block: 72px 40px; text-align: center; }
+.tb-area { margin: 0; font-family: var(--font-mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.tb-name {
+  margin: 0; max-width: 100%;
+  font-size: clamp(64px, 17cqi, 230px); font-weight: 800; line-height: .84; letter-spacing: -0.01em; text-transform: uppercase;
+  text-wrap: balance; overflow-wrap: anywhere;
+}
+.tb-tagline { margin: 0; max-width: 46ch; font-size: 18px; color: rgba(255, 255, 255, .86); text-wrap: pretty; }
+.tb-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; padding-top: 8px; }
+.tb-actions .s-btn { min-height: 54px; padding: 0 26px; text-transform: uppercase; letter-spacing: .06em; font-size: 14px; }
+.tb-status { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+.tb-status i { width: 8px; height: 8px; background: #8A857E; }
+.tb-status[data-open='true'] i { background: var(--accent); }
+
+.tb-band { overflow: hidden; background: var(--accent); color: var(--on-accent); }
+.tb-band p { display: flex; gap: 28px; margin: 0; padding: 14px 20px; white-space: nowrap; font-size: 26px; font-weight: 800; text-transform: uppercase; }
+.tb-band span + span::before { content: '/'; margin-right: 28px; opacity: .5; }
+
+.tb-sec { display: grid; gap: 22px; padding-block: 64px 8px; }
+.tb-h2 { margin: 0; font-size: clamp(44px, 9cqi, 96px); font-weight: 800; line-height: .9; text-transform: uppercase; }
+.tb-h3 { margin: 0 0 12px; font-size: 32px; font-weight: 800; text-transform: uppercase; }
+
+.tb-rows { margin: 0; padding: 0; list-style: none; border-top: 3px solid var(--ink); }
+.tb-row {
+  display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 4px 16px;
+  padding: 18px 0; border-bottom: 1px solid var(--line); text-decoration: none;
+  transition: background-color 180ms ease;
+}
+.tb-row-name { grid-column: 1; font-size: clamp(30px, 6cqi, 52px); font-weight: 800; line-height: .95; text-transform: uppercase; }
+.tb-row-meta { grid-column: 1; grid-row: 2; font-size: 14px; color: var(--muted); }
+.tb-row-price { grid-column: 2; grid-row: 1 / 3; align-self: center; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.tb-row-go { display: none; }
+
+.tb-about p { margin: 0; max-width: 22ch; font-size: clamp(34px, 6cqi, 64px); font-weight: 700; line-height: 1; text-transform: uppercase; }
+
+.tb-gallery { display: grid; grid-template-columns: 1fr 1fr; margin-top: 64px; }
+.tb-tile { aspect-ratio: 1; overflow: hidden; }
+
+.tb-team { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.tb-team li { display: grid; gap: 6px; }
+.tb-team-photo { aspect-ratio: 3 / 4; overflow: hidden; }
+.tb-team-photo img { filter: grayscale(1) contrast(1.08); }
+.tb-team strong { font-size: 26px; text-transform: uppercase; line-height: 1; }
+.tb-team small { color: var(--muted); }
+
+.tb-dark { margin-top: 72px; padding-block: 64px; background: var(--ink); color: #F2F0EC; }
+.tb-split { display: grid; gap: 40px; }
+.tb-split > div { display: grid; gap: 16px; align-content: start; }
+.tb-place { margin: 0; font-size: 20px; max-width: 32ch; }
+.tb-split .s-btn { justify-self: start; }
+.tb-hours div { border-bottom: 1px solid rgba(255, 255, 255, .14); }
+.tb-hours [data-today] { color: var(--accent); font-weight: 700; }
+.tb-faqs .s-faq { border-bottom: 1px solid var(--line); }
+.tb-faqs summary { font-size: 18px; }
+
+.tb-foot { background: var(--ink); color: #F2F0EC; border-top: 1px solid rgba(255, 255, 255, .12); }
+.tb-foot-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-block: 28px; }
+.tb-foot strong { font-size: 32px; text-transform: uppercase; }
+
+@media (hover: hover) and (pointer: fine) {
+  .tb-row:hover { background: color-mix(in oklab, var(--accent) 12%, transparent); }
+  .tb-nav a:hover, .tb-call:hover { color: #fff; }
+}
+
+@container site (min-width: 760px) {
+  .tb-nav { display: flex; gap: 24px; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; }
+  .tb-nav a { color: rgba(242, 240, 236, .75); text-decoration: none; }
+  .tb-call span { display: inline; }
+  .tb-hero { min-height: 680px; }
+  .tb-row { grid-template-columns: 1fr minmax(0, 1.1fr) auto auto; align-items: center; gap: 24px; padding: 22px 0; }
+  .tb-row-meta { grid-column: 2; grid-row: 1; }
+  .tb-row-price { grid-column: 3; grid-row: 1; }
+  .tb-row-go { display: grid; grid-column: 4; }
+  .tb-gallery { grid-template-columns: repeat(4, 1fr); }
+  .tb-team { grid-template-columns: repeat(4, 1fr); }
+  .tb-split { grid-template-columns: 1.2fr 1fr; gap: 64px; }
+}

@@ -1,0 +1,79 @@
+/* Neighbour: soft daylight, rounded friendly shapes, a teal that says "reliable", a warm sand second surface. */
+.t-neighbour { --paper: #FAF8F3; --ink: #1D2B2A; --muted: #5B6866; --line: #E3DFD4; --sand: #F1ECDF; font-size: 17px; }
+
+.tn-head-in { display: flex; align-items: center; gap: 16px; min-height: 72px; }
+.tn-brand { display: flex; align-items: center; gap: 10px; min-width: 0; margin-right: auto; text-decoration: none; font-size: 20px; font-weight: 700; }
+.tn-brand > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tn-brand .s-logo { border-radius: 14px; }
+.tn-head nav { display: none; }
+.tn-phone { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 999px; background: var(--sand); font-weight: 600; text-decoration: none; }
+.tn-phone span { display: none; }
+
+.tn-hero { display: grid; gap: 24px; padding-block: 24px 8px; }
+.tn-hero-copy { display: grid; justify-items: start; gap: 16px; }
+.tn-open { margin: 0; padding: 6px 14px; border-radius: 999px; background: var(--sand); font-size: 14px; font-weight: 600; }
+.tn-open[data-open='true'] { background: color-mix(in oklab, var(--accent) 16%, var(--paper)); color: color-mix(in oklab, var(--accent), var(--ink) 40%); }
+.tn-name { margin: 0; font-size: clamp(46px, 8.5cqi, 104px); font-weight: 750; line-height: .98; letter-spacing: -0.035em; text-wrap: balance; }
+.tn-tagline { margin: 0; max-width: 38ch; font-size: 20px; line-height: 1.4; color: var(--muted); }
+.tn-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.tn-actions .s-btn { min-height: 54px; padding: 0 24px; border-radius: 999px; font-size: 17px; }
+.tn-covers { margin: 0; font-size: 15px; color: var(--muted); }
+.tn-hero-photo { aspect-ratio: 5 / 4; overflow: hidden; border-radius: 28px; }
+
+.tn-sec { display: grid; gap: 20px; padding-block: 64px 0; }
+.tn-h2 { margin: 0; font-size: clamp(32px, 5cqi, 54px); font-weight: 750; letter-spacing: -0.03em; line-height: 1.02; }
+.tn-h3 { margin: 0 0 8px; font-size: 26px; font-weight: 700; }
+.tn-services { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.tn-service { display: grid; grid-template-columns: 76px 1fr auto; align-items: center; gap: 16px; padding: 12px; border-radius: 22px; background: #fff; box-shadow: 0 1px 0 var(--line); text-decoration: none; transition: transform 200ms var(--ease-out), box-shadow 200ms ease; }
+.tn-service-photo { width: 76px; height: 76px; overflow: hidden; border-radius: 16px; }
+.tn-service-photo .s-ph-mono { font-size: 22px; }
+.tn-service-photo .s-ph-tag { display: none; }
+.tn-service-text { display: grid; gap: 4px; min-width: 0; }
+.tn-service-text strong { font-size: 20px; font-weight: 700; }
+.tn-service-text > span:not(.tn-chips) { color: var(--muted); font-size: 15px; }
+.tn-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tn-chips span { padding: 3px 10px; border-radius: 999px; background: var(--sand); font-size: 13px; font-weight: 600; }
+.tn-chips span:first-child { background: var(--accent); color: var(--on-accent); }
+.tn-go { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--sand); }
+
+.tn-steps { display: grid; gap: 10px; margin: 16px 0 0; padding: 0; list-style: none; }
+.tn-steps li { display: grid; grid-template-columns: auto 1fr; column-gap: 14px; align-items: center; padding: 16px; border-radius: 20px; background: var(--sand); }
+.tn-steps strong { font-size: 17px; }
+.tn-steps li > span:last-child { grid-column: 2; color: var(--muted); font-size: 15px; }
+.tn-step-icon { grid-row: span 2; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: #fff; color: var(--accent); }
+
+.tn-where { display: grid; gap: 14px; padding: 28px 24px; border-radius: 28px; background: color-mix(in oklab, var(--accent) 12%, var(--paper)); }
+.tn-place { margin: 0; font-size: 20px; }
+.tn-areas { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.tn-areas li { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: #fff; font-weight: 600; font-size: 15px; }
+.tn-hours-card { padding: 24px; border-radius: 28px; background: #fff; box-shadow: 0 1px 0 var(--line); }
+.tn-hours div { border-bottom: 1px solid var(--line); }
+.tn-hours [data-today] { color: var(--accent); font-weight: 700; }
+.tn-team { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 0; padding: 0; list-style: none; }
+.tn-team li { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.tn-face { display: block; width: 120px; height: 120px; overflow: hidden; border-radius: 50%; }
+.tn-face .s-ph-mono { font-size: 34px; }
+.tn-face .s-ph-tag { display: none; }
+.tn-team small { color: var(--muted); }
+.tn-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tn-gallery figure { margin: 0; aspect-ratio: 1; overflow: hidden; border-radius: 20px; }
+.tn-about { margin: 0; max-width: 32ch; font-size: clamp(26px, 4cqi, 38px); font-weight: 600; line-height: 1.2; }
+.tn-faqs .s-faq { border-bottom: 1px solid var(--line); }
+.tn-foot { margin-top: 72px; background: var(--ink); color: var(--paper); }
+.tn-foot-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-block: 32px; }
+.tn-foot strong { font-size: 28px; }
+.tn-foot .s-btn { border-radius: 999px; }
+
+@media (hover: hover) and (pointer: fine) {
+  .tn-service:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -18px rgba(29, 43, 42, .45); }
+  .tn-head nav a:hover { color: var(--ink); }
+}
+
+@container site (min-width: 760px) {
+  .tn-head nav { display: flex; gap: 22px; font-size: 15px; font-weight: 600; }
+  .tn-head nav a { color: var(--muted); text-decoration: none; }
+  .tn-phone span { display: inline; }
+  .tn-hero { grid-template-columns: 1.1fr 1fr; align-items: center; gap: 48px; padding-block: 40px 16px; }
+  .tn-steps { grid-template-columns: repeat(3, 1fr); }
+  .tn-team { grid-template-columns: repeat(4, 1fr); }
+}

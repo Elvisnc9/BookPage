@@ -1,0 +1,120 @@
+/* Website templates: what every template shares. Each template's own look lives
+   in templates/<name>.css, scoped under .t-<name>. Breakpoints are container
+   queries on .site, so a template lays out by the width it's given: the full
+   window on the live page, the scaled canvas in the onboarding preview. */
+@import '@fontsource-variable/bodoni-moda/index.css';
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/bricolage-grotesque/index.css';
+
+.site {
+  container: site / inline-size;
+  --font-body: var(--font-sans);
+  --on-accent: #fff;
+  --paper: #fff;
+  --ink: #141210;
+  --muted: #6B645E;
+  --line: #E4DED7;
+  position: relative;
+  min-height: 100%;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-tap-highlight-color: transparent;
+  overflow-wrap: break-word;
+}
+.site[data-font='grotesk'] { --font-display: 'Geist Variable', 'Helvetica Neue', Arial, sans-serif; --display-stretch: 100%; }
+.site[data-font='didone'] { --font-display: 'Bodoni Moda Variable', 'Didot', 'Bodoni 72', Georgia, serif; --display-stretch: 100%; }
+.site[data-font='condensed'] { --font-display: 'Archivo Variable', 'Arial Narrow', sans-serif; --display-stretch: 68%; }
+.site[data-font='soft'] { --font-display: 'Bricolage Grotesque Variable', 'Geist Variable', sans-serif; --display-stretch: 100%; }
+.site[data-font='mono'] { --font-display: 'Geist Mono Variable', ui-monospace, monospace; --display-stretch: 100%; }
+
+:where(.site) a { color: inherit; }
+:where(.site) img { display: block; max-width: 100%; }
+.site :where(a, button, summary):focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+:where(.site) :where(a, summary) { touch-action: manipulation; }
+
+.s-wrap { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: 20px; }
+@container site (min-width: 760px) { .s-wrap { padding-inline: 40px; } }
+.s-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.s-display { font-family: var(--font-display); font-stretch: var(--display-stretch); }
+
+/* Buttons every template restyles: an accent fill with readable text. */
+.s-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 20px; border: 1.5px solid transparent;
+  font: inherit; font-weight: 600; text-decoration: none; white-space: nowrap;
+  user-select: none; -webkit-user-select: none;
+  transition: transform 140ms var(--ease-out), background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+.s-btn:active { transform: scale(.97); }
+.s-btn-accent { background: var(--accent); color: var(--on-accent); }
+.s-btn-line { border-color: currentColor; }
+
+/* Photos and their fallbacks. */
+.s-img { width: 100%; height: 100%; object-fit: cover; }
+.s-ph {
+  position: relative; display: grid; place-items: center; overflow: hidden;
+  width: 100%; height: 100%;
+  background: color-mix(in oklab, var(--accent) 34%, var(--paper));
+  color: color-mix(in oklab, var(--accent), var(--ink) 55%);
+}
+.s-ph[data-tint='1'] { background: color-mix(in oklab, var(--accent) 22%, var(--paper)); }
+.s-ph[data-tint='2'] { background: color-mix(in oklab, var(--accent) 48%, var(--paper)); }
+.s-ph[data-tint='3'] { background: color-mix(in oklab, var(--accent) 28%, var(--ink) 8%); }
+.s-ph[data-tint='4'] { background: color-mix(in oklab, var(--accent) 16%, var(--paper)); }
+.s-ph[data-tint='5'] { background: color-mix(in oklab, var(--accent) 40%, var(--ink) 6%); }
+.s-ph-mono { font-family: var(--font-display); font-stretch: var(--display-stretch); font-size: clamp(40px, 9cqi, 120px); font-weight: 800; letter-spacing: -0.04em; opacity: .55; }
+
+/* Preview-only markers. They never render on a live page (mode = live). */
+.s-ph-tag {
+  position: absolute; left: 10px; bottom: 10px; z-index: 2;
+  padding: 4px 8px; border: 1.5px dashed #141210; border-radius: 4px;
+  background: #FFF8E6; color: #141210;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .06em; line-height: 1.3; text-transform: uppercase;
+  white-space: nowrap; pointer-events: none;
+}
+.s-hint, .s-hint-inline {
+  color: color-mix(in oklab, currentColor 55%, transparent);
+  text-decoration: underline dashed 1px;
+  text-underline-offset: .2em;
+}
+.s-hint { margin: 0; font-style: italic; }
+
+/* Logo */
+.s-logo {
+  display: inline-grid; place-items: center; flex: none; overflow: hidden;
+  width: 40px; height: 40px; border-radius: 8px;
+  background: var(--accent); color: var(--on-accent);
+  font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+}
+.s-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+/* Hours, contact, FAQ: structure here, look in each template. */
+.s-hours { display: grid; margin: 0; }
+.s-hours div { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; }
+.s-hours dt, .s-hours dd { margin: 0; }
+.s-hours dd { text-align: right; font-variant-numeric: tabular-nums; }
+.s-hours [data-closed] dd { opacity: .6; }
+.s-contact { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.s-contact li { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.s-contact svg { flex: none; }
+.s-contact a { overflow-wrap: anywhere; }
+.s-faqs { display: grid; gap: 0; }
+.s-faq summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  min-height: 56px; padding: 14px 0; list-style: none; cursor: pointer; font-weight: 600;
+}
+.s-faq summary::-webkit-details-marker { display: none; }
+.s-faq summary svg { flex: none; transition: rotate 200ms var(--ease-out); }
+.s-faq[open] summary svg { rotate: 45deg; }
+.s-faq p { margin: 0; padding: 0 0 18px; max-width: 62ch; opacity: .8; }
+.s-made { margin: 0; padding: 18px 20px 28px; text-align: center; }
+.s-made a { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; opacity: .7; }
+
+@media (hover: hover) and (pointer: fine) {
+  .s-btn-accent:hover { background: color-mix(in oklab, var(--accent), var(--ink) 14%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site *, .site *::before, .site *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

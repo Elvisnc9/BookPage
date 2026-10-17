@@ -15,6 +15,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // /_astro, /_image, /_server-islands etc. are framework internals.
   if (pathname.startsWith('/_')) return next();
+  // Uploaded images are public and served the same on every host.
+  if (pathname.startsWith('/media/')) return next();
 
   const site = resolveSite(context.url.hostname, ROOT_DOMAIN, APP_HOST);
   const rest = pathname === '/' ? '' : pathname;

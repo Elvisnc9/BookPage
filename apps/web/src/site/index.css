@@ -1,0 +1,13 @@
+/* Every template's styles, for the booking page and the onboarding preview alike. */
+@import './site.css';
+@import '../styles/booking.css';
+@import './templates/billboard.css';
+@import './templates/quiet.css';
+@import './templates/journal.css';
+@import './templates/carte.css';
+@import './templates/shelf.css';
+@import './templates/neighbour.css';
+@import './templates/noir.css';
+@import './templates/pulse.css';
+@import './templates/folio.css';
+@import './templates/practice.css';

@@ -1,5 +1,7 @@
-/* Booking page template: warm off-white, peach accent, black buttons.
-   Mobile-first, server-rendered, no JavaScript (details/summary and links only). */
+/* Classic template and the booking flow: warm off-white, peach accent, black buttons.
+   Mobile-first, server-rendered, no JavaScript (details/summary and links only).
+   Breakpoints are container queries on .bk, so the same page lays out correctly
+   full-width on a phone, on a desktop, and scaled down inside the onboarding preview. */
 
 .bk {
   --bg: #F7F3EE;
@@ -9,13 +11,15 @@
   --ink-soft: #3B3632;
   --muted: #736B64;
   --line: #E6DED6;
-  --peach: #F09C84;
-  --peach-deep: #E07F64;
-  --peach-soft: #FBE6DE;
+  /* The owner's brand colour (theme accent) drives the peach family; Classic's default is #F09C84. */
+  --peach: var(--accent, #F09C84);
+  --peach-deep: color-mix(in oklab, var(--peach), #000 12%);
+  --peach-soft: color-mix(in oklab, var(--peach) 22%, #fff);
   --ok: #3E9B6B;
   --r-card: 12px;
   --shadow-card: 0 1px 2px rgba(40, 24, 12, .05), 0 8px 24px -12px rgba(40, 24, 12, .18);
 
+  container: bk / inline-size;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -53,7 +57,7 @@ body:has(> .bk) { background: #F7F3EE; }
   text-transform: uppercase;
   color: var(--muted);
 }
-.bk-h2 { margin: 0; font-size: clamp(30px, 7.5vw, 44px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; text-wrap: balance; }
+.bk-h2 { font-family: var(--font-display, inherit); margin: 0; font-size: clamp(30px, 7.5cqi, 44px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; text-wrap: balance; }
 .bk-lede { margin: 0; color: var(--muted); font-size: 15px; max-width: 46ch; }
 .bk-note { margin: 0; font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .bk-link {
@@ -122,7 +126,7 @@ body:has(> .bk) { background: #F7F3EE; }
 .bk-hero-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(20, 12, 8, .65) 100%); }
 .bk-hero-mono {
   position: absolute; right: -4%; top: 2%;
-  font-size: clamp(180px, 62vw, 420px); font-weight: 900; line-height: .8; letter-spacing: -0.06em;
+  font-size: clamp(180px, 62cqi, 420px); font-weight: 900; line-height: .8; letter-spacing: -0.06em;
   color: transparent; -webkit-text-stroke: 1.5px rgba(255, 255, 255, .28);
   user-select: none;
 }
@@ -131,7 +135,8 @@ body:has(> .bk) { background: #F7F3EE; }
 .bk-hero .bk-kicker { color: rgba(255, 255, 255, .8); }
 .bk-name {
   --outline: #fff;
-  margin: 0; font-size: clamp(56px, 17vw, 132px); font-weight: 900; letter-spacing: -0.055em; line-height: .86;
+  font-family: var(--font-display, inherit);
+  margin: 0; font-size: clamp(56px, 17cqi, 132px); font-weight: 900; letter-spacing: -0.055em; line-height: .86;
   overflow-wrap: anywhere;
 }
 .bk-outline {
@@ -350,7 +355,7 @@ body:has(> .bk) { background: #F7F3EE; }
 .bk-panel { display: grid; gap: 22px; padding: 20px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
 .bk-step { display: grid; gap: 12px; }
 .bk-step-title { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.025em; }
-.bk-flow-title { margin: 0; font-size: clamp(30px, 8vw, 40px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+.bk-flow-title { margin: 0; font-size: clamp(30px, 8cqi, 40px); font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
 
 .bk-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .bk-chips .chip {
@@ -427,7 +432,7 @@ textarea.bk-input { resize: vertical; }
 
 /* ─── Wider screens ──────────────────────────────────────────────────── */
 
-@media (min-width: 640px) {
+@container bk (min-width: 640px) {
   .bk-wrap { padding: 0 24px; }
   .bk-cards { grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .bk-perks { grid-template-columns: repeat(2, 1fr); }
@@ -442,7 +447,7 @@ textarea.bk-input { resize: vertical; }
   .bk-flow { padding-top: 32px; }
 }
 
-@media (min-width: 900px) {
+@container bk (min-width: 900px) {
   .bk-wrap { padding: 0 32px; }
   .bk-head { position: sticky; top: 0; backdrop-filter: blur(10px); }
   .bk-head-in { min-height: 72px; gap: 28px; }
@@ -465,11 +470,11 @@ textarea.bk-input { resize: vertical; }
     mask-image: linear-gradient(90deg, transparent 0, #000 45%);
   }
   .bk-hero-art::after { background: linear-gradient(180deg, transparent 60%, rgba(20, 12, 8, .25)); }
-  .bk-hero-mono { right: 4%; top: 50%; translate: 0 -50%; font-size: clamp(300px, 34vw, 480px); }
+  .bk-hero-mono { right: 4%; top: 50%; translate: 0 -50%; font-size: clamp(300px, 34cqi, 480px); }
   .bk-hero-in { grid-template-columns: minmax(0, 1fr) auto; align-items: end; min-height: 560px; padding-top: 72px; padding-bottom: 36px; }
   .bk-hero-copy { align-self: center; max-width: 560px; }
   .bk-hero .bk-kicker { color: var(--muted); }
-  .bk-name { --outline: var(--ink); font-size: clamp(84px, 9.5vw, 136px); }
+  .bk-name { --outline: var(--ink); font-size: clamp(84px, 9.5cqi, 136px); }
   .bk-tagline { color: var(--ink-soft); font-size: 18px; }
   .bk-stack span { border-color: var(--bg); }
   .bk-hero .bk-hero-actions { display: flex; }
@@ -525,4 +530,30 @@ textarea.bk-input { resize: vertical; }
   .bk-foot-in { grid-template-columns: auto 1fr auto; justify-items: stretch; align-items: center; text-align: left; }
   .bk-foot-nav { justify-content: center; }
   .bk-made { text-align: right; max-width: 1200px; margin: 0 auto; padding: 0 32px 28px; }
+}
+
+/* ─── Classic as a template: uploaded photos and the gallery ────────────── */
+
+.bk-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bk-hero-art:has(.bk-hero-photo)::after { background: linear-gradient(180deg, rgba(20, 12, 8, .15) 20%, rgba(20, 12, 8, .72) 100%); }
+.bk-hero-tag { left: auto; right: 16px; bottom: 16px; }
+.bk-svc-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+.bk-svc-tag { left: 10px; bottom: auto; top: 44px; }
+.bk-cta-photo { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; }
+img.bk-thumb, img.bk-avatar { object-fit: cover; }
+.bk-stack span { overflow: hidden; }
+.bk-stack img { width: 100%; height: 100%; object-fit: cover; }
+.bk-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 6px 0 0; padding: 0; list-style: none; }
+.bk-gallery li { aspect-ratio: 4 / 5; overflow: hidden; border-radius: 10px; }
+.bk-gallery li:first-child { grid-column: 1 / -1; aspect-ratio: 16 / 10; }
+.bk-faqs .s-faq { background: var(--card); border: 1px solid var(--line); border-radius: 10px; }
+.bk-faqs .s-faq summary { padding: 12px 16px; font-size: 15px; }
+.bk-faqs .s-faq p { padding: 0 16px 16px; color: var(--muted); font-size: 15px; opacity: 1; }
+
+@container bk (min-width: 900px) {
+  .bk-hero-art:has(.bk-hero-photo)::after { background: linear-gradient(90deg, var(--bg) 0, rgba(247, 243, 238, 0) 38%); }
+  .bk-hero:has(.bk-hero-photo) .bk-hero-art { -webkit-mask-image: none; mask-image: none; }
+  .bk-gallery { grid-template-columns: 2fr 1fr 1fr; grid-auto-rows: 220px; }
+  .bk-gallery li, .bk-gallery li:first-child { aspect-ratio: auto; }
+  .bk-gallery li:first-child { grid-column: auto; grid-row: span 2; }
 }

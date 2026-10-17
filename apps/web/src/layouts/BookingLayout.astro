@@ -1,8 +1,8 @@
 ---
-import type { PublicBusiness } from '@bookpage/shared';
+import { onAccent, type PublicBusiness } from '@bookpage/shared';
 import Base from './Base.astro';
 import Icon from '../components/booking/Icon.astro';
-import '../styles/booking.css';
+import '../site/index.css';
 import { initials } from '../lib/public';
 
 interface Props {
@@ -18,6 +18,8 @@ interface Props {
 }
 
 const { business: b, title, description, bar = true, nav = [], noReferrer = false } = Astro.props;
+// The booking flow wears the business's brand colour and display font, whatever its template.
+const theme = `--accent: ${b.site.theme.accent}; --on-accent: ${onAccent(b.site.theme.accent)}`;
 const whatsapp = b.whatsapp ? `https://wa.me/${b.whatsapp.replace(/\D/g, '')}` : null;
 const contacts = [
   whatsapp && { href: whatsapp, label: 'WhatsApp', icon: 'chat' as const },
@@ -28,12 +30,12 @@ const contacts = [
 
 <Base title={title} description={description}>
   {noReferrer && <meta slot="head" name="referrer" content="no-referrer" />}
-  <div class="bk">
+  <div class="bk site" data-font={b.site.theme.font} style={theme}>
     <header class="bk-head" data-flow={!bar || undefined}>
       <div class="bk-wrap bk-head-in">
         <a class="bk-brand" href="/">
           <span class="bk-logo" aria-hidden="true">
-            {b.logoUrl ? <img src={b.logoUrl} alt="" width="36" height="36" /> : initials(b.name)}
+            {b.logo ? <img src={b.logo.url} alt="" width="36" height="36" /> : initials(b.name)}
           </span>
           <span class="bk-brand-name">{b.name}</span>
         </a>
@@ -65,7 +67,7 @@ const contacts = [
       <div class="bk-wrap bk-foot-in">
         <a class="bk-brand" href="/">
           <span class="bk-logo" aria-hidden="true">
-            {b.logoUrl ? <img src={b.logoUrl} alt="" width="36" height="36" /> : initials(b.name)}
+            {b.logo ? <img src={b.logo.url} alt="" width="36" height="36" /> : initials(b.name)}
           </span>
           <span class="bk-brand-name">{b.name}</span>
         </a>
