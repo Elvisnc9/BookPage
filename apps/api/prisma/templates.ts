@@ -6,6 +6,7 @@
 // Each slug must have a renderer in apps/web/src/site/registry.ts. Rows are
 // data only: section order, display options, default colours and fonts.
 import type { LayoutConfig, SiteSection, SiteTheme, TemplateGroup } from '@bookpage/shared';
+import type { Prisma } from '../src/generated/prisma/client';
 
 export interface CatalogueEntry {
   id: string;
@@ -146,8 +147,9 @@ export const toRow = (t: CatalogueEntry, position: number) => ({
   isActive: true,
   isPremium: t.isPremium ?? false,
   supportedSections: t.supportedSections,
-  defaultTheme: t.defaultTheme,
-  layoutConfiguration: t.layout,
+  // Plain JSON values for Prisma's Json columns.
+  defaultTheme: { ...t.defaultTheme } satisfies Prisma.InputJsonObject,
+  layoutConfiguration: JSON.parse(JSON.stringify(t.layout)) as Prisma.InputJsonObject,
   schemaVersion: 1,
   position,
 });

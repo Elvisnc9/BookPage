@@ -133,8 +133,12 @@ describe('choosing a template during onboarding', () => {
     expect(themed.site.template.layout).toEqual(bySlug('noir').layout);
     expect(themed.site.theme).toEqual({ accent: '#2F55D4', font: bySlug('noir').defaultTheme.font });
 
-    const font = biz((await call('PATCH', '/business', { theme: { font: 'mono' } })).json);
+    const font = biz((await call('PATCH', '/business', { theme: { accent: '#2f55d4', font: 'mono' } })).json);
     expect(font.theme).toEqual({ accent: '#2f55d4', font: 'mono' });
+    // Leaving a key out goes back to the template's default.
+    const reset = biz((await call('PATCH', '/business', { theme: { font: 'mono' } })).json);
+    expect(reset.site.theme).toEqual({ accent: bySlug('noir').defaultTheme.accent, font: 'mono' });
+    await call('PATCH', '/business', { theme: { accent: '#2f55d4', font: 'mono' } });
 
     expect((await call('PATCH', '/business', { theme: { layout: 'menu' } })).status).toBe(400);
   });

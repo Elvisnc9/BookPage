@@ -60,15 +60,15 @@ export class BusinessService {
 
   /** Autosaves profile fields, creating the draft business on the first save. */
   async patch(ownerId: string, patch: BusinessPatch): Promise<OwnerBusiness> {
-    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true, theme: true } });
+    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true } });
     const data = normalise(patch, patch.country ?? existing?.country ?? 'US');
 
     // Only offered, valid templates can be picked; a stale or made-up id is a field error, never a silent swap.
     if (patch.templateId !== undefined && !(await this.templates.findSelectable(patch.templateId))) {
       throw new BadRequestException({ message: 'Invalid request', issues: [{ path: 'templateId', message: "That template isn't available. Pick another." }] });
     }
-    // Theme is a patch too: changing the colour keeps the font, and neither touches the layout.
-    if (patch.theme) data.theme = { ...asObject(existing?.theme), ...patch.theme };
+    // The theme is the owner's whole set of overrides (a key left out means "the template's default"); it never touches the layout.
+    if (patch.theme) data.theme = patch.theme;
 
     if (existing) {
       await this.prisma.business.update({ where: { id: existing.id }, data });
@@ -227,7 +227,7 @@ async function relinkStaff(tx: Tx, businessId: string) {
 function normalise(patch: BusinessPatch, country: string): Prisma.BusinessUpdateInput {
   const data: Prisma.BusinessUpdateInput = { ...patch };
 
-  // The theme is merged with what's stored by the caller; the template id is checked there too.
+  // The caller sets the theme and checks the template id.
   delete data.theme;
   for (const key of ['phone', 'whatsapp'] as const) {
     const value = patch[key];
@@ -260,8 +260,6 @@ function isTimeZone(zone: string): boolean {
     return false;
   }
 }
-
-const asObject = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
 
 function toOwnerView(b: BusinessWithView, site: ResolvedSite): OwnerBusiness {
   const rules = b.bookingRules!;
