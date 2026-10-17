@@ -73,7 +73,7 @@ export function Classic({ site }: { site: SiteModel }) {
           <div class="bk-wrap bk-hero-in">
             <div class="bk-hero-copy">
               {site.area && <p class="bk-kicker">{site.area}</p>}
-              <h1 id="name" class="bk-name">
+              <h1 id="name" class="bk-name" data-length={site.nameLength}>
                 {!site.hasName ? <Name site={site} /> : rest.length ? <>{firstWord} <span class="bk-outline">{rest.join(' ')}</span></> : site.name}
               </h1>
               {site.tagline ? <p class="bk-tagline">{site.tagline}</p> : <Hint site={site}>Your one-line description appears here.</Hint>}

@@ -92,3 +92,7 @@
   .tb-team { grid-template-columns: repeat(4, 1fr); }
   .tb-split { grid-template-columns: 1.2fr 1fr; gap: 64px; }
 }
+
+/* Long names step down rather than break mid-word. */
+.tb-name[data-length='medium'] { font-size: clamp(52px, 12cqi, 170px); }
+.tb-name[data-length='long'] { font-size: clamp(40px, 8.5cqi, 120px); overflow-wrap: break-word; hyphens: auto; }

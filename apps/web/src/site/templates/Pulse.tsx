@@ -104,7 +104,7 @@ export function Pulse({ site }: { site: SiteModel }) {
       <main>
         <section class="tp-hero s-wrap" aria-labelledby="tp-name">
           <div class="tp-hero-copy">
-            <h1 id="tp-name" class="tp-name s-display">
+            <h1 id="tp-name" class="tp-name s-display" data-length={site.nameLength}>
               {site.hasName ? words.map((w) => <span>{w}</span>) : <Name site={site} />}
             </h1>
             {site.tagline ? <p class="tp-tagline">{site.tagline}</p> : <Hint site={site}>Your one-line description appears here.</Hint>}

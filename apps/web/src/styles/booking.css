@@ -557,3 +557,7 @@ img.bk-thumb, img.bk-avatar { object-fit: cover; }
   .bk-gallery li, .bk-gallery li:first-child { aspect-ratio: auto; }
   .bk-gallery li:first-child { grid-column: auto; grid-row: span 2; }
 }
+
+/* Long names step down rather than break mid-word. */
+.bk-name[data-length='medium'] { font-size: clamp(44px, 12cqi, 104px); }
+.bk-name[data-length='long'] { font-size: clamp(36px, 9cqi, 84px); overflow-wrap: break-word; hyphens: auto; }

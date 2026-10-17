@@ -61,6 +61,8 @@ export interface SiteModel {
   layout: LayoutConfig;
 
   name: string;
+  /** How long the name's longest word is: poster-type templates step the size down for long ones. */
+  nameLength: 'short' | 'medium' | 'long';
   /** False in the preview before the owner has typed a name. */
   hasName: boolean;
   initials: string;
@@ -161,6 +163,7 @@ export function buildSite(b: PublicBusiness, mode: SiteMode, now = new Date()): 
     theme: b.site.theme,
     layout: b.site.template.layout,
     name: name || 'Your business',
+    nameLength: nameLength(name || 'Your business'),
     hasName: !!name,
     initials: initials(name || 'Your business'),
     categoryLabel: category?.label ?? null,
@@ -224,6 +227,11 @@ export function navFor(site: SiteModel, labels: Partial<Record<SiteSection, stri
   return site.layout.sections
     .filter((s) => s !== 'hours' && shows(site, s))
     .map((s) => ({ href: `#${s}`, label: labels[s] ?? defaults[s] }));
+}
+
+function nameLength(name: string): SiteModel['nameLength'] {
+  const longest = Math.max(...name.split(/\s+/).map((w) => [...w].length));
+  return longest > 11 || name.length > 26 ? 'long' : longest > 7 || name.length > 16 ? 'medium' : 'short';
 }
 
 export const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

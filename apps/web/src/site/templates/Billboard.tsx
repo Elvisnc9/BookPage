@@ -109,7 +109,7 @@ export function Billboard({ site }: { site: SiteModel }) {
           </div>
           <div class="s-wrap tb-hero-in">
             {site.area && <p class="tb-area">{site.area}</p>}
-            <h1 id="tb-name" class="tb-name s-display"><Name site={site} /></h1>
+            <h1 id="tb-name" class="tb-name s-display" data-length={site.nameLength}><Name site={site} /></h1>
             {site.tagline ? <p class="tb-tagline">{site.tagline}</p> : <Hint site={site}>Your one-line description appears here.</Hint>}
             <div class="tb-actions">
               <a class="s-btn s-btn-accent" href="#services">{site.cta} <Icon name="arrow" size={18} /></a>

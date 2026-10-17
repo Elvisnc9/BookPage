@@ -73,3 +73,7 @@
   .tp-gallery { grid-template-columns: repeat(4, 1fr); }
 }
 .tp-mins small { margin-left: 6px; font-size: 18px; font-weight: 700; text-transform: uppercase; }
+
+/* Long names step down rather than break mid-word. */
+.tp-name[data-length='medium'] { font-size: clamp(56px, 10.5cqi, 150px); }
+.tp-name[data-length='long'] { font-size: clamp(44px, 7.5cqi, 110px); overflow-wrap: break-word; hyphens: auto; }
