@@ -1,5 +1,7 @@
-import { Body, Controller, Get, HttpCode, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import {
+  MEDIA_MAX_BYTES,
   type BusinessPatch,
   businessPatchSchema,
   type HoursInput,
@@ -15,6 +17,7 @@ import {
 import { CurrentAuth, SessionGuard } from '../auth/session.guard';
 import type { SessionUser } from '../auth/session.service';
 import { ZodPipe } from '../common/zod.pipe';
+import { readBody } from '../site/media';
 import { BusinessService } from './business.service';
 
 /** The signed-in owner's business. Used by onboarding (autosave) and the dashboard. */
@@ -51,6 +54,26 @@ export class BusinessController {
   @Patch('rules')
   rules(@CurrentAuth() auth: SessionUser, @Body(new ZodPipe(rulesPatchSchema)) body: RulesPatch) {
     return this.business.patchRules(auth.userId, body);
+  }
+
+  /** Raw image body, already resized in the browser. `kind` picks the slot; `targetId` the service or person. */
+  @Post('media')
+  @HttpCode(200)
+  async upload(
+    @CurrentAuth() auth: SessionUser,
+    @Req() req: Request,
+    @Query('kind') kind = '',
+    @Query('targetId') targetId?: string,
+    @Query('width') width?: string,
+    @Query('height') height?: string,
+  ) {
+    const bytes = await readBody(req, MEDIA_MAX_BYTES);
+    return this.business.uploadMedia(auth.userId, { kind, targetId, width: Number(width) || undefined, height: Number(height) || undefined, bytes });
+  }
+
+  @Delete('media/:id')
+  removeMedia(@CurrentAuth() auth: SessionUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.business.removeMedia(auth.userId, id);
   }
 
   @Get('slug-available')

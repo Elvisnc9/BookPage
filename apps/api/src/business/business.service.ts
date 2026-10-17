@@ -2,6 +2,9 @@ import { randomBytes } from 'node:crypto';
 import { BadRequestException, ConflictException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   type BusinessPatch,
+  CLASSIC_FALLBACK,
+  type ResolvedSite,
+  siteThemePatchSchema,
   customerFieldsSchema,
   type HoursInput,
   isValidSlug,
@@ -14,6 +17,9 @@ import {
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min';
 import { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MEDIA_META, mediaSlots } from '../site/media';
+import { MediaService, type UploadInput } from '../site/media.service';
+import { SiteTemplatesService } from '../site/site-templates.service';
 
 type Tx = Prisma.TransactionClient;
 
@@ -25,6 +31,8 @@ const OWNER_VIEW = {
   services: { where: { archivedAt: null }, orderBy: { position: 'asc' } },
   staff: { where: { archivedAt: null }, orderBy: { position: 'asc' } },
   bookingRules: true,
+  template: true,
+  media: MEDIA_META,
 } satisfies Prisma.BusinessInclude;
 
 type BusinessWithView = Prisma.BusinessGetPayload<{ include: typeof OWNER_VIEW }>;
@@ -35,7 +43,11 @@ type BusinessWithView = Prisma.BusinessGetPayload<{ include: typeof OWNER_VIEW }
  */
 @Injectable()
 export class BusinessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly templates: SiteTemplatesService,
+    private readonly media: MediaService,
+  ) {}
 
   async get(ownerId: string): Promise<OwnerBusiness | null> {
     const business = await this.prisma.business.findFirst({
@@ -43,13 +55,20 @@ export class BusinessService {
       orderBy: { createdAt: 'asc' },
       include: OWNER_VIEW,
     });
-    return business && toOwnerView(business);
+    return business && toOwnerView(business, await this.templates.resolve(business.template, business.theme));
   }
 
   /** Autosaves profile fields, creating the draft business on the first save. */
   async patch(ownerId: string, patch: BusinessPatch): Promise<OwnerBusiness> {
-    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true } });
+    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true, theme: true } });
     const data = normalise(patch, patch.country ?? existing?.country ?? 'US');
+
+    // Only offered, valid templates can be picked; a stale or made-up id is a field error, never a silent swap.
+    if (patch.templateId !== undefined && !(await this.templates.findSelectable(patch.templateId))) {
+      throw new BadRequestException({ message: 'Invalid request', issues: [{ path: 'templateId', message: "That template isn't available. Pick another." }] });
+    }
+    // Theme is a patch too: changing the colour keeps the font, and neither touches the layout.
+    if (patch.theme) data.theme = { ...asObject(existing?.theme), ...patch.theme };
 
     if (existing) {
       await this.prisma.business.update({ where: { id: existing.id }, data });
@@ -139,13 +158,16 @@ export class BusinessService {
     if (!business) throw new NotFoundException('Set up your business first');
 
     const issues = publishIssues(business);
+    if (business.site.notice) issues.unshift({ step: 1, message: 'Pick one of the available templates' });
     if (issues.length) throw new UnprocessableEntityException({ message: 'Not ready to publish', issues });
     if (!(await this.slugAvailable(ownerId, slug))) throw new ConflictException('That address is taken');
 
+    // Publishing pins the template the preview showed: Classic when nothing was picked.
+    const templateId = business.site.template.id === CLASSIC_FALLBACK.id ? business.templateId : business.site.template.id;
     try {
       await this.prisma.business.update({
         where: { id: business.id },
-        data: { slug, onboardingStep: 5, publishedAt: business.publishedAt ?? new Date() },
+        data: { slug, templateId, onboardingStep: 5, publishedAt: business.publishedAt ?? new Date() },
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -153,6 +175,16 @@ export class BusinessService {
       }
       throw error;
     }
+    return (await this.get(ownerId))!;
+  }
+
+  async uploadMedia(ownerId: string, input: UploadInput): Promise<OwnerBusiness> {
+    await this.media.upload(await this.requireId(ownerId), input);
+    return (await this.get(ownerId))!;
+  }
+
+  async removeMedia(ownerId: string, mediaId: string): Promise<OwnerBusiness> {
+    await this.media.remove(await this.requireId(ownerId), mediaId);
     return (await this.get(ownerId))!;
   }
 
@@ -195,16 +227,20 @@ async function relinkStaff(tx: Tx, businessId: string) {
 function normalise(patch: BusinessPatch, country: string): Prisma.BusinessUpdateInput {
   const data: Prisma.BusinessUpdateInput = { ...patch };
 
-  if (patch.phone !== undefined) {
-    if (!patch.phone) {
-      data.phone = null;
-    } else {
-      const parsed = parsePhoneNumberFromString(patch.phone, country as CountryCode);
-      if (!parsed?.isValid()) {
-        throw new BadRequestException({ message: 'Invalid request', issues: [{ path: 'phone', message: 'Enter a valid phone number' }] });
-      }
-      data.phone = parsed.number;
+  // The theme is merged with what's stored by the caller; the template id is checked there too.
+  delete data.theme;
+  for (const key of ['phone', 'whatsapp'] as const) {
+    const value = patch[key];
+    if (value === undefined) continue;
+    if (!value) {
+      data[key] = null;
+      continue;
     }
+    const parsed = parsePhoneNumberFromString(value, country as CountryCode);
+    if (!parsed?.isValid()) {
+      throw new BadRequestException({ message: 'Invalid request', issues: [{ path: key, message: 'Enter a valid phone number' }] });
+    }
+    data[key] = parsed.number;
   }
   if (patch.email !== undefined) data.email = patch.email ? patch.email.toLowerCase() : null;
   for (const key of ['description', 'addressLine1', 'addressLine2', 'city', 'region', 'postalCode'] as const) {
@@ -225,8 +261,12 @@ function isTimeZone(zone: string): boolean {
   }
 }
 
-function toOwnerView(b: BusinessWithView): OwnerBusiness {
+const asObject = (v: unknown): Record<string, unknown> => (v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {});
+
+function toOwnerView(b: BusinessWithView, site: ResolvedSite): OwnerBusiness {
   const rules = b.bookingRules!;
+  const media = mediaSlots(b.media);
+  const theme = siteThemePatchSchema.safeParse(b.theme);
   return {
     id: b.id,
     slug: b.slug,
@@ -242,12 +282,19 @@ function toOwnerView(b: BusinessWithView): OwnerBusiness {
     country: b.country,
     serviceAreas: b.serviceAreas,
     phone: b.phone,
+    whatsapp: b.whatsapp,
     email: b.email,
     timezone: b.timezone,
     currency: b.currency,
-    template: b.template,
+    templateId: b.templateId,
+    theme: theme.success ? theme.data : {},
+    site,
+    logo: media.logo,
+    hero: media.hero,
+    gallery: media.gallery,
     onboardingStep: b.onboardingStep,
     publishedAt: b.publishedAt?.toISOString() ?? null,
+    updatedAt: b.updatedAt.toISOString(),
     hours: b.hours.map(({ weekday, opensAt, closesAt }) => ({ weekday, opensAt, closesAt })),
     services: b.services.map((s) => ({
       id: s.id,
@@ -258,8 +305,9 @@ function toOwnerView(b: BusinessWithView): OwnerBusiness {
       durationMin: s.durationMin,
       bufferMin: s.bufferMin,
       bookable: s.bookable,
+      image: media.forService(s.id),
     })),
-    staff: b.staff.map((s) => ({ id: s.id, name: s.name })),
+    staff: b.staff.map((s) => ({ id: s.id, name: s.name, photo: media.forStaff(s.id) })),
     rules: {
       minNoticeMin: rules.minNoticeMin,
       windowDays: rules.windowDays,

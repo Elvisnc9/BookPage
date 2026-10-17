@@ -8,6 +8,7 @@ import {
   type PublicBooking,
   type PublicBusiness,
   type PublicDay,
+  type ResolvedSite,
 } from '@bookpage/shared';
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min';
 import { hashToken } from '../auth/session.service';
@@ -17,6 +18,8 @@ import { NotificationsService } from '../email/notifications.service';
 import { addDays, isDateString, localDate, zonedToUtc } from '@bookpage/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MEDIA_META, mediaSlots } from '../site/media';
+import { SiteTemplatesService } from '../site/site-templates.service';
 import { isSlotTaken } from '../prisma/errors';
 
 const ACTIVE = ['pending', 'confirmed'] as const;
@@ -28,6 +31,8 @@ const BUSINESS_VIEW = {
   services: { where: { archivedAt: null }, orderBy: { position: 'asc' } },
   staff: { where: { archivedAt: null }, orderBy: { position: 'asc' }, include: { services: { select: { serviceId: true } } } },
   faqs: { where: { approved: true }, orderBy: { position: 'asc' }, select: { question: true, answer: true } },
+  template: true,
+  media: MEDIA_META,
 } satisfies Prisma.BusinessInclude;
 
 type LoadedBusiness = Prisma.BusinessGetPayload<{ include: typeof BUSINESS_VIEW }>;
@@ -44,10 +49,12 @@ export class PublicService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly templates: SiteTemplatesService,
   ) {}
 
   async profile(slug: string): Promise<PublicBusiness> {
-    return toPublic(await this.load(slug));
+    const b = await this.load(slug);
+    return toPublic(b, await this.templates.resolve(b.template, b.theme));
   }
 
   async availability(slug: string, serviceId: string, staffId: string | undefined, from: string | undefined, days: number): Promise<PublicDay[]> {
@@ -259,8 +266,9 @@ export class PublicService {
 const isCancellable = (status: string, startsAt: Date) =>
   (status === 'pending' || status === 'confirmed') && startsAt.getTime() > Date.now();
 
-function toPublic(b: LoadedBusiness): PublicBusiness {
+function toPublic(b: LoadedBusiness, site: ResolvedSite): PublicBusiness {
   const rules = b.bookingRules!;
+  const media = mediaSlots(b.media);
   return {
     slug: b.slug,
     name: b.name,
@@ -277,8 +285,11 @@ function toPublic(b: LoadedBusiness): PublicBusiness {
     phone: b.phone,
     whatsapp: b.whatsapp,
     email: b.email,
-    logoUrl: b.logoUrl,
-    template: b.template,
+    logo: media.logo,
+    hero: media.hero,
+    gallery: media.gallery,
+    // Customers never see why a fallback happened; the owner app shows the notice.
+    site: { ...site, notice: null },
     timezone: b.timezone,
     currency: b.currency,
     hours: b.hours.filter((h) => h.kind === 'opening').map(({ weekday, opensAt, closesAt }) => ({ weekday, opensAt, closesAt })),
@@ -290,8 +301,9 @@ function toPublic(b: LoadedBusiness): PublicBusiness {
       priceMinor: s.priceMinor,
       durationMin: s.durationMin,
       bookable: s.bookable && s.priceType !== 'quote',
+      image: media.forService(s.id),
     })),
-    staff: b.staff.map((s) => ({ id: s.id, name: s.name, serviceIds: s.services.map((l) => l.serviceId) })),
+    staff: b.staff.map((s) => ({ id: s.id, name: s.name, serviceIds: s.services.map((l) => l.serviceId), photo: media.forStaff(s.id) })),
     faqs: b.faqs,
     booking: { windowDays: rules.windowDays, customerFields: customerFieldsSchema.parse(rules.customerFields) },
   };

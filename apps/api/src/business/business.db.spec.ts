@@ -81,7 +81,7 @@ describe('onboarding autosave', () => {
     const b = asBusiness(json);
     expect(b.slug).toMatch(/^draft-[0-9a-f]{8}$/);
     expect(b.publishedAt).toBeNull();
-    expect(b.staff).toEqual([{ id: expect.any(String), name: 'Ava' }]);
+    expect(b.staff).toEqual([{ id: expect.any(String), name: 'Ava', photo: null }]);
     expect(b.hours).toHaveLength(6);
     expect(b.rules.customerFields).toEqual({ phone: 'required', note: 'optional' });
   });
