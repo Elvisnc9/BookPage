@@ -15,6 +15,15 @@ const anchor = (id: string) => (onHome ? `#${id}` : `/#${id}`);
 ---
 
 <Base title={title} description={description}>
+  <script is:inline slot="head">
+    // Hide the hero's pieces until its entrance runs (avoids a flash of the final state).
+    // Wide screens only: phones show the hero at once (no waiting on JavaScript).
+    // Never hidden with reduced motion, and shown anyway if the motion script doesn't arrive.
+    if (matchMedia('(min-width: 960px) and (prefers-reduced-motion: no-preference)').matches) {
+      document.documentElement.classList.add('hero-motion');
+      setTimeout(function () { document.documentElement.classList.remove('hero-motion'); }, 2500);
+    }
+  </script>
   <div class="mk-page">
     <a class="mk-skip" href="#main">Skip to content</a>
     <header class="mk-w mk-header">

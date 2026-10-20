@@ -10,8 +10,17 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
+import { initHero } from './hero';
 
 gsap.registerPlugin(ScrollTrigger);
+
+// The hero's entrance, story and pointer parallax (reverted if the page is swapped out).
+const disposeHero = initHero();
+document.addEventListener('astro:before-swap', () => {
+  disposeHero();
+  lenis.destroy();
+  ScrollTrigger.getAll().forEach((t) => t.kill());
+}, { once: true });
 
 // Smooth wheel scrolling on desktop; touch keeps native scrolling (better on phones).
 const lenis = new Lenis({ anchors: { offset: -72 }, autoRaf: false });

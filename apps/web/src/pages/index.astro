@@ -1,8 +1,7 @@
 ---
-import Corners from '../components/marketing/Corners.astro';
 import Deco from '../components/marketing/Deco.astro';
+import Hero from '../components/marketing/Hero.astro';
 import Pricing from '../components/marketing/Pricing.astro';
-import SectionArt from '../components/marketing/SectionArt.astro';
 import { swing, waveDownPath, wavePath } from '../components/marketing/wave';
 import MarketingLayout from '../layouts/MarketingLayout.astro';
 import { siteLinks } from '../lib/marketing';
@@ -21,14 +20,6 @@ const channels = [
   { n: 'WhatsApp status', d: ICON.whatsapp, c: '#25D366' },
   { n: 'Facebook page', d: ICON.facebook, c: '#0866FF' },
   { n: 'Google listing', d: ICON.pin, c: '#4285F4' },
-];
-
-// The robot's speech bubble and the "new booking" card cycle through these (see the script below).
-const bubbles = ['Saturday 10:30 is free. Want it?', 'Booked! Confirmation sent.', 'Reminder sent for tomorrow.', 'Moved to Friday 4pm. Done.'];
-const bookings = [
-  { t: 'Silk press · Dana W.', w: 'SAT 17 OCT · 10:30 TO 12:00', who: 'WITH MAYA · BOOKED AT 11:43PM', c: '#C8553D' },
-  { t: 'Skin fade · Luca R.', w: 'SAT 17 OCT · 2:00 TO 2:45PM', who: 'WITH SAM · BOOKED AT 9:12PM', c: '#E07A3F' },
-  { t: 'Lash lift · Sofia M.', w: 'MON 19 OCT · 10:00 TO 11:00AM', who: 'WITH ADA · BOOKED AT 7:05AM', c: '#E9B949' },
 ];
 
 const forCustomers = [
@@ -86,55 +77,10 @@ const faqs = [
 ---
 
 <MarketingLayout title="BookPage · Never miss a booking" description="A free booking page for your local business. Customers see your services, prices and real free times, and book in under a minute.">
-  <!-- Hero -->
-  <section class="mk-hero mk-dots" aria-labelledby="hero-title">
-    <div class="mk-w mk-hero-in">
-      <Corners labels={['A1 · BOOKPAGE/HERO', 'OPEN 24/7 ▮', 'V1.0 · LAUNCH', 'X 1280 · Y 640']} />
-      <div class="mk-hero-copy">
-        <span class="mk-pilltag" style="--dot:#C8553D">Free booking pages for local businesses</span>
-        <h1 id="hero-title" class="mk-h1"><span>Never miss</span><br /><span>a <span class="scan">booking</span></span></h1>
-        <p class="mk-lede">One link with your services, prices and real free times. Customers book in under a minute and get a confirmation and a reminder. You get every booking straight to your inbox.</p>
-        <div class="mk-actions">
-          <a class="btn btn-ink mk-btn-lg" href={links.signUp}>Create my free page</a>
-          <a class="btn mk-btn-lg" href={links.example}>See an example ↗</a>
-        </div>
-        <span class="mk-small mono">Free · No card · Ready in about 5 minutes</span>
-      </div>
-
-      <div class="mk-collage" role="img" aria-label="Bookings arriving on a BookPage booking page">
-        <Deco kind="bot" class="ci" style="left:6%;top:30%" rot={-4} anim="dr2" speed={0.6} label="PAGE 01" sub="BOOKING · SAT 10:30" color="#E9B949" shadow="#E9B949" />
-        <Deco kind="price" class="ci" style="right:2%;top:0" rot={5} anim="dr1" speed={0.5} label="$85" color="#E9B949" />
-        <Deco kind="cal" class="ci" style="left:34%;top:2%" rot={-8} anim="dr2" speed={0.7} label="OCT" sub="17" color="#C8553D" />
-        <span class="ci bob mk-robot" data-speed="0.8" aria-hidden="true">
-          <span class="box mk-bubble" data-bubble>“{bubbles[0]}”</span>
-          <svg width="120" height="136" viewBox="0 0 132 150" class="mk-bot"><line x1="66" y1="14" x2="66" y2="34" stroke="#0D0D10" stroke-width="3" /><circle cx="66" cy="11" r="7" fill="#E9B949" stroke="#0D0D10" stroke-width="2.5" class="ant" /><rect x="18" y="34" width="96" height="70" rx="18" fill="#FFFFFF" stroke="#0D0D10" stroke-width="3" /><rect x="30" y="48" width="72" height="40" rx="10" fill="#0D0D10" /><g class="eyes"><rect x="46" y="60" width="9" height="14" rx="4.5" fill="#E9B949" /><rect x="77" y="60" width="9" height="14" rx="4.5" fill="#E9B949" /></g><path d="M60 80 Q66 85 72 80" stroke="#E9B949" stroke-width="2.5" fill="none" stroke-linecap="round" /><rect x="10" y="58" width="9" height="22" rx="4" fill="#E07A3F" stroke="#0D0D10" stroke-width="2.5" /><rect x="113" y="58" width="9" height="22" rx="4" fill="#E07A3F" stroke="#0D0D10" stroke-width="2.5" /><rect x="36" y="104" width="60" height="36" rx="10" fill="#C8553D" stroke="#0D0D10" stroke-width="3" /><rect x="52" y="113" width="28" height="18" rx="3" fill="#FFFFFF" stroke="#0D0D10" stroke-width="2" /><line x1="52" y1="119" x2="80" y2="119" stroke="#0D0D10" stroke-width="2" /><path d="M66 128 L61 123 A3 3 0 0 1 66 119 A3 3 0 0 1 71 123 Z" fill="#E9B949" /></svg>
-        </span>
-        <Deco kind="price" class="ci" style="right:0;top:52%" rot={-3} anim="dr2" speed={0.6} label="€40" color="#E9B949" shadow="#C8553D" flag />
-        <Deco kind="clock" class="ci" style="left:2%;top:58%" rot={8} anim="dr1" speed={0.9} color="#C8553D" />
-        <Deco kind="star" class="ci" style="right:22%;top:18%" rot={12} anim="dr3" speed={0.7} color="#E07A3F" />
-        <Deco kind="bot" class="ci" style="left:12%;bottom:4%" rot={3} anim="dr1" speed={0.8} label="REMINDER" sub="SENT · FRI 9:00AM" color="#E07A3F" shadow="#E07A3F" />
-        <span class="ci mk-newcard" data-speed="0.4" aria-hidden="true">
-          <span class="box">
-            <span class="mk-newcard-head"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M2 5h20v14H2z" fill="#FFFFFF" stroke="#0D0D10" stroke-width="2" stroke-linejoin="round" /><path d="M2 5l10 8 10-8" fill="none" stroke="#C8553D" stroke-width="2" stroke-linejoin="round" /></svg><span class="mono">NEW BOOKING · EMAILED TO YOU</span></span>
-            <span class="mk-newcard-body pop" data-booking>
-              <i style={`background:${bookings[0]!.c}`}></i>
-              <span><b>{bookings[0]!.t}</b><small class="mono">{bookings[0]!.w}</small><small class="mono">{bookings[0]!.who}</small></span>
-            </span>
-          </span>
-        </span>
-        <Deco kind="gear" class="mk-gear-a" style="left:40%;bottom:-40px" color="#E07A3F" size={110} />
-        <Deco kind="gear" class="mk-gear-b" style="left:60%;bottom:10px" color="#E9B949" size={66} />
-      </div>
-    </div>
-    <div class="mk-band" aria-hidden="true">
-      <span class="mk-band-a mono">No app · No account · No password</span>
-      <span class="mk-band-b mono"><i class="blink"></i>Bookings flowing in</span>
-    </div>
-  </section>
+  <Hero />
 
   <!-- Channels -->
   <section class="mk-fx mk-white mk-channels" aria-label="Where to share your link">
-    <SectionArt colors={['#C8553D', '#E9B949', '#E07A3F', '#C8553D']} at={['left:3%;top:90px', 'right:4%;top:140px', 'right:10%;bottom:60px', 'left:8%;bottom:90px']} hair="left" />
     <div class="mk-w mk-channels-in">
       <span class="lab">Share it where your customers already are</span>
       <ul>
@@ -147,14 +93,7 @@ const faqs = [
 
   <!-- How it works -->
   <section id="how" class="mk-fx mk-sec mk-grid" aria-labelledby="how-title">
-    <SectionArt colors={['#E07A3F', '#0D0D10', '#E9B949', '#E07A3F']} at={['left:10%;top:103px', 'right:9%;top:169px', 'right:13%;bottom:77px', 'left:12%;bottom:113px']} hair="right" />
     <div class="mk-w mk-stack">
-      <Corners labels={['FLOW.01 · SETUP', '3 STEPS · 1 LINK', 'T+05:00 MIN', 'STATUS: READY ▮']} />
-      <Deco kind="gear" class="mk-side-art" style="right:-30px;bottom:-40px;z-index:0" color="#C8553D" size={120} />
-      <Deco kind="gear" class="mk-side-art" style="right:78px;bottom:30px;z-index:0" color="#E9B949" size={66} />
-      <Deco kind="bot" class="mk-side-art mk-hide-sm" style="right:4%;top:70px" rot={3} anim="dr2" speed={0.6} label="YOUR PAGE" sub="SETTING UP · 72%" color="#E07A3F" shadow="#E07A3F" />
-      <Deco kind="cal" class="mk-side-art mk-hide-sm" style="left:58%;top:40px" rot={-8} anim="dr1" speed={0.7} label="SAT" sub="17" color="#E07A3F" />
-      <Deco kind="price" class="mk-side-art" style="left:3%;bottom:70px" rot={6} anim="dr2" speed={0.5} label="$35" color="#E9B949" />
 
       <div class="mk-head" data-reveal>
         <h2 id="how-title" class="mk-h2">Set up once. <span class="scan">Get booked.</span></h2>
@@ -207,7 +146,6 @@ const faqs = [
 
   <!-- Both sides -->
   <section class="mk-fx mk-sec mk-white mk-ruled" aria-labelledby="sides-title">
-    <SectionArt colors={['#E9B949', '#C8553D', '#0D0D10', '#E9B949']} at={['left:7%;top:116px', 'right:5%;top:198px', 'right:16%;bottom:94px', 'left:16%;bottom:136px']} hair="top" />
     <div class="mk-w mk-stack">
       <h2 id="sides-title" class="mk-h2" style="max-width:15ch" data-reveal>Made for both sides of the <span class="scan">counter</span></h2>
       <div class="mk-sides" data-reveal>
@@ -227,14 +165,8 @@ const faqs = [
 
   <!-- Your own link -->
   <section class="mk-fx mk-sec mk-cream mk-ruled" aria-labelledby="link-title">
-    <SectionArt colors={['#C8553D', '#E9B949', '#E07A3F', '#C8553D']} at={['left:11%;top:142px', 'right:6%;top:256px', 'right:10%;bottom:128px', 'left:14%;bottom:182px']} hair="right" />
     <div class="mk-w mk-link">
       <Deco kind="tag" class="mk-side-art" style="left:6%;top:70px;z-index:0" rot={-8} anim="dr1" speed={0.6} label="BOOKED ✓" sub="SAT 10:30AM · SILK PRESS" color="#FFFFFF" />
-      <Deco kind="cal" class="mk-side-art" style="right:7%;top:90px;z-index:0" rot={10} anim="dr2" speed={0.8} label="OCT" sub="17" color="#C8553D" />
-      <Deco kind="price" class="mk-side-art" style="left:10%;bottom:70px;z-index:0" rot={6} anim="dr2" speed={0.5} label="€45" color="#E9B949" />
-      <Deco kind="robot" class="mk-side-art" style="right:9%;bottom:60px;z-index:0" rot={-6} anim="dr1" speed={0.7} color="#E07A3F" />
-      <Deco kind="star" class="mk-side-art mk-hide-sm" style="left:44%;top:30px;z-index:0" rot={-14} anim="dr2" speed={0.9} color="#E07A3F" />
-      <Deco kind="tag" class="mk-side-art mk-hide-sm" style="right:30%;bottom:30px;z-index:0" rot={7} anim="dr1" speed={0.6} label="NEW BOOKING" sub="JUST NOW" color="#C8553D" flag />
 
       <h2 id="link-title" class="mk-h2" data-reveal>Your own <span class="scan">link</span></h2>
       <p class="mk-sub mono" data-reveal>Type your business name. That is your booking page address, free.</p>
@@ -249,7 +181,6 @@ const faqs = [
 
   <!-- Templates -->
   <section id="templates" class="mk-fx mk-sec" aria-labelledby="templates-title">
-    <SectionArt colors={['#E07A3F', '#0D0D10', '#E9B949', '#E07A3F']} at={['left:8%;top:95px', 'right:11%;top:165px', 'right:13%;bottom:65px', 'left:8%;bottom:105px']} hair="top" />
     <div class="mk-w mk-tpl">
       <div class="mk-tpl-copy" data-reveal>
         <span class="mk-pilltag" style="--dot:#E9B949">Pro · $15 a month · coming soon</span>
@@ -306,7 +237,6 @@ const faqs = [
 
   <!-- Who it's for -->
   <section id="stories" class="mk-fx mk-sec mk-stories" aria-labelledby="stories-title">
-    <SectionArt colors={['#E9B949', '#C8553D', '#0D0D10', '#E9B949']} at={['left:5%;top:108px', 'right:7%;top:194px', 'right:16%;bottom:82px', 'left:12%;bottom:128px']} hair="left" />
     <div class="mk-w mk-stack mk-stories-in">
       <div class="mk-stories-head" data-reveal>
         <div>
@@ -353,7 +283,6 @@ const faqs = [
 
   <!-- FAQ -->
   <section id="faq" class="mk-fx mk-sec mk-white mk-ruled" aria-labelledby="faq-title">
-    <SectionArt colors={['#C8553D', '#E9B949', '#E07A3F', '#C8553D']} at={['left:9%;top:134px', 'right:8%;top:252px', 'right:10%;bottom:116px', 'left:10%;bottom:174px']} hair="top" />
     <div class="mk-w mk-faq">
       <h2 id="faq-title" class="mk-h2" data-reveal>Questions, <span class="scan">answered</span></h2>
       <div class="mk-faq-list" data-reveal>
@@ -367,30 +296,6 @@ const faqs = [
     </div>
   </section>
 </MarketingLayout>
-
-<script define:vars={{ bubbles, bookings }}>
-  // Hero: the robot's bubble and the new-booking card take turns, like a live feed.
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const bubble = document.querySelector('[data-bubble]');
-    const card = document.querySelector('[data-booking]');
-    let i = 0;
-    setInterval(() => {
-      i++;
-      if (bubble) bubble.textContent = `“${bubbles[i % bubbles.length]}”`;
-      if (card) {
-        const b = bookings[i % bookings.length];
-        card.querySelector('i').style.background = b.c;
-        const [t, w, who] = card.querySelectorAll('b, small');
-        t.textContent = b.t;
-        w.textContent = b.w;
-        who.textContent = b.who;
-        card.classList.remove('pop');
-        void card.offsetWidth;
-        card.classList.add('pop');
-      }
-    }, 2600);
-  }
-</script>
 
 <script>
   // "Your own link": live availability check (the form still works without it).

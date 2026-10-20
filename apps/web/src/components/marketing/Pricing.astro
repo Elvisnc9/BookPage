@@ -1,5 +1,4 @@
 ---
-import SectionArt from './SectionArt.astro';
 import { siteLinks } from '../../lib/marketing';
 
 /** Free and Pro ($15/mo, waitlist only for now), plus what's coming. Used on the home page and /pricing. */
@@ -42,7 +41,6 @@ const later = [
 ---
 
 <section id="pricing" class="mk-fx mk-sec mk-white mk-ruled-top" aria-labelledby="pricing-title">
-  <SectionArt colors={['#0D0D10', '#E07A3F', '#C8553D', '#0D0D10']} at={['left:12%;top:121px', 'right:12%;top:223px', 'right:19%;bottom:99px', 'left:16%;bottom:151px']} hair="right" />
   <div class="mk-w mk-stack mk-pricing">
     <div class="mk-head mk-head-center" data-reveal>
       <Heading id="pricing-title" class="mk-h2">Start free. <span class="scan">Grow with Pro.</span></Heading>
