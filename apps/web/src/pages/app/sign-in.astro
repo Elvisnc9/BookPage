@@ -20,61 +20,99 @@ const copy = isNew
 ---
 
 <Base title="Sign in · BookPage">
-  <main class="wrap">
-    <a class="brand mono" href="/">BookPage</a>
-
-    <section class="box raised card" aria-labelledby="title">
-      <p class="lab">{copy.kicker}</p>
-      <h1 id="title" class="h-display">{copy.t1} <span class="scan">{copy.t2}</span></h1>
-      <p class="sub">{copy.sub}</p>
-
-      {error && <p class="error" role="alert">{error}</p>}
-
-      <a class="btn btn-ink google" href="/api/auth/google">
-        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
-          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
-          <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-          <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
-          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
-        </svg>
-        Continue with Google
-        <span aria-hidden="true">→</span>
+  <main class="si">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="BookPage home">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="13" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="2" width="9" height="9" rx="2" fill="#F7D45C" stroke="#0D0D10" stroke-width="1.6" /></svg>
+        <span class="mono">BOOKPAGE</span>
       </a>
 
-      <p class="note">
-        No passwords to remember. You sign in with an account you already trust, and we never see its password.
-      </p>
-    </section>
+      <section class="box raised card" aria-labelledby="title">
+        <p class="lab">{copy.kicker}</p>
+        <h1 id="title" class="h-display">{copy.t1} <span class="scan">{copy.t2}</span></h1>
+        <p class="sub">{copy.sub}</p>
 
-    {devLogin && (
-      <section class="box dev" aria-labelledby="dev-title">
-        <p id="dev-title" class="lab">Developer sign-in · this computer only</p>
-        <form method="post" action="/api/auth/dev-login">
-          <input type="hidden" name="as" value="demo" />
-          <button class="btn dev-btn" type="submit">Glow Studio owner (demo data) →</button>
-        </form>
-        <form method="post" action="/api/auth/dev-login" class="dev-row">
-          <label class="visually-hidden" for="dev-email">Email for a new owner</label>
-          <input id="dev-email" class="dev-input" name="email" type="email" placeholder="new-owner@example.com" required />
-          <button class="btn dev-btn" type="submit">New owner →</button>
-        </form>
-        <p class="note">Needs DEV_LOGIN=true in apps/api/.env. Never shown on the live site.</p>
+        {error && <p class="error" role="alert">{error}</p>}
+
+        <a class="btn btn-ink google" href="/api/auth/google">
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
+            <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
+          </svg>
+          Continue with Google
+          <span aria-hidden="true">→</span>
+        </a>
+
+        <p class="note">
+          No passwords to remember. You sign in with an account you already trust, and we never see its password.
+        </p>
       </section>
-    )}
 
-    <p class="legal">
-      By continuing you agree to the <a href="https://bookpage.app/terms">Terms</a> and <a href="https://bookpage.app/privacy">Privacy Policy</a>.
-    </p>
-    <p class="switch lab">
-      {isNew ? 'Have an account?' : 'New to BookPage?'}
-      <a href={isNew ? '/sign-in' : '/sign-in?new'}>{isNew ? 'Sign in' : 'Create account'}</a>
-    </p>
+      {devLogin && (
+        <section class="box dev" aria-labelledby="dev-title">
+          <p id="dev-title" class="lab">Developer sign-in · this computer only</p>
+          <form method="post" action="/api/auth/dev-login">
+            <input type="hidden" name="as" value="demo" />
+            <button class="btn dev-btn" type="submit">Glow Studio owner (demo data) →</button>
+          </form>
+          <form method="post" action="/api/auth/dev-login" class="dev-row">
+            <label class="visually-hidden" for="dev-email">Email for a new owner</label>
+            <input id="dev-email" class="dev-input" name="email" type="email" placeholder="new-owner@example.com" required />
+            <button class="btn dev-btn" type="submit">New owner →</button>
+          </form>
+          <p class="note">Needs DEV_LOGIN=true in apps/api/.env. Never shown on the live site.</p>
+        </section>
+      )}
+
+      <p class="legal">
+        By continuing you agree to the <a href="https://bookpage.app/terms">Terms</a> and <a href="https://bookpage.app/privacy">Privacy Policy</a>.
+      </p>
+      <p class="switch lab">
+        {isNew ? 'Have an account?' : 'New to BookPage?'}
+        <a href={isNew ? '/sign-in' : '/sign-in?new'}>{isNew ? 'Sign in' : 'Create account'}</a>
+      </p>
+    </div>
+
+    <!-- Wide screens: a still of the product (an illustration, hidden from assistive tech). -->
+    <aside class="art" aria-hidden="true">
+      <span class="art-sun"></span>
+      <span class="art-block"></span>
+      <p class="art-line">Your bookings,<br />while you work.</p>
+      <div class="box art-today">
+        <div class="art-today-head">
+          <b>Today</b>
+          <span class="pill" data-tone="ok">3 booked</span>
+        </div>
+        <div class="art-row">
+          <span class="avatar" data-hue="1">AM</span>
+          <span><b>Ada M.</b><small>Silk press</small></span>
+          <span class="mono">10:30</span>
+        </div>
+        <div class="art-row">
+          <span class="avatar" data-hue="3">JR</span>
+          <span><b>Jordan R.</b><small>Knotless braids</small></span>
+          <span class="mono">13:00</span>
+        </div>
+        <div class="art-row">
+          <span class="avatar" data-hue="2">SK</span>
+          <span><b>Sam K.</b><small>Trim</small></span>
+          <span class="pill" data-tone="wait">Needs OK</span>
+        </div>
+      </div>
+      <div class="box art-toast">
+        <span class="art-tick">✓</span>
+        <span><small class="mono">New booking</small><b>Sat 10:30 · Silk press</b></span>
+      </div>
+    </aside>
   </main>
 </Base>
 
 <style>
+  .si { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr); }
   .wrap {
-    min-height: 100dvh;
+    width: 100%;
     max-width: 440px;
     margin: 0 auto;
     padding: 24px 16px 40px;
@@ -85,8 +123,12 @@ const copy = isNew
   }
   .brand {
     align-self: flex-start;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--ink);
     text-decoration: none;
   }
   .card { padding: 28px 24px; display: grid; gap: 14px; }
@@ -112,9 +154,49 @@ const copy = isNew
   .dev { display: grid; gap: 10px; padding: 16px; border-style: dashed; background: var(--surface-2); }
   .dev .lab { margin: 0; }
   .dev form { margin: 0; }
-  .dev-row { display: flex; gap: 8px; }
-  .dev-input { flex: 1; min-width: 0; min-height: 44px; padding: 8px 10px; font-size: 16px; border: var(--border); border-radius: var(--r); }
-  .dev-btn { width: 100%; }
+  .dev-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dev-input { flex: 1 1 180px; min-width: 0; min-height: 44px; padding: 8px 10px; font-size: 16px; border: var(--border); border-radius: var(--r); background: var(--surface); }
+  .dev-btn { width: 100%; white-space: normal; }
   .dev-row .dev-btn { width: auto; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  /* The product still: wide screens only. */
+  .art { display: none; }
+  @media (min-width: 960px) {
+    .si { grid-template-columns: minmax(440px, 1fr) minmax(0, 1.1fr); gap: 24px; padding: 24px; }
+    .wrap { padding: 24px 16px; }
+    .art {
+      position: relative;
+      display: block;
+      min-height: 560px;
+      overflow: hidden;
+      border: var(--border);
+      border-radius: var(--r-xl);
+      background: var(--sun) radial-gradient(circle, rgb(13 13 16 / .14) 1.5px, transparent 1.6px) 0 0 / 22px 22px;
+      box-shadow: var(--shadow);
+    }
+    .art-sun { position: absolute; right: -90px; top: -90px; width: 300px; height: 300px; border: var(--border); border-radius: 50%; background: var(--periwinkle); }
+    .art-block { position: absolute; left: 8%; bottom: -40px; width: 180px; height: 140px; border: var(--border); border-radius: var(--r-xl); background: var(--peach); rotate: -6deg; }
+    .art-line { position: absolute; left: 8%; top: 9%; margin: 0; font-size: clamp(34px, 3.4vw, 52px); font-weight: 900; line-height: .98; letter-spacing: var(--track-tight); }
+    .art-today {
+      position: absolute; left: 12%; top: 34%; width: min(380px, 66%);
+      display: grid; gap: 4px; padding: 16px; box-shadow: var(--shadow); rotate: -2deg;
+    }
+    .art-today-head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; }
+    .art-today-head b { font-size: 18px; font-weight: 800; }
+    .art-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line-soft); }
+    .art-row > span:nth-child(2) { display: grid; line-height: 1.25; }
+    .art-row b { font-size: 14px; }
+    .art-row small { font-size: 12px; color: var(--muted); }
+    .art-row .mono { font-size: 13px; font-weight: 600; }
+    .art-toast {
+      position: absolute; right: 8%; bottom: 14%;
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px 12px 12px;
+      box-shadow: var(--shadow-sm); rotate: 3deg;
+    }
+    .art-toast > span:last-child { display: grid; gap: 2px; }
+    .art-toast small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .art-toast b { font-size: 14px; }
+    .art-tick { display: grid; place-items: center; width: 34px; height: 34px; border: var(--border); border-radius: var(--r); background: var(--mint); font-weight: 900; }
+  }
 </style>
