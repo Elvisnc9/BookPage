@@ -268,6 +268,28 @@ const days = [['THU', '15'], ['FRI', '16'], ['SAT', '17'], ['SUN', '18']];
     .hero-title { font-size: clamp(72px, 8vw, 128px); }
   }
 
+  /* Tablets (portrait): the hero is the screen. Headline across the top, then
+     the words beside the scene, so nothing waits below the fold. The copy's
+     children join the hero grid directly. */
+  @media (min-width: 600px) and (max-width: 959px) {
+    .hero-in {
+      grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+      grid-template-areas: 'kick kick' 'title title' 'lede stage' 'acts stage' 'facts stage';
+      align-content: center;
+      gap: 20px 28px;
+      min-height: calc(100svh - 72px);
+      padding-top: 24px;
+      padding-bottom: 32px;
+    }
+    .hero-copy { display: contents; }
+    .hero-kicker { grid-area: kick; }
+    .hero-title { grid-area: title; font-size: clamp(72px, 12.5vw, 112px); }
+    .hero-lede { grid-area: lede; font-size: 16px; }
+    .hero-actions { grid-area: acts; flex-direction: column; align-items: stretch; }
+    .hero-facts { grid-area: facts; flex-direction: column; align-self: start; }
+    .hero-stage { grid-area: stage; align-self: center; }
+  }
+
   @media (max-width: 520px) {
     .hs-dots, .hs-spark, .ha-pin { display: none; }
     .hero-in { gap: 32px; padding-bottom: 40px; }
