@@ -280,7 +280,7 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
     <div class="ob-app">
       <header class="ob-top">
         <a class="ob-brand" href="/" aria-label="BookPage">
-          <span class="ob-logo" aria-hidden="true"><i /><i /><i /><i /></span>
+          <svg class="ob-logo" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="13" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="2" width="9" height="9" rx="2" fill="#F7D45C" stroke="#0D0D10" stroke-width="1.6" /></svg>
           <span class="ob-brand-name">BookPage</span>
         </a>
         <nav class="ob-steps" aria-label="Setup steps">
@@ -320,6 +320,7 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
       <div class="ob-shell">
         <form class="ob-form" onSubmit={(e) => { e.preventDefault(); void next(); }} noValidate>
           <div class="ob-step" key={step} data-dir={dir} ref={heading}>
+            <p class="ob-kicker mono">Step {step} of 5 · {ONBOARDING_STEPS[step - 1]}</p>
             {step === 1 && <StepTemplate templates={templates} design={design} onDesign={editDesign} notice={design.templateId === biz.templateId ? biz.site.notice : null} />}
             {step === 2 && <StepAbout about={about} onAbout={editAbout} issues={aboutSave.issues} biz={biz} onBiz={onBiz} />}
             {step === 3 && <StepServices services={services} onServices={editServices} category={about.category} currency={about.currency} media={{ biz, onBiz }} />}
@@ -334,7 +335,7 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
             {step > 1 ? <button type="button" class="btn" onClick={() => goTo(step - 1)}><Icon name="back" size={16} /> Back</button> : <span />}
             <button type="button" class="btn ob-nav-preview" onClick={() => setSheet(true)}>Preview</button>
             <p class={`ob-nav-msg${navError ? ' bad' : ''}`} role="status" aria-live="polite">{navError}</p>
-            <button type="submit" class="btn btn-ink ob-continue" disabled={publishing} data-busy={publishing || undefined}>
+            <button type="submit" class="btn btn-primary ob-continue" disabled={publishing} data-busy={publishing || undefined}>
               {step === 5 ? (publishing ? 'Publishing…' : 'Publish my page') : (
                 <><span class="ob-continue-long">Continue to {ONBOARDING_STEPS[step]!.toLowerCase()}</span><span class="ob-continue-short">Continue</span></>
               )}

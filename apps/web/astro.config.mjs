@@ -19,7 +19,12 @@ export default defineConfig({
     // Bundle browser deps up front so the first visit to onboarding or the home page
     // doesn't trigger a mid-session re-optimise and reload in dev.
     optimizeDeps: {
-      include: ['preact', 'preact/hooks', 'preact/jsx-runtime', 'preact/devtools', 'gsap', 'gsap/ScrollTrigger', 'lenis'],
+      include: ['preact', 'preact/hooks', 'preact/compat', 'preact/jsx-runtime', 'preact/devtools', 'gsap', 'gsap/ScrollTrigger', 'lenis'],
+    },
+    // Same for server rendering: the marketing showcase and the booking pages render
+    // Preact on the server, and discovering it mid-session left a stale dep cache.
+    ssr: {
+      optimizeDeps: { include: ['preact', 'preact/hooks', 'preact/compat', 'preact/jsx-runtime'] },
     },
   },
   env: {

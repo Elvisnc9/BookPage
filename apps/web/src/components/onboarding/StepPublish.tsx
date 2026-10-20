@@ -133,11 +133,11 @@ export function Published(props: { url: string; host: string }) {
       <p class="ob-intro">Share it anywhere customers find you: your Instagram bio, WhatsApp status, Google profile.</p>
       <div class="ob-card ob-link-card">
         <a class="mono" href={props.url} target="_blank" rel="noopener">{props.host}</a>
-        <button type="button" class="btn btn-ink" onClick={copy}>{copied === 'ok' ? 'Copied' : 'Copy link'}</button>
+        <button type="button" class="btn" onClick={copy}>{copied === 'ok' ? 'Copied' : 'Copy link'}</button>
       </div>
       <p class="ob-hint" role="status">{copied === 'fail' ? "Couldn't copy. Select the link and copy it yourself." : copied === 'ok' ? 'Link copied to your clipboard.' : ''}</p>
       <div class="ob-done-actions">
-        <a class="btn btn-ink" href={props.url} target="_blank" rel="noopener">Open my page <Icon name="arrow" size={16} /></a>
+        <a class="btn btn-primary" href={props.url} target="_blank" rel="noopener">Open my page <Icon name="arrow" size={16} /></a>
         <a class="btn" href="/">Go to your dashboard</a>
       </div>
     </section>

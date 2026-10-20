@@ -84,14 +84,15 @@ export function Switch(props: { label: string; note?: string; checked: boolean; 
 }
 
 /**
- * A step's heading and body. `scan` names one word of the title to set in the
- * striped BookPage display style (static here: no looping motion in the app).
+ * A step's heading and body. `scan` marks one word of the title (kept as a hook;
+ * headings now use the plain condensed display style).
  */
 export function Section(props: { title: string; scan?: string; intro?: string; kicker?: string; children: ComponentChildren }) {
   const at = props.scan ? props.title.lastIndexOf(props.scan) : -1;
   return (
     <section class="ob-section" aria-labelledby="ob-step-title">
       <header class="ob-section-head">
+        {props.kicker && <p class="ob-kicker mono">{props.kicker}</p>}
         <h1 id="ob-step-title" class="ob-title" tabIndex={-1}>
           {at >= 0 ? (
             <>
