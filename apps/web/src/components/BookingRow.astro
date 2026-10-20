@@ -1,0 +1,98 @@
+---
+import { allowedChanges, type OwnerBooking } from '@bookpage/shared';
+import AppIcon from './AppIcon.astro';
+import { avatarFor } from '../lib/people';
+import { price, timeOf, whenLabel } from '../lib/public';
+
+/**
+ * One booking in the dashboard: a table row on wide screens, a card on phones.
+ * Actions are plain forms (post/redirect/get in lib/owner.ts), so they work without JavaScript.
+ */
+interface Props {
+  booking: OwnerBooking;
+  timezone: string;
+  /** Show the date as well as the time (lists that span several days). */
+  showDate?: boolean;
+}
+
+const { booking: b, timezone, showDate = false } = Astro.props;
+const actions = allowedChanges(b.status, new Date(b.startsAt));
+const pending = b.status === 'pending';
+const STATUS = {
+  pending: { label: 'Needs your OK', tone: 'wait' },
+  confirmed: { label: 'Confirmed', tone: 'info' },
+  cancelled: { label: 'Cancelled', tone: 'muted' },
+  completed: { label: 'Done', tone: 'ok' },
+  no_show: { label: 'No-show', tone: 'bad' },
+} as const;
+const s = STATUS[b.status];
+const { initials, hue } = avatarFor(b.customer.name);
+const tel = b.customer.phone ? `tel:${b.customer.phone}` : null;
+const wa = b.customer.phone ? `https://wa.me/${b.customer.phone.replace(/\D/g, '')}` : null;
+---
+
+<article class="ap-row" id={`b-${b.id}`} data-status={b.status} aria-label={`${b.customer.name}, ${b.serviceName}, ${whenLabel(b.startsAt, timezone)}`}>
+  <div class="ap-row-who">
+    <span class="avatar" data-hue={hue} aria-hidden="true">{initials}</span>
+    <span class="ap-row-name">
+      <strong>{b.customer.name}</strong>
+      <span class="mono">{b.customer.email ?? b.customer.phone ?? ''}</span>
+    </span>
+  </div>
+
+  <div class="ap-row-what">
+    <strong>{b.serviceName}</strong>
+    <span class="mono">with {b.staffName}</span>
+  </div>
+
+  <div class="ap-row-when mono">
+    <strong>{timeOf(b.startsAt, timezone)}</strong>
+    <span>{showDate ? whenLabel(b.startsAt, timezone).split(',')[0] : `to ${timeOf(b.endsAt, timezone)}`}</span>
+  </div>
+
+  <div class="ap-row-status"><span class="pill" data-tone={s.tone}>{s.label}</span></div>
+
+  <div class="ap-row-price mono">{price(b, b.currency)}</div>
+
+  <div class="ap-row-actions">
+    {actions.includes('confirmed') && (
+      <form method="post"><input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value="confirmed" />
+        <button class="btn btn-primary ap-btn" type="submit"><AppIcon name="check" size={16} />Approve</button></form>
+    )}
+    {actions.includes('completed') && (
+      <form method="post"><input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value="completed" />
+        <button class="btn ap-btn" type="submit">Done</button></form>
+    )}
+    {actions.includes('no_show') && (
+      <form method="post"><input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value="no_show" />
+        <button class="btn ap-btn" type="submit">No-show</button></form>
+    )}
+    {actions.includes('cancelled') && (
+      <details class="ap-cancel">
+        <summary class="btn btn-quiet ap-btn">{pending ? 'Decline' : 'Cancel'}</summary>
+        <form method="post" class="ap-cancel-form">
+          <input type="hidden" name="id" value={b.id} />
+          <input type="hidden" name="status" value="cancelled" />
+          <input type="hidden" name="was" value={b.status} />
+          <label class="lab" for={`reason-${b.id}`}>Message to {b.customer.name.split(' ')[0]} (optional)</label>
+          <input class="ap-input" id={`reason-${b.id}`} name="reason" maxlength="300" placeholder={pending ? 'e.g. Fully booked that day' : 'e.g. Stylist is ill, sorry!'} />
+          <button class="btn btn-danger ap-btn" type="submit">{pending ? 'Decline and email' : 'Cancel and email'}</button>
+        </form>
+      </details>
+    )}
+  </div>
+
+  {(b.customer.phone || b.customer.email || b.note || b.cancelReason) && (
+    <details class="ap-row-more">
+      <summary class="mono">Details</summary>
+      <dl>
+        {b.customer.phone && (
+          <div><dt>Phone</dt><dd><a href={tel!}><AppIcon name="phone" size={14} />{b.customer.phone}</a> · <a href={wa!} rel="noopener">WhatsApp</a></dd></div>
+        )}
+        {b.customer.email && <div><dt>Email</dt><dd><a href={`mailto:${b.customer.email}`}><AppIcon name="mail" size={14} />{b.customer.email}</a></dd></div>}
+        {b.note && <div><dt>Note</dt><dd>{b.note}</dd></div>}
+        {b.cancelReason && <div><dt>Reason</dt><dd>{b.cancelReason}</dd></div>}
+      </dl>
+    </details>
+  )}
+</article>

@@ -1,6 +1,7 @@
 ---
 import { type BookingStatus, localDate, type OwnerBooking } from '@bookpage/shared';
-import BookingCard from '../../components/BookingCard.astro';
+import AppIcon from '../../components/AppIcon.astro';
+import BookingRow from '../../components/BookingRow.astro';
 import AppLayout from '../../layouts/AppLayout.astro';
 import { flash, getBookings, getSummary, handleBookingAction } from '../../lib/owner';
 import { dayLabel } from '../../lib/public';
@@ -17,10 +18,12 @@ const VIEWS = {
 } as const;
 type View = keyof typeof VIEWS;
 
-const view: View = (Astro.url.searchParams.get('view') as View) in VIEWS ? (Astro.url.searchParams.get('view') as View) : 'upcoming';
+const params = Astro.url.searchParams;
+const view: View = (params.get('view') as View) in VIEWS ? (params.get('view') as View) : 'upcoming';
+const q = (params.get('q') ?? '').trim().slice(0, 80);
 const v = VIEWS[view];
 const now = new Date();
-const [summary, bookings] = await Promise.all([
+const [summary, all] = await Promise.all([
   getSummary(Astro.request),
   getBookings(Astro.request, {
     status: v.status,
@@ -28,6 +31,12 @@ const [summary, bookings] = await Promise.all([
   }),
 ]);
 const tz = summary.timezone;
+
+// Search by customer name, email, phone or service (the list is already scoped to this owner).
+const needle = q.toLowerCase();
+const bookings = needle
+  ? all.filter((b) => [b.customer.name, b.customer.email, b.customer.phone, b.serviceName].some((f) => f?.toLowerCase().includes(needle)))
+  : all;
 
 const groups = new Map<string, OwnerBooking[]>();
 for (const b of bookings) {
@@ -41,28 +50,50 @@ const EMPTY: Record<View, string> = {
   past: 'No past bookings yet.',
   cancelled: 'No cancellations.',
 };
+const link = (k: View) => `/bookings?view=${k}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
 ---
 
 <AppLayout title="Bookings" active="bookings" timezone={tz}>
-  <h1 class="h-display ap-h1">Your <span class="scan">bookings</span></h1>
+  <div class="ap-head">
+    <h1 class="ap-h1">Your <span class="scan">bookings</span></h1>
+  </div>
 
   {message && <p class={`ap-flash ${message.tone}`} role="status">{message.text}</p>}
 
-  <nav class="ap-tabs" aria-label="Filter bookings">
-    {(Object.keys(VIEWS) as View[]).map((k) => (
-      <a class="chip" href={`/bookings?view=${k}`} aria-current={k === view ? 'page' : undefined}>
-        {VIEWS[k].label}{k === 'pending' && summary.pendingCount ? ` · ${summary.pendingCount}` : ''}
-      </a>
-    ))}
-  </nav>
+  <div class="ap-filters">
+    <nav class="ap-seg" aria-label="Filter bookings">
+      {(Object.keys(VIEWS) as View[]).map((k) => (
+        <a href={link(k)} aria-current={k === view ? 'page' : undefined}>
+          {VIEWS[k].label}{k === 'pending' && summary.pendingCount ? <span class="ap-seg-n">{summary.pendingCount}</span> : ''}
+        </a>
+      ))}
+    </nav>
+    <form class="ap-search" method="get" action="/bookings" role="search">
+      <input type="hidden" name="view" value={view} />
+      <AppIcon name="search" />
+      <label class="visually-hidden" for="booking-search">Search bookings</label>
+      <input id="booking-search" name="q" value={q} placeholder="Search name, email or service" autocomplete="off" />
+      {q && <a class="ap-search-clear" href={link(view).replace(/&q=.*/, '')} aria-label="Clear search"><AppIcon name="x" size={18} /></a>}
+    </form>
+  </div>
+
+  {q && <p class="ap-found mono">{bookings.length} {bookings.length === 1 ? 'match' : 'matches'} for “{q}”</p>}
 
   {groups.size === 0 ? (
-    <p class="ap-empty">{EMPTY[view]}</p>
+    <div class="ap-panel ap-empty-panel">
+      <p class="ap-empty">{q ? 'Nothing matches that search.' : EMPTY[view]}</p>
+    </div>
   ) : (
     [...groups].map(([date, list]) => (
-      <section class="ap-section" aria-label={dayLabel(date).long}>
-        <h2 class="ap-day mono">{dayLabel(date).long} · {list.length}</h2>
-        <div class="ap-list">{list.map((b) => <BookingCard booking={b} timezone={tz} />)}</div>
+      <section class="ap-panel ap-table" aria-label={dayLabel(date).long}>
+        <div class="ap-table-head">
+          <h2 class="ap-h2">{dayLabel(date).long}</h2>
+          <span class="pill">{list.length}</span>
+        </div>
+        <div class="ap-rows">
+          <div class="ap-cols mono" aria-hidden="true"><span>Customer</span><span>Service</span><span>Time</span><span>Status</span><span>Price</span><span></span></div>
+          {list.map((b) => <BookingRow booking={b} timezone={tz} />)}
+        </div>
       </section>
     ))
   )}

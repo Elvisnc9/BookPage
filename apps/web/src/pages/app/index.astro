@@ -1,6 +1,8 @@
 ---
-import { addDays, zonedToUtc } from '@bookpage/shared';
-import BookingCard from '../../components/BookingCard.astro';
+import { addDays, localDate, weekdayOf, WEEKDAY_SHORT, zonedToUtc } from '@bookpage/shared';
+import AppIcon from '../../components/AppIcon.astro';
+import BookingRow from '../../components/BookingRow.astro';
+import WeekPanel from '../../components/WeekPanel.astro';
 import AppLayout from '../../layouts/AppLayout.astro';
 import { flash, getBookings, getSummary, handleBookingAction } from '../../lib/owner';
 import { timeOf, whenLabel } from '../../lib/public';
@@ -13,51 +15,96 @@ const summary = await getSummary(Astro.request);
 const tz = summary.timezone;
 const dayStart = zonedToUtc(summary.today, 0, tz);
 const dayEnd = zonedToUtc(addDays(summary.today, 1), 0, tz);
-const [today, pending] = await Promise.all([
+const monday = addDays(summary.today, 1 - weekdayOf(summary.today));
+const lastMonday = addDays(monday, -7);
+
+const [today, pending, fortnight] = await Promise.all([
   getBookings(Astro.request, { from: dayStart, to: dayEnd, status: ['pending', 'confirmed', 'completed', 'no_show'] }),
   getBookings(Astro.request, { from: new Date(), status: ['pending'] }),
+  getBookings(Astro.request, { from: zonedToUtc(lastMonday, 0, tz), to: zonedToUtc(addDays(monday, 7), 0, tz), status: ['pending', 'confirmed', 'completed', 'no_show'] }),
 ]);
+
+// Bookings per day, Monday to Sunday, in the business's time zone.
+const perDay = new Map<string, number>();
+for (const b of fortnight) {
+  const { date } = localDate(new Date(b.startsAt), tz);
+  perDay.set(date, (perDay.get(date) ?? 0) + 1);
+}
+const days = WEEKDAY_SHORT.map((label, i) => {
+  const date = addDays(monday, i);
+  return { label, count: perDay.get(date) ?? 0, isToday: date === summary.today };
+});
+const lastWeekCount = Array.from({ length: 7 }, (_, i) => perDay.get(addDays(lastMonday, i)) ?? 0).reduce((a, b) => a + b, 0);
+
 const message = flash(Astro.url);
 const pendingLater = pending.filter((b) => new Date(b.startsAt) >= dayEnd);
 const n = summary.todayCount;
+const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: tz }).format(new Date()));
+const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+const first = (Astro.locals.me!.user.name ?? '').split(' ')[0];
 ---
 
 <AppLayout title="Today" active="today" timezone={tz}>
-  <h1 class="h-display ap-h1">{n === 0 ? 'Nothing booked' : `${n} booking${n === 1 ? '' : 's'}`} <span class="scan">today</span></h1>
+  <div class="ap-head">
+    <div>
+      <p class="ap-greet">{greeting}{first ? `, ${first}` : ''}.</p>
+      <h1 class="ap-h1">{n === 0 ? 'Nothing booked' : `${n} booking${n === 1 ? '' : 's'}`} <span class="scan">today</span></h1>
+    </div>
+    <a class="btn btn-primary" href="/bookings">All bookings <AppIcon name="arrow" size={16} /></a>
+  </div>
 
   {message && <p class={`ap-flash ${message.tone}`} role="status">{message.text}</p>}
 
-  <div class="ap-kpis">
-    <div class="box ap-kpi"><span class="lab">Today</span><strong class="mono">{summary.todayCount}</strong></div>
-    <div class="box ap-kpi"><span class="lab">This week</span><strong class="mono">{summary.weekCount}</strong></div>
-    <a class={`box ap-kpi${summary.pendingCount ? ' ap-kpi-alert' : ''}`} href="/bookings?view=pending">
-      <span class="lab">Needs your OK</span><strong class="mono">{summary.pendingCount}</strong>
-    </a>
-    <div class="box ap-kpi">
-      <span class="lab">Next up</span>
-      <strong class="ap-kpi-next">{summary.next ? `${timeOf(summary.next.startsAt, tz)} · ${summary.next.customer.name}` : '—'}</strong>
+  <div class="ap-hero">
+    <WeekPanel days={days} todayCount={summary.todayCount} weekCount={summary.weekCount} lastWeekCount={lastWeekCount} />
+
+    <div class="ap-tiles">
+      <a class={`ap-tile ap-tile-ok${summary.pendingCount ? ' is-alert' : ''}`} href="/bookings?view=pending">
+        <span class="ap-tile-icon" aria-hidden="true"><AppIcon name="bell" /></span>
+        <span class="ap-tile-k">Needs your OK</span>
+        <strong class="ap-tile-v">{summary.pendingCount}</strong>
+        <span class="ap-tile-go mono">{summary.pendingCount ? 'Review' : 'All clear'} <AppIcon name="arrow" size={14} /></span>
+      </a>
+      <div class="ap-tile ap-tile-next">
+        <span class="ap-tile-icon" aria-hidden="true"><AppIcon name="clock" /></span>
+        <span class="ap-tile-k">Next up</span>
+        {summary.next ? (
+          <>
+            <strong class="ap-tile-v ap-tile-time">{timeOf(summary.next.startsAt, tz)}</strong>
+            <span class="ap-tile-sub">{summary.next.customer.name} · {summary.next.serviceName}</span>
+            {new Date(summary.next.startsAt) >= dayEnd && <span class="ap-tile-sub mono">{whenLabel(summary.next.startsAt, tz).split(',')[0]}</span>}
+          </>
+        ) : (
+          <span class="ap-tile-sub">Nothing coming up yet.</span>
+        )}
+      </div>
     </div>
   </div>
 
-  <section class="ap-section" aria-labelledby="sched">
-    <h2 id="sched" class="ap-h2">Today's schedule</h2>
+  <section class="ap-panel ap-table" aria-labelledby="sched">
+    <div class="ap-table-head">
+      <h2 id="sched" class="ap-h2">Today's schedule</h2>
+      <span class="pill" data-tone="info">{today.length} {today.length === 1 ? 'booking' : 'bookings'}</span>
+    </div>
     {today.length ? (
-      <div class="ap-list">{today.map((b) => <BookingCard booking={b} timezone={tz} />)}</div>
+      <div class="ap-rows">
+        <div class="ap-cols mono" aria-hidden="true"><span>Customer</span><span>Service</span><span>Time</span><span>Status</span><span>Price</span><span></span></div>
+        {today.map((b) => <BookingRow booking={b} timezone={tz} />)}
+      </div>
     ) : (
       <p class="ap-empty">No bookings today. Share your page link to fill your diary.</p>
     )}
   </section>
 
   {pendingLater.length > 0 && (
-    <section class="ap-section" aria-labelledby="later">
-      <h2 id="later" class="ap-h2">Waiting for your OK</h2>
-      <div class="ap-list">
-        {pendingLater.map((b) => (
-          <div>
-            <p class="ap-day mono">{whenLabel(b.startsAt, tz)}</p>
-            <BookingCard booking={b} timezone={tz} />
-          </div>
-        ))}
+    <section class="ap-panel ap-table" aria-labelledby="later">
+      <div class="ap-table-head">
+        <h2 id="later" class="ap-h2">Waiting for your OK</h2>
+        <span class="pill" data-tone="wait">{pendingLater.length}</span>
+      </div>
+      <div class="ap-rows">
+        <div class="ap-cols mono" aria-hidden="true"><span>Customer</span><span>Service</span><span>When</span><span>Status</span><span>Price</span><span></span></div>
+        {pendingLater.map((b) => <BookingRow booking={b} timezone={tz} showDate />)}
       </div>
     </section>
   )}

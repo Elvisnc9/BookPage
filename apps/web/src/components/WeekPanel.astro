@@ -1,0 +1,50 @@
+---
+import AppIcon from './AppIcon.astro';
+
+/**
+ * The Today hero (after the reference's "Total Balance" card): this week's
+ * bookings per day as a line on a periwinkle panel, with today's count on a
+ * peach card in front. Every number is real; nothing here is decorative data.
+ */
+interface Props {
+  days: { label: string; count: number; isToday: boolean }[];
+  todayCount: number;
+  weekCount: number;
+  lastWeekCount: number;
+}
+
+const { days, todayCount, weekCount, lastWeekCount } = Astro.props;
+const W = 600;
+const H = 220;
+const top = 40;
+const max = Math.max(4, ...days.map((d) => d.count));
+const x = (i: number) => 24 + (i * (W - 48)) / (days.length - 1);
+const y = (c: number) => H - 24 - ((H - top - 24) * c) / max;
+const points = days.map((d, i) => `${x(i).toFixed(1)},${y(d.count).toFixed(1)}`).join(' ');
+const area = `M${x(0)},${H} L${points.replace(/ /g, ' L')} L${x(days.length - 1)},${H} Z`;
+const todayIndex = days.findIndex((d) => d.isToday);
+const diff = weekCount - lastWeekCount;
+const diffLabel = diff === 0 ? 'Same as last week' : `${diff > 0 ? '+' : ''}${diff} vs last week`;
+---
+
+<section class="ap-week" aria-labelledby="week-title">
+  <div class="ap-week-chart">
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      <path d={area} class="ap-week-area" />
+      <polyline points={points} class="ap-week-line" pathLength="1" />
+      {todayIndex >= 0 && <circle cx={x(todayIndex)} cy={y(days[todayIndex]!.count)} r="7" class="ap-week-dot" />}
+    </svg>
+    <span class="ap-week-diff mono" data-up={diff > 0 || undefined}>{diffLabel}</span>
+    <ol class="ap-week-days mono" aria-label="Bookings per day this week">
+      {days.map((d) => (
+        <li data-today={d.isToday || undefined}><span>{d.label}</span><span class="ap-week-n">{d.count}</span></li>
+      ))}
+    </ol>
+  </div>
+
+  <div class="ap-week-card">
+    <p id="week-title" class="ap-week-k">Bookings today</p>
+    <p class="ap-week-v">{todayCount}</p>
+    <p class="ap-week-sub"><span class="ap-week-badge" aria-hidden="true"><AppIcon name="trend" size={18} /></span>{weekCount} this week</p>
+  </div>
+</section>

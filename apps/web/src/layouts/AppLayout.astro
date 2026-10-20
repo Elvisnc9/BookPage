@@ -1,6 +1,7 @@
 ---
 import { ROOT_DOMAIN } from 'astro:env/server';
 import { localDate } from '@bookpage/shared';
+import AppIcon from '../components/AppIcon.astro';
 import Base from './Base.astro';
 import '../styles/app.css';
 import { dayLabel, initials } from '../lib/public';
@@ -10,6 +11,8 @@ interface Props {
   active: 'today' | 'bookings' | 'page';
   /** The business time zone, for the date line. */
   timezone?: string | undefined;
+  /** Optional heading shown in the page header (the page's own h1 otherwise). */
+  heading?: string | undefined;
 }
 
 const { title, active, timezone } = Astro.props;
@@ -17,46 +20,110 @@ const { user, business } = Astro.locals.me!;
 const { protocol, port } = Astro.url;
 const pageHost = business ? `${business.slug}.${ROOT_DOMAIN}${port ? `:${port}` : ''}` : '';
 const pageUrl = `${protocol}//${pageHost}`;
-const today = timezone ? dayLabel(localDate(new Date(), timezone).date).long : '';
+const today = timezone ? dayLabel(localDate(new Date(), timezone).date) : null;
+const who = user.name ?? user.email;
 
 const nav = [
-  { key: 'today', label: 'Today', href: '/' },
-  { key: 'bookings', label: 'Bookings', href: '/bookings' },
-  { key: 'page', label: 'My page', href: '/page' },
+  { key: 'today', label: 'Today', href: '/', icon: 'today' },
+  { key: 'bookings', label: 'Bookings', href: '/bookings', icon: 'bookings' },
+  { key: 'page', label: 'My page', href: '/page', icon: 'page' },
 ] as const;
 ---
 
 <Base title={`${title} · BookPage`}>
   <div class="ap">
-    <nav class="ap-side" aria-label="Dashboard">
-      <a class="ap-brand mono" href="/">BookPage</a>
-      <ul class="ap-nav">
-        {nav.map((n) => (
-          <li><a class="ap-nav-link" href={n.href} aria-current={n.key === active ? 'page' : undefined}>{n.label}</a></li>
-        ))}
-        <li><a class="ap-nav-link" href={pageUrl} target="_blank" rel="noopener">View my page ↗</a></li>
-      </ul>
-      <div class="ap-me">
-        <span class="ap-avatar mono" aria-hidden="true">{initials(user.name ?? user.email)}</span>
-        <span class="ap-me-text">
-          <strong>{user.name ?? user.email}</strong>
+    <aside class="ap-side" aria-label="Dashboard">
+      <a class="ap-brand mono" href="/" aria-label="BookPage, Today">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="13" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="2" width="9" height="9" rx="2" fill="#F7D45C" stroke="#0D0D10" stroke-width="1.6" /></svg>
+        BookPage
+      </a>
+
+      <section class="ap-panel ap-profile" aria-label="Signed in as">
+        <span class="ap-ring"><span class="avatar ap-avatar" data-hue="1" aria-hidden="true">{initials(who)}</span></span>
+        <span class="ap-profile-text">
+          <strong>{who}</strong>
           <span class="mono">{business?.name}</span>
         </span>
-        <form method="post" action="/api/auth/logout">
-          <button class="ap-signout mono" type="submit">Sign out</button>
-        </form>
-      </div>
-    </nav>
+      </section>
 
-    <div class="ap-main">
-      <header class="ap-top">
-        <span class="mono ap-date">{today}</span>
-        <span class="ap-live mono"><i aria-hidden="true"></i>Page live</span>
-        <a class="ap-link mono" href={pageUrl} target="_blank" rel="noopener">{pageHost}</a>
-      </header>
-      <main class="ap-content">
-        <slot />
-      </main>
-    </div>
+      <nav class="ap-panel ap-nav" aria-label="Dashboard sections">
+        {nav.map((n) => (
+          <a class="ap-nav-link" href={n.href} aria-current={n.key === active ? 'page' : undefined}>
+            <AppIcon name={n.icon} />
+            <span>{n.label}</span>
+            {n.key === active && <span class="ap-nav-arrow"><AppIcon name="arrow" size={18} /></span>}
+          </a>
+        ))}
+        <a class="ap-nav-link" href={pageUrl} target="_blank" rel="noopener">
+          <AppIcon name="external" />
+          <span>View my page</span>
+        </a>
+        <form method="post" action="/api/auth/logout">
+          <button class="ap-nav-link" type="submit">
+            <AppIcon name="logout" />
+            <span>Sign out</span>
+          </button>
+        </form>
+      </nav>
+
+      <section class="ap-panel ap-share" aria-labelledby="share-title">
+        <p id="share-title" class="lab">Your page</p>
+        <p class="ap-share-live mono"><i aria-hidden="true"></i>Live</p>
+        <a class="ap-share-url mono" href={pageUrl} target="_blank" rel="noopener">{pageHost}</a>
+        <button type="button" class="btn btn-primary ap-copy" data-copy={pageUrl}>
+          <AppIcon name="copy" size={16} /> <span data-copy-label>Copy link</span>
+        </button>
+      </section>
+    </aside>
+
+    <header class="ap-bar">
+      <a class="ap-brand mono" href="/">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="13" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="2" width="9" height="9" rx="2" fill="#F7D45C" stroke="#0D0D10" stroke-width="1.6" /></svg>
+        BookPage
+      </a>
+      <a class="pill ap-bar-live" data-tone="ok" href={pageUrl} target="_blank" rel="noopener"><i aria-hidden="true"></i>Page live</a>
+      <form method="post" action="/api/auth/logout">
+        <button class="icon-btn ap-bar-out" type="submit" aria-label="Sign out"><AppIcon name="logout" /></button>
+      </form>
+    </header>
+
+    <main class="ap-main" id="main">
+      {today && (
+        <p class="ap-date mono">
+          <span class="ap-date-icon" aria-hidden="true"><AppIcon name="today" size={18} /></span>
+          {today.long}
+        </p>
+      )}
+      <slot />
+    </main>
+
+    <nav class="ap-tabs-bottom" aria-label="Dashboard sections">
+      {nav.map((n) => (
+        <a href={n.href} aria-current={n.key === active ? 'page' : undefined}>
+          <AppIcon name={n.icon} size={22} />
+          <span>{n.label}</span>
+        </a>
+      ))}
+      <a href={pageUrl} target="_blank" rel="noopener">
+        <AppIcon name="external" size={22} />
+        <span>View page</span>
+      </a>
+    </nav>
   </div>
+
+  <script>
+    // "Copy link" for the owner's page. Falls back to selecting the link text.
+    for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
+      const label = button.querySelector<HTMLElement>('[data-copy-label]');
+      button.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(button.dataset.copy!);
+          if (label) label.textContent = 'Copied';
+        } catch {
+          if (label) label.textContent = 'Copy failed';
+        }
+        setTimeout(() => { if (label) label.textContent = 'Copy link'; }, 2000);
+      });
+    }
+  </script>
 </Base>
