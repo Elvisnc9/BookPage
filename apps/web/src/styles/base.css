@@ -65,6 +65,7 @@ button { cursor: pointer; }
 }
 .box.raised { box-shadow: var(--shadow); }
 
+/* Buttons: an outlined block resting on a hard shadow. Hover lifts it, press pushes it in. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -83,33 +84,105 @@ button { cursor: pointer; }
   border-radius: var(--r);
   background: var(--surface);
   color: var(--ink);
+  box-shadow: var(--shadow-press);
   transition:
     transform var(--dur-fast) var(--ease-out),
     background-color 180ms ease,
     color 180ms ease,
-    box-shadow 180ms ease;
+    box-shadow var(--dur-fast) var(--ease-out);
 }
-.btn:active { transform: scale(.97); }
-.btn-ink { background: var(--ink); color: var(--surface); }
+.btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.btn:disabled, .btn[aria-disabled='true'] { opacity: .5; box-shadow: none; cursor: not-allowed; }
+.btn-primary { background: var(--sun); }
+.btn-ink { background: var(--ink); color: var(--surface); box-shadow: 3px 3px 0 var(--sun-deep); }
+.btn-ink:active { box-shadow: 1px 1px 0 var(--sun-deep); }
+.btn-quiet { box-shadow: none; border-color: var(--line); }
+.btn-danger { color: var(--red); border-color: var(--red); box-shadow: 3px 3px 0 var(--red); }
 
+/* Square icon button (the reference's + and −). */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  box-shadow: var(--shadow-press);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.icon-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+
+/* Choice chips and segmented controls: the chosen one turns sun yellow. */
 .chip {
   min-height: 32px;
   padding: 0 12px;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   border-radius: var(--r);
   background: var(--surface);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: .06em;
-  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
-.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.chip[aria-pressed='true'], .chip[aria-current], .chip[aria-checked='true'] {
+  background: var(--sun);
+  color: var(--ink);
+  border: var(--border);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* Status pills: a quiet tint, an ink outline, mono label. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--r);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.pill[data-tone='wait'] { background: var(--tint-sun); }
+.pill[data-tone='ok'] { background: var(--tint-mint); }
+.pill[data-tone='bad'] { background: var(--tint-red); }
+.pill[data-tone='info'] { background: var(--tint-periwinkle); }
+.pill[data-tone='muted'] { background: var(--line-soft); color: var(--muted); border-color: var(--faint); }
+
+/* Round initials avatar with an ink ring. */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: var(--border);
+  border-radius: 50%;
+  background: var(--peach);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.avatar[data-hue='1'] { background: var(--sun); }
+.avatar[data-hue='2'] { background: var(--periwinkle); color: var(--surface); }
+.avatar[data-hue='3'] { background: var(--mint); }
+.avatar[data-hue='4'] { background: var(--tint-orange); }
 
 .lift { transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) ease; }
 
 @media (hover: hover) and (pointer: fine) {
-  .btn:hover { background: var(--ink); color: var(--surface); }
-  .btn-ink:hover { background: var(--ink-hover); }
+  .btn:hover:not(:disabled), .icon-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+  .btn-ink:hover:not(:disabled) { background: var(--ink-hover); box-shadow: 4px 4px 0 var(--sun-deep); }
+  .btn-danger:hover:not(:disabled) { box-shadow: 4px 4px 0 var(--red); }
+  .btn-quiet:hover:not(:disabled) { box-shadow: none; border-color: var(--ink); transform: none; }
+  .chip:not([aria-pressed='true']):not([aria-current]):not([aria-checked='true']):hover { border-color: var(--ink); }
   .lift:hover { transform: translate(-2px, -2px); box-shadow: var(--shadow-lg); }
 }
 

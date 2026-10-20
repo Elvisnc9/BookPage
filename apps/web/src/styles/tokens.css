@@ -1,28 +1,39 @@
-/* BookPage design tokens. Source of truth: design/README.md.
-   Softened neo-brutalism: 2px ink borders, hard offset shadows, 4–10px radii.
-   Accents are used one per element; there is no primary colour. */
+/* BookPage design tokens. Source of truth: design/README.md, refined for the
+   2026-10 redesign (premium neo-brutalism, light only).
+   2px ink borders, hard offset shadows, 6–12px radii. Sun yellow is the main
+   accent (primary actions, the selected state); the others carry meaning:
+   periwinkle for data, peach and red for warmth and warnings, mint for done. */
 :root {
-  /* Surfaces & text */
-  --page: #EBEBE8;
+  /* Surfaces & text (light only: there is no dark theme) */
+  --page: #F3F2EE;
   --surface: #FFFFFF;
-  --surface-2: #FAFAF9;
+  --surface-2: #FAF9F5;
+  --cream: #FBF7EC;
   --ink: #0D0D10;
   --ink-hover: #2A2A30;
   --ink-soft: #3C3C44;
   --muted: #5C5C66;
   --faint: #8E8E96;
-  --line: #CFCFD4;
-  --line-soft: #F2F2F3;
+  --line: #D7D6D0;
+  --line-soft: #ECEBE6;
 
   /* Accents */
-  --red: #C8553D;
-  --orange: #E07A3F;
+  --sun: #F7D45C;
+  --sun-deep: #E9B949;
   --yellow: #E9B949;
+  --orange: #E07A3F;
+  --peach: #F6A06F;
+  --red: #C8553D;
+  --periwinkle: #6F7CF2;
+  --mint: #3CC48E;
 
-  /* Tints */
+  /* Tints (backgrounds for pills, highlights and quiet panels) */
+  --tint-sun: #FDF3CF;
   --tint-yellow: #FBF3DC;
   --tint-orange: #FCE9DC;
   --tint-red: #FBE4DE;
+  --tint-periwinkle: #E6E8FD;
+  --tint-mint: #DDF4E9;
 
   /* Type */
   --font-sans: 'Geist Variable', 'Helvetica Neue', Arial, sans-serif;
@@ -36,16 +47,29 @@
   --r-sm: 4px;
   --r: 6px;
   --r-lg: 8px;
-  --r-xl: 10px;
+  --r-xl: 12px;
   --r-pill: 999px;
 
-  /* Hard offset shadows */
+  /* Hard offset shadows. --shadow-press is the resting state of every control. */
+  --shadow-press: 3px 3px 0 var(--ink);
   --shadow-sm: 5px 5px 0 var(--ink);
   --shadow: 6px 6px 0 var(--ink);
   --shadow-lg: 10px 10px 0 var(--ink);
 
+  /* Spacing scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 72px;
+
   /* Motion */
   --ease-out: cubic-bezier(.23, 1, .32, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
   --dur-fast: 140ms;
   --dur: 220ms;
+  --dur-slow: 420ms;
 }
