@@ -55,7 +55,7 @@ const link = (k: View) => `/bookings?view=${k}${q ? `&q=${encodeURIComponent(q)}
 
 <AppLayout title="Bookings" active="bookings" timezone={tz}>
   <div class="ap-head">
-    <h1 class="ap-h1">Your <span class="scan">bookings</span></h1>
+    <h1 class="ap-h1">Bookings</h1>
   </div>
 
   {message && <p class={`ap-flash ${message.tone}`} role="status">{message.text}</p>}

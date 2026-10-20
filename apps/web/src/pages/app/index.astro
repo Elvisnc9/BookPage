@@ -48,7 +48,7 @@ const first = (Astro.locals.me!.user.name ?? '').split(' ')[0];
   <div class="ap-head">
     <div>
       <p class="ap-greet">{greeting}{first ? `, ${first}` : ''}.</p>
-      <h1 class="ap-h1">{n === 0 ? 'Nothing booked' : `${n} booking${n === 1 ? '' : 's'}`} <span class="scan">today</span></h1>
+      <h1 class="ap-h1">{n === 0 ? 'Nothing booked today' : `${n} booking${n === 1 ? '' : 's'} today`}</h1>
     </div>
     <a class="btn btn-primary" href="/bookings">All bookings <AppIcon name="arrow" size={16} /></a>
   </div>
@@ -56,29 +56,31 @@ const first = (Astro.locals.me!.user.name ?? '').split(' ')[0];
   {message && <p class={`ap-flash ${message.tone}`} role="status">{message.text}</p>}
 
   <div class="ap-hero">
-    <WeekPanel days={days} todayCount={summary.todayCount} weekCount={summary.weekCount} lastWeekCount={lastWeekCount} />
-
-    <div class="ap-tiles">
-      <a class={`ap-tile ap-tile-ok${summary.pendingCount ? ' is-alert' : ''}`} href="/bookings?view=pending">
-        <span class="ap-tile-icon" aria-hidden="true"><AppIcon name="bell" /></span>
-        <span class="ap-tile-k">Needs your OK</span>
-        <strong class="ap-tile-v">{summary.pendingCount}</strong>
-        <span class="ap-tile-go mono">{summary.pendingCount ? 'Review' : 'All clear'} <AppIcon name="arrow" size={14} /></span>
+    <div class="ap-stats">
+      <div class="ap-stat">
+        <span class="ap-stat-k"><span class="ap-stat-ic" aria-hidden="true"><AppIcon name="today" size={18} /></span>Today</span>
+        <strong class="ap-num ap-stat-v">{summary.todayCount}</strong>
+        <span class="ap-stat-sub">{summary.weekCount} this week</span>
+      </div>
+      <a class={`ap-stat ap-stat-link${summary.pendingCount ? ' is-alert' : ''}`} href="/bookings?view=pending">
+        <span class="ap-stat-k"><span class="ap-stat-ic" aria-hidden="true"><AppIcon name="bell" size={18} /></span>Needs your OK</span>
+        <strong class="ap-num ap-stat-v">{summary.pendingCount}</strong>
+        <span class="ap-stat-sub ap-stat-go">{summary.pendingCount ? 'Review' : 'All clear'} <AppIcon name="arrow" size={14} /></span>
       </a>
-      <div class="ap-tile ap-tile-next">
-        <span class="ap-tile-icon" aria-hidden="true"><AppIcon name="clock" /></span>
-        <span class="ap-tile-k">Next up</span>
+      <div class="ap-stat ap-stat-next">
+        <span class="ap-stat-k"><span class="ap-stat-ic" aria-hidden="true"><AppIcon name="clock" size={18} /></span>Next up</span>
         {summary.next ? (
           <>
-            <strong class="ap-tile-v ap-tile-time">{timeOf(summary.next.startsAt, tz)}</strong>
-            <span class="ap-tile-sub">{summary.next.customer.name} · {summary.next.serviceName}</span>
-            {new Date(summary.next.startsAt) >= dayEnd && <span class="ap-tile-sub mono">{whenLabel(summary.next.startsAt, tz).split(',')[0]}</span>}
+            <strong class="ap-num ap-stat-v">{timeOf(summary.next.startsAt, tz)}</strong>
+            <span class="ap-stat-sub">{summary.next.customer.name} · {summary.next.serviceName}{new Date(summary.next.startsAt) >= dayEnd ? ` · ${whenLabel(summary.next.startsAt, tz).split(',')[0]}` : ''}</span>
           </>
         ) : (
-          <span class="ap-tile-sub">Nothing coming up yet.</span>
+          <span class="ap-stat-sub">Nothing coming up yet.</span>
         )}
       </div>
     </div>
+
+    <WeekPanel days={days} weekCount={summary.weekCount} lastWeekCount={lastWeekCount} />
   </div>
 
   <section class="ap-panel ap-table" aria-labelledby="sched">

@@ -152,7 +152,7 @@ button { cursor: pointer; }
 .pill[data-tone='wait'] { background: var(--tint-sun); }
 .pill[data-tone='ok'] { background: var(--tint-mint); }
 .pill[data-tone='bad'] { background: var(--tint-red); }
-.pill[data-tone='info'] { background: var(--tint-periwinkle); }
+.pill[data-tone='info'] { background: var(--surface-2); }
 .pill[data-tone='muted'] { background: var(--line-soft); color: var(--muted); border-color: var(--faint); }
 
 /* Round initials avatar with an ink ring. */
@@ -164,16 +164,16 @@ button { cursor: pointer; }
   height: 40px;
   border: var(--border);
   border-radius: 50%;
-  background: var(--peach);
+  background: var(--tint-orange);
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 700;
   color: var(--ink);
 }
-.avatar[data-hue='1'] { background: var(--sun); }
-.avatar[data-hue='2'] { background: var(--periwinkle); color: var(--surface); }
-.avatar[data-hue='3'] { background: var(--mint); }
-.avatar[data-hue='4'] { background: var(--tint-orange); }
+.avatar[data-hue='1'] { background: var(--tint-sun); }
+.avatar[data-hue='2'] { background: var(--line-soft); }
+.avatar[data-hue='3'] { background: var(--tint-mint); }
+.avatar[data-hue='4'] { background: var(--tint-red); }
 
 .lift { transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) ease; }
 

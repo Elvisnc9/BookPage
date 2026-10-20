@@ -32,48 +32,45 @@ const nav = [
 
 <Base title={`${title} · BookPage`}>
   <div class="ap">
+    <!-- Rail on tablets, full sidebar on desktops (hidden on phones: top bar + bottom tabs). -->
     <aside class="ap-side" aria-label="Dashboard">
       <a class="ap-brand mono" href="/" aria-label="BookPage, Today">
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="13" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="2" width="9" height="9" rx="2" fill="#F7D45C" stroke="#0D0D10" stroke-width="1.6" /></svg>
-        BookPage
+        <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="13" width="9" height="9" rx="2" fill="#0D0D10" /><rect x="13" y="2" width="9" height="9" rx="2" fill="#F7D45C" stroke="#0D0D10" stroke-width="1.6" /></svg>
+        <span class="ap-wide">BookPage</span>
       </a>
 
-      <section class="ap-panel ap-profile" aria-label="Signed in as">
-        <span class="ap-ring"><span class="avatar ap-avatar" data-hue="1" aria-hidden="true">{initials(who)}</span></span>
-        <span class="ap-profile-text">
-          <strong>{who}</strong>
-          <span class="mono">{business?.name}</span>
-        </span>
-      </section>
-
-      <nav class="ap-panel ap-nav" aria-label="Dashboard sections">
+      <nav class="ap-nav" aria-label="Dashboard sections">
+        <p class="ap-nav-k lab ap-wide">Menu</p>
         {nav.map((n) => (
           <a class="ap-nav-link" href={n.href} aria-current={n.key === active ? 'page' : undefined}>
             <AppIcon name={n.icon} />
             <span>{n.label}</span>
-            {n.key === active && <span class="ap-nav-arrow"><AppIcon name="arrow" size={18} /></span>}
           </a>
         ))}
         <a class="ap-nav-link" href={pageUrl} target="_blank" rel="noopener">
           <AppIcon name="external" />
-          <span>View my page</span>
+          <span><span class="ap-wide">View my </span><span class="ap-rail-only">View </span>page</span>
         </a>
-        <form method="post" action="/api/auth/logout">
-          <button class="ap-nav-link" type="submit">
-            <AppIcon name="logout" />
-            <span>Sign out</span>
-          </button>
-        </form>
       </nav>
 
-      <section class="ap-panel ap-share" aria-labelledby="share-title">
-        <p id="share-title" class="lab">Your page</p>
-        <p class="ap-share-live mono"><i aria-hidden="true"></i>Live</p>
+      <section class="ap-share ap-wide" aria-labelledby="share-title">
+        <p id="share-title" class="ap-share-k"><span class="lab">Your page</span><span class="ap-share-live mono"><i aria-hidden="true"></i>Live</span></p>
         <a class="ap-share-url mono" href={pageUrl} target="_blank" rel="noopener">{pageHost}</a>
         <button type="button" class="btn btn-primary ap-copy" data-copy={pageUrl}>
           <AppIcon name="copy" size={16} /> <span data-copy-label>Copy link</span>
         </button>
       </section>
+
+      <div class="ap-me">
+        <span class="avatar ap-avatar" data-hue="1" aria-hidden="true">{initials(who)}</span>
+        <span class="ap-me-text ap-wide">
+          <strong>{who}</strong>
+          <span class="mono">{business?.name}</span>
+        </span>
+        <form method="post" action="/api/auth/logout">
+          <button class="ap-out" type="submit" aria-label="Sign out" title="Sign out"><AppIcon name="logout" /></button>
+        </form>
+      </div>
     </aside>
 
     <header class="ap-bar">
@@ -89,10 +86,7 @@ const nav = [
 
     <main class="ap-main" id="main">
       {today && (
-        <p class="ap-date mono">
-          <span class="ap-date-icon" aria-hidden="true"><AppIcon name="today" size={18} /></span>
-          {today.long}
-        </p>
+        <p class="ap-date mono"><i aria-hidden="true"></i>{today.long}</p>
       )}
       <slot />
     </main>
