@@ -100,6 +100,13 @@ describe('template catalogue', () => {
     const shapes = templates.map((t) => `${t.layout.sections.join(',')}|${t.layout.services.display}`);
     expect(new Set(shapes).size).toBe(shapes.length);
   });
+
+  it('shows the same catalogue to the marketing site, without a session', async () => {
+    const res = await fetch(`${base}/marketing/templates`, { headers: { 'x-bookpage-client-ip': randomUUID(), 'x-bookpage-proxy-secret': 'test-proxy-secret' } });
+    expect(res.status).toBe(200);
+    const listed = ((await res.json()) as { templates: SiteTemplate[] }).templates;
+    expect(listed.map((t) => t.slug)).toEqual(templates.map((t) => t.slug));
+  });
 });
 
 describe('choosing a template during onboarding', () => {

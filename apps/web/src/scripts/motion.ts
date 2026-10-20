@@ -1,8 +1,7 @@
 /**
- * Marketing-site motion: Lenis smooth scroll, GSAP ScrollTrigger reveals,
- * data-speed parallax on the floating stickers, and the workflow string
- * drawing itself in. CSS and SMIL handle the always-on loops (drift, swing,
- * marquee).
+ * Marketing-site motion: the hero (scripts/hero.ts), Lenis smooth scroll,
+ * GSAP ScrollTrigger reveals and data-speed parallax. CSS handles the
+ * always-on loops (the marquee strips).
  *
  * Loaded only when the visitor hasn't asked for reduced motion. Nothing is
  * hidden by CSS, so the page reads fine without this script.
@@ -51,11 +50,3 @@ for (const el of gsap.utils.toArray<HTMLElement>('[data-speed]')) {
   });
 }
 
-// The workflow string draws itself in as "How it works" scrolls into view.
-for (const line of gsap.utils.toArray<SVGPathElement>('.mk-strline')) {
-  gsap.fromTo(line, { strokeDashoffset: 1 }, {
-    strokeDashoffset: 0,
-    ease: 'none',
-    scrollTrigger: { trigger: line.closest('section'), start: 'top 75%', end: 'center 55%', scrub: true },
-  });
-}

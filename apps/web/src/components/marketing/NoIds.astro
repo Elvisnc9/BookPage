@@ -1,0 +1,9 @@
+---
+// Renders its children with every id (and the attributes that point at ids)
+// removed, so a picture of a template can sit on a page more than once without
+// clashing with that page's own anchors (#faq, #faq-title…). Only for our own
+// components with sample data: the HTML is re-emitted as is.
+const html = (await Astro.slots.render('default')).replace(/\s(?:id|for|aria-labelledby|aria-describedby|aria-controls)="[^"]*"/g, '');
+---
+
+<Fragment set:html={html} />

@@ -4,6 +4,7 @@ import { isValidSlug } from '@bookpage/shared';
 import { z } from 'zod';
 import { ZodPipe } from '../common/zod.pipe';
 import { PrismaService } from '../prisma/prisma.service';
+import { SiteTemplatesService } from '../site/site-templates.service';
 import { PUBLIC_READ_LIMITS, PublicThrottlerGuard } from './public-throttler.guard';
 
 const waitlistSchema = z.object({
@@ -11,11 +12,21 @@ const waitlistSchema = z.object({
   kind: z.enum(['pro']).default('pro'),
 });
 
-/** Marketing site: "is this page address free?" and the Pro waitlist. No session. */
+/** Marketing site: the template showcase, "is this page address free?" and the Pro waitlist. No session. */
 @Controller('marketing')
 @UseGuards(PublicThrottlerGuard)
 export class MarketingController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly templates: SiteTemplatesService,
+  ) {}
+
+  /** The same active, validated catalogue onboarding offers, so the showcase never shows a template owners can't pick. */
+  @Get('templates')
+  @Throttle(PUBLIC_READ_LIMITS)
+  async listTemplates() {
+    return { templates: await this.templates.list() };
+  }
 
   @Get('slug-available')
   @Throttle(PUBLIC_READ_LIMITS)

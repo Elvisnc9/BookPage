@@ -1,12 +1,12 @@
 ---
-import Deco from '../components/marketing/Deco.astro';
 import Hero from '../components/marketing/Hero.astro';
 import Pricing from '../components/marketing/Pricing.astro';
-import { swing, waveDownPath, wavePath } from '../components/marketing/wave';
+import Showcase from '../components/marketing/Showcase.astro';
 import MarketingLayout from '../layouts/MarketingLayout.astro';
-import { siteLinks } from '../lib/marketing';
+import { listTemplates, siteLinks } from '../lib/marketing';
 
 const links = siteLinks(Astro.url);
+const templates = await listTemplates(Astro.request);
 
 const ICON = {
   instagram: 'M7.03.084c-1.277.06-2.149.264-2.911.563-.789.308-1.458.72-2.123 1.388-.665.668-1.075 1.337-1.38 2.127-.296.764-.496 1.637-.552 2.914-.056 1.278-.069 1.688-.063 4.947.006 3.259.021 3.667.083 4.947.061 1.277.264 2.148.563 2.911.308.789.72 1.457 1.388 2.123.668.665 1.337 1.074 2.129 1.38.763.295 1.636.496 2.913.552 1.277.056 1.688.069 4.946.063 3.258-.006 3.668-.021 4.948-.081 1.28-.061 2.147-.265 2.91-.563.789-.309 1.458-.72 2.123-1.388.665-.668 1.074-1.338 1.379-2.129.296-.763.497-1.636.552-2.912.056-1.281.069-1.69.063-4.948-.006-3.258-.021-3.667-.082-4.947-.06-1.28-.264-2.148-.563-2.911-.308-.789-.72-1.457-1.388-2.123C21.298 1.33 20.628.921 19.838.617 19.074.321 18.202.12 16.924.065 15.647.009 15.236-.005 11.977.001 8.718.008 8.31.022 7.03.084m.14 21.693c-1.17-.051-1.805-.245-2.229-.408-.56-.216-.96-.477-1.382-.895-.422-.418-.681-.819-.9-1.378-.164-.423-.362-1.058-.417-2.228-.06-1.264-.072-1.644-.079-4.848-.007-3.204.005-3.583.061-4.848.05-1.169.246-1.805.408-2.228.216-.561.476-.96.895-1.382.419-.422.818-.681 1.378-.9.423-.165 1.058-.361 2.227-.417 1.266-.06 1.645-.072 4.848-.079 3.203-.007 3.584.005 4.85.061 1.169.051 1.805.245 2.228.408.561.216.96.475 1.382.895.422.419.682.818.9 1.379.166.422.362 1.056.417 2.226.06 1.266.074 1.645.08 4.848.006 3.203-.006 3.583-.061 4.848-.051 1.17-.245 1.806-.408 2.23-.216.56-.476.96-.895 1.381-.419.421-.818.681-1.378.9-.423.165-1.058.362-2.226.417-1.266.06-1.645.072-4.85.079-3.204.007-3.582-.006-4.848-.061M16.953 5.586A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.442M5.839 12.012c.007 3.403 2.77 6.156 6.173 6.149 3.403-.006 6.157-2.77 6.151-6.173-.007-3.403-2.771-6.157-6.174-6.15-3.403.007-6.156 2.771-6.15 6.174M8 12.008a4 4 0 1 1 4.008 3.992A3.999 3.999 0 0 1 8 12.008',
@@ -35,8 +35,8 @@ const forOwners = [
   "Today's schedule on your phone",
 ];
 
-const how = swing(wavePath, [200, 170, 210]);
-const howDown = swing(waveDownPath, [150, 130, 155]);
+// A four-point sparkle for the marquee strips.
+const STAR = 'M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z';
 
 const stories = [
   { q: 'Saturday bookings stop living in your DMs. Clients tap the link in your bio and pick a free time, even at midnight.', n: 'Hair salons', r: 'SILK PRESS · BRAIDS · COLOUR', tag: 'SALON', stat: 'BOOKED WHILE YOU SLEEP', bg: '#FFFFFF', fg: '#0D0D10', w: 440, rot: -2, big: true, acc: '#E9B949', ini: 'HS' },
@@ -62,8 +62,6 @@ const rowB = [
   ['Mechanics', 'OIL CHANGE · $70', '#E07A3F', '⚙'], ['Driving instructors', 'LESSON · €45', '#E9B949', '▲'], ['Massage therapists', '60 MIN · $95', '#0D0D10', '✿'],
   ['Cleaners', 'HOME CLEAN · €60', '#C8553D', '⌂'],
 ];
-
-const swatches = [['Ink', '#0D0D10'], ['Brick', '#C8553D'], ['Orange', '#E07A3F'], ['Mustard', '#E9B949']] as const;
 
 const faqs = [
   ['Do my customers need to download anything?', 'No. Your page is an ordinary web link. They open it, pick a time, enter their name and email, and they are booked. No app, no account.'],
@@ -91,141 +89,94 @@ const faqs = [
     </div>
   </section>
 
-  <!-- How it works -->
-  <section id="how" class="mk-fx mk-sec mk-grid" aria-labelledby="how-title">
-    <div class="mk-w mk-stack">
+  <!-- Strip: the whole job in four words -->
+  <div class="mk-strip" style="--strip:var(--mint)" aria-hidden="true">
+    <div class="mk-strip-track">
+      {[0, 1].map(() => ['Add your services', 'Set your hours', 'Share your link', 'Get booked'].map((w) => (
+        <span>{w}<svg viewBox="0 0 24 24"><path d={STAR} /></svg></span>
+      )))}
+    </div>
+  </div>
 
-      <div class="mk-head" data-reveal>
-        <h2 id="how-title" class="mk-h2">Set up once. <span class="scan">Get booked.</span></h2>
-        <p class="mk-sub mono">Three steps for you. One minute for your customers.</p>
+  <!-- How it works -->
+  <section id="how" class="mk-fx mk-sec mk-how" aria-labelledby="how-title">
+    <div class="mk-w">
+      <div class="mk-how-head" data-reveal>
+        <h2 id="how-title" class="mk-cond mk-big">Set up once.<br />Get booked.</h2>
+        <div class="mk-how-aside">
+          <p class="mk-sub">Three steps for you, about five minutes on your phone. One minute for your customers, any time of day.</p>
+          <a class="btn btn-ink" href={links.signUp}>Start step one →</a>
+        </div>
       </div>
-      <div class="mk-flow">
-        <svg class="mk-str mk-str-h" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true">
-          <path class="mk-strline" pathLength="1" d={how.d} fill="none" stroke="#0D0D10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><animate attributeName="d" dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1" values={how.values} /></path>
-        </svg>
-        <svg class="mk-str mk-str-v" viewBox="0 0 400 1200" preserveAspectRatio="none" aria-hidden="true">
-          <path class="mk-strline" pathLength="1" d={howDown.d} fill="none" stroke="#0D0D10" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><animate attributeName="d" dur="6s" repeatCount="indefinite" calcMode="spline" keyTimes="0;.33;.66;1" keySplines=".45 0 .55 1;.45 0 .55 1;.45 0 .55 1" values={howDown.values} /></path>
-        </svg>
-        <ol class="mk-steps" data-reveal>
-          <li class="box mk-step">
-            <span class="mk-step-n mono" style="background:#C8553D">01</span>
-            <h3>Add your business</h3>
-            <p class="mono">Services, prices and opening hours. About five minutes, on your phone.</p>
-            <span class="mk-step-foot" style="background:#FBE4DE">
-              <span class="mk-row mono"><span>Silk press</span><span>$85</span></span>
-              <span class="mk-row mono"><span>Knotless braids</span><span>$180</span></span>
-            </span>
-          </li>
-          <li class="box mk-step">
-            <span class="mk-step-n mono" style="background:#E07A3F">02</span>
-            <h3>Set your rules</h3>
-            <p class="mono">Notice, how far ahead, approve or auto-confirm. Only times you are free are offered, so no double bookings.</p>
-            <span class="mk-step-foot mk-step-foot-row" style="background:#FCE9DC">
-              <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="16" rx="3" fill="#FFFFFF" stroke="#0D0D10" stroke-width="2" /><path d="M3 9.5h18M8 2.5v4M16 2.5v4" stroke="#0D0D10" stroke-width="2" stroke-linecap="round" /><path d="M8.5 15l2.5 2.5 4.5-5" stroke="#E07A3F" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
-              <span><b>Auto-confirm</b><small class="mono">● ON · 2 HOURS NOTICE</small></span>
-            </span>
-          </li>
-          <li class="box mk-step">
-            <span class="mk-step-n mono" style="background:#E9B949">03</span>
-            <h3>Share your link</h3>
-            <p class="mono">Put it in your Instagram bio, WhatsApp status and Google listing. Customers book from there.</p>
-            <span class="mk-step-foot" style="background:#FBF3DC"><span class="mk-url mono">glowstudio.bookpage.app</span></span>
-          </li>
-        </ol>
-      </div>
+      <svg class="mk-doodle mk-how-doodle" viewBox="0 0 220 120" aria-hidden="true"><path d="M8 20c40-14 70 4 62 34s-40 22-30-4 64-38 92-6 22 52 68 56" /><path d="M188 92l14 10-16 8" /></svg>
+      <ol class="mk-how-cards" data-reveal>
+        <li class="box mk-hc" style="--bg:var(--surface);--rot:-4deg">
+          <span class="mk-hc-top"><span class="mk-hc-ic" style="--ic:var(--sun)"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" /></svg></span><span class="mono">Step 01</span></span>
+          <h3 class="mk-cond">Add your business</h3>
+          <p>Services, prices and opening hours. About five minutes, on your phone.</p>
+          <span class="mk-hc-ui">
+            <span class="mk-row mono"><span>Silk press</span><span>$85</span></span>
+            <span class="mk-row mono"><span>Knotless braids</span><span>$180</span></span>
+          </span>
+        </li>
+        <li class="box mk-hc" style="--bg:var(--peach);--rot:3deg">
+          <span class="mk-hc-top"><span class="mk-hc-ic" style="--ic:var(--surface)"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M3 10h18M8 3v4M16 3v4M8.5 15.5l2.5 2.5 4.5-5" /></svg></span><span class="mono">Step 02</span></span>
+          <h3 class="mk-cond">Set your rules</h3>
+          <p>Notice, how far ahead, approve or auto-confirm. Only free times are offered, so no double bookings.</p>
+          <span class="mk-hc-ui mk-hc-toggle">
+            <span><b>Auto-confirm</b><small class="mono">2 hours notice</small></span>
+            <span class="mk-toggle" data-on></span>
+          </span>
+        </li>
+        <li class="box mk-hc" style="--bg:var(--periwinkle);--rot:-2deg">
+          <span class="mk-hc-top"><span class="mk-hc-ic" style="--ic:var(--sun)"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg></span><span class="mono">Step 03</span></span>
+          <h3 class="mk-cond">Share your link</h3>
+          <p>In your Instagram bio, WhatsApp status and Google listing. Customers book from there.</p>
+          <span class="mk-hc-ui"><span class="mk-url mono">glowstudio.bookpage.app</span></span>
+        </li>
+      </ol>
     </div>
   </section>
 
   <!-- Both sides -->
-  <section class="mk-fx mk-sec mk-white mk-ruled" aria-labelledby="sides-title">
-    <div class="mk-w mk-stack">
-      <h2 id="sides-title" class="mk-h2" style="max-width:15ch" data-reveal>Made for both sides of the <span class="scan">counter</span></h2>
-      <div class="mk-sides" data-reveal>
-        <div class="box mk-side" style="background:#FBF3DC;box-shadow:8px 8px 0 #E9B949">
-          <span class="lab">Your customers</span>
-          <span class="mk-side-title">Book in a minute, any time of day.</span>
-          <ul class="mk-dots-list" style="--b:#E07A3F">{forCustomers.map((x) => <li>{x}</li>)}</ul>
+  <section class="mk-fx mk-sec mk-duo-sec" aria-labelledby="sides-title">
+    <div class="mk-w">
+      <h2 id="sides-title" class="mk-cond mk-big mk-center" data-reveal>Made for both sides<br />of the counter</h2>
+      <div class="mk-duo" data-reveal>
+        <div class="box mk-duo-card" style="--rot:-2.5deg">
+          <span class="mk-duo-tag mono">Your customers</span>
+          <span class="mk-duo-title">Book in a minute, any time of day.</span>
+          <ul class="mk-ticks">{forCustomers.map((x) => <li>{x}</li>)}</ul>
         </div>
-        <div class="box mk-side mk-side-dark" style="box-shadow:8px 8px 0 #C8553D">
-          <span class="lab">You, the owner</span>
-          <span class="mk-side-title">Stop answering “are you free Saturday?” all day.</span>
-          <ul class="mk-dots-list" style="--b:#E9B949">{forOwners.map((x) => <li>{x}</li>)}</ul>
+        <span class="mk-duo-mid" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 9h15l-4-4M20 15H5l4 4" /></svg></span>
+        <div class="box mk-duo-card mk-duo-dark" style="--rot:2deg">
+          <span class="mk-duo-tag mono">You, the owner</span>
+          <span class="mk-duo-title">Stop answering “are you free Saturday?” all day.</span>
+          <ul class="mk-ticks">{forOwners.map((x) => <li>{x}</li>)}</ul>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Your own link -->
-  <section class="mk-fx mk-sec mk-cream mk-ruled" aria-labelledby="link-title">
+  <section class="mk-fx mk-link-sec" aria-labelledby="link-title">
     <div class="mk-w mk-link">
-      <Deco kind="tag" class="mk-side-art" style="left:6%;top:70px;z-index:0" rot={-8} anim="dr1" speed={0.6} label="BOOKED ✓" sub="SAT 10:30AM · SILK PRESS" color="#FFFFFF" />
-
-      <h2 id="link-title" class="mk-h2" data-reveal>Your own <span class="scan">link</span></h2>
-      <p class="mk-sub mono" data-reveal>Type your business name. That is your booking page address, free.</p>
-      <form class="box mk-slug" action={links.signUp} method="get" data-reveal data-slug-form>
-        <span class="mono">https://</span>
-        <input class="mono" name="slug" value="lunanails" aria-label="Your business name" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourbusiness" data-slug-input />
-        <span class="mono">.bookpage.app</span>
-      </form>
-      <p class="mk-slug-note mono" role="status" data-slug-note>Type a name to check it</p>
-    </div>
-  </section>
-
-  <!-- Templates -->
-  <section id="templates" class="mk-fx mk-sec" aria-labelledby="templates-title">
-    <div class="mk-w mk-tpl">
-      <div class="mk-tpl-copy" data-reveal>
-        <span class="mk-pilltag" style="--dot:#E9B949">Pro · $15 a month · coming soon</span>
-        <h2 id="templates-title" class="mk-h2">Make it look like <span class="scan">you</span></h2>
-        <p class="mk-sub mono">Pick a template, choose your colours, add a video of your space and a gallery of your best work. Try it here.</p>
-        <div class="mk-ctl" data-tpl-controls>
-          <span class="lab" id="tpl-label">Template</span>
-          <div class="mk-chips-row" role="radiogroup" aria-labelledby="tpl-label">
-            {['Classic', 'Bold', 'Soft'].map((t, i) => (
-              <button type="button" class="chip" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-tpl={t.toLowerCase()}>{t.toUpperCase()}</button>
-            ))}
-          </div>
-        </div>
-        <div class="mk-ctl">
-          <span class="lab" id="colour-label">Your colour</span>
-          <div class="mk-swatches" role="radiogroup" aria-labelledby="colour-label">
-            {swatches.map(([n, c], i) => (
-              <button type="button" class="mk-swatch" role="radio" aria-checked={i === 1 ? 'true' : 'false'} aria-label={n} data-colour={c} style={`background:${c}`}></button>
-            ))}
-          </div>
-        </div>
-        <div class="mk-addons">
-          {[['Business video', 'Show your space in 30 to 60 seconds', 'vid'], ['Premium gallery', 'Up to 50 HD photos of your work', 'gal']].map(([t, s, k]) => (
-            <div class="mk-addon">
-              <span><b>{t}</b><small class="mono">{s}</small></span>
-              <button type="button" class="mk-switch" role="switch" aria-checked="true" aria-label={t} data-addon={k}><span></span></button>
-            </div>
-          ))}
-        </div>
+      <div class="mk-link-copy" data-reveal>
+        <h2 id="link-title" class="mk-cond mk-big">Claim your link</h2>
+        <p class="mk-sub">Type your business name. That is your booking page address, and it's free.</p>
       </div>
-      <div class="mk-tpl-pv" data-reveal>
-        <div class="box mk-pv" data-tpl="classic" data-vid="on" data-gal="on" style="--accent:#C8553D;--on-accent:#FFFFFF" data-tpl-preview>
-          <div class="mk-browser"><i style="background:#C8553D"></i><i style="background:#E9B949"></i><i style="background:#0D0D10"></i><span class="mono">glowstudio.bookpage.app</span></div>
-          <div class="mk-pv-hero">
-            <span class="mono">Hair, lashes and nails · Brooklyn</span>
-            <span class="mk-pv-title">Glow Studio</span>
-            <span class="mk-pv-lede">Braids, silk presses and lashes in a calm studio.</span>
-            <span class="mk-pv-btn mono">Book an appointment</span>
-          </div>
-          <div class="mk-pv-video">
-            <span class="mk-pv-v1"></span><span class="mk-pv-v2"></span>
-            <span class="mk-pv-live mono">● Video</span>
-            <span class="mk-pv-play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0D0D10" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg></span>
-            <span class="mk-pv-cap mono">A day at Glow Studio · 0:42</span>
-          </div>
-          <div class="mk-pv-gallery"><span></span><span></span><span></span><span></span></div>
-          <div class="mk-pv-services">
-            {[['Braids', '$180'], ['Silk press', '$85'], ['Lashes', '$120']].map(([n, p]) => <span class="mono"><span>{n}</span><span>{p}</span></span>)}
-          </div>
-        </div>
+      <div class="mk-link-box" data-reveal>
+        <form class="box mk-slug" action={links.signUp} method="get" data-slug-form>
+          <span class="mono">https://</span>
+          <input class="mono" name="slug" value="lunanails" aria-label="Your business name" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourbusiness" data-slug-input />
+          <span class="mono">.bookpage.app</span>
+        </form>
+        <p class="mk-slug-note mono" role="status" data-slug-note>Type a name to check it</p>
       </div>
     </div>
   </section>
+
+  <Showcase templates={templates} signUp={links.signUp} />
 
   <!-- Who it's for -->
   <section id="stories" class="mk-fx mk-sec mk-stories" aria-labelledby="stories-title">
@@ -319,24 +270,4 @@ const faqs = [
   input?.addEventListener('input', check);
   check();
   document.querySelector('[data-slug-form]')?.addEventListener('submit', (e) => e.preventDefault());
-
-  // Template preview: Classic / Bold / Soft, the accent colour, and the two add-ons.
-  const preview = document.querySelector<HTMLElement>('[data-tpl-preview]');
-  const choose = (group: NodeListOf<HTMLElement>, picked: HTMLElement) => group.forEach((b) => b.setAttribute('aria-checked', String(b === picked)));
-  const tplButtons = document.querySelectorAll<HTMLElement>('[data-tpl-controls] [data-tpl]');
-  const swatches = document.querySelectorAll<HTMLElement>('[data-colour]');
-  tplButtons.forEach((b) => b.addEventListener('click', () => {
-    choose(tplButtons, b);
-    if (preview) preview.dataset.tpl = b.dataset.tpl!;
-  }));
-  swatches.forEach((b) => b.addEventListener('click', () => {
-    choose(swatches, b);
-    preview?.style.setProperty('--accent', b.dataset.colour!);
-    preview?.style.setProperty('--on-accent', b.dataset.colour === '#E9B949' ? '#0D0D10' : '#FFFFFF');
-  }));
-  document.querySelectorAll<HTMLElement>('[data-addon]').forEach((b) => b.addEventListener('click', () => {
-    const on = b.getAttribute('aria-checked') !== 'true';
-    b.setAttribute('aria-checked', String(on));
-    if (preview) preview.dataset[b.dataset.addon!] = on ? 'on' : 'off';
-  }));
 </script>

@@ -1,3 +1,4 @@
+import type { SiteTemplate } from '@bookpage/shared';
 import { API_URL, APP_HOST, ROOT_DOMAIN } from 'astro:env/server';
 import { visitorHeaders } from './api';
 
@@ -28,4 +29,15 @@ export async function slugAvailable(slug: string, request: Request): Promise<{ a
   const res = await fetch(`${API_URL}/marketing/slug-available?slug=${encodeURIComponent(slug)}`, { headers: visitorHeaders(request) });
   if (!res.ok) return { available: false, valid: false };
   return (await res.json()) as { available: boolean; valid: boolean };
+}
+
+/** The live template catalogue for the showcase. Empty if the API can't be reached (the section then hides). */
+export async function listTemplates(request: Request): Promise<SiteTemplate[]> {
+  try {
+    const res = await fetch(`${API_URL}/marketing/templates`, { headers: visitorHeaders(request) });
+    if (!res.ok) return [];
+    return ((await res.json()) as { templates: SiteTemplate[] }).templates;
+  } catch {
+    return [];
+  }
 }

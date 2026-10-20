@@ -1,0 +1,89 @@
+---
+// "Make it look like you": real templates from the live catalogue, drawn by the
+// same components as published pages, filled with the onboarding gallery's
+// sample businesses. Static HTML (no hydration); a small script fits each
+// fixed-width canvas to its frame.
+import type { SiteTemplate } from '@bookpage/shared';
+import { sampleBusiness } from '../onboarding/samples';
+import { buildSite } from '../../site/model';
+import { Site } from '../../site/Site';
+import '../../site/index.css';
+import NoIds from './NoIds.astro';
+
+interface Props {
+  templates: SiteTemplate[];
+  signUp: string;
+}
+
+const { templates, signUp } = Astro.props;
+// Four that look nothing alike; any the catalogue no longer offers are skipped.
+const FEATURED = ['classic', 'billboard', 'noir', 'pulse'];
+const featured = FEATURED.map((slug) => templates.find((t) => t.slug === slug)).filter((t): t is SiteTemplate => !!t);
+const shown = featured.length >= 2 ? featured : templates.slice(0, 4);
+const rows = shown.map((t) => {
+  const business = sampleBusiness(t);
+  return { t, business, site: buildSite(business, 'live') };
+});
+const tints = ['var(--tint-sun)', 'var(--tint-periwinkle)', 'var(--tint-red)', 'var(--tint-mint)'];
+---
+
+{rows.length > 0 && (
+  <Fragment>
+  <div class="mk-strip mk-strip-ink" aria-hidden="true">
+    <div class="mk-strip-track">
+      {[0, 1].map(() => templates.map((t) => (
+        <span>{t.name}<svg viewBox="0 0 24 24"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z" /></svg></span>
+      )))}
+    </div>
+  </div>
+  <section id="templates" class="mk-show" aria-labelledby="templates-title">
+    <div class="mk-w">
+      <div class="mk-show-head" data-reveal>
+        <span class="mk-pilltag" style="--dot:var(--peach)">{templates.length} templates · switch any time</span>
+        <h2 id="templates-title" class="mk-cond mk-show-title">Make it look like you</h2>
+        <p class="mk-sub">Every template is a real, finished website for your business. Your services, prices and photos carry over when you switch. Here are {rows.length}, filled in with sample businesses.</p>
+      </div>
+
+      <ol class="mk-show-list">
+        {rows.map(({ t, business, site }, i) => (
+          <li class="mk-show-row" data-flip={i % 2 === 1 ? '' : undefined} data-reveal>
+            <div class="mk-show-media" style={`--tint:${tints[i % tints.length]}`} aria-hidden="true" inert>
+              <div class="box mk-show-desk">
+                <div class="mk-show-bar"><i></i><i></i><i></i><span class="mono">{business.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.bookpage.app</span></div>
+                <div class="mk-canvas" data-canvas="1280"><div class="mk-canvas-in"><NoIds><Site site={site} /></NoIds></div></div>
+              </div>
+              <div class="box mk-show-phone">
+                <div class="mk-canvas" data-canvas="390"><div class="mk-canvas-in"><NoIds><Site site={site} /></NoIds></div></div>
+              </div>
+            </div>
+            <div class="mk-show-copy">
+              <span class="mk-show-n mono">{String(i + 1).padStart(2, '0')} / {String(templates.length).padStart(2, '0')}</span>
+              <h3 class="mk-cond">{t.name}</h3>
+              <p>{t.description}</p>
+              <span class="mk-show-eg mono">Shown with: {business.name} · {business.city}</span>
+              {t.isPremium && <span class="pill" data-tone="info">Pro</span>}
+            </div>
+            {i < rows.length - 1 && (
+              <svg class="mk-show-loop" viewBox="0 0 160 70" aria-hidden="true"><path d="M6 14c22-8 40 6 34 22s-26 14-20-2 40-26 62-6 14 30 44 26 22-14 22-14" /><path d="M140 30l8 10-12 4" /></svg>
+            )}
+          </li>
+        ))}
+      </ol>
+
+      <div class="mk-show-end" data-reveal>
+        <a class="btn btn-primary mk-btn-lg" href={signUp}>See all {templates.length} and pick yours →</a>
+        <span class="mono mk-small">Switch any time. Your details stay.</span>
+      </div>
+    </div>
+  </section>
+  </Fragment>
+)}
+
+<script>
+  // Fit each fixed-width canvas (a real desktop or phone width, so the template
+  // lays out as it would there) to its frame.
+  const fit = (el: HTMLElement) => el.style.setProperty('--k', String(el.clientWidth / Number(el.dataset.canvas)));
+  const canvases = document.querySelectorAll<HTMLElement>('[data-canvas]');
+  const ro = new ResizeObserver((entries) => entries.forEach((e) => fit(e.target as HTMLElement)));
+  canvases.forEach((el) => { fit(el); ro.observe(el); });
+</script>
