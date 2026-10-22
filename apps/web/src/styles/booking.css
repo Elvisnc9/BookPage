@@ -564,3 +564,10 @@ img.bk-thumb, img.bk-avatar { object-fit: cover; }
 /* Long names step down rather than break mid-word. */
 .bk-name[data-length='medium'] { font-size: clamp(44px, 12cqi, 104px); }
 .bk-name[data-length='long'] { font-size: clamp(36px, 9cqi, 84px); overflow-wrap: break-word; hyphens: auto; }
+
+/* Deposits: the note on the details form and the pay block on the booking page. */
+.bk-deposit-note { display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-left: 4px solid var(--ink); border-radius: 8px; background: var(--bg); font-size: 14px; }
+.bk-deposit-note span { color: var(--muted); }
+.bk-deposit { display: grid; gap: 10px; justify-items: start; margin: 4px 0 8px; padding: 16px; border: 2px solid var(--ink); border-radius: 10px; background: var(--peach-soft); }
+.bk-deposit .bk-hint { margin: 0; color: var(--ink); }
+.bk-deposit-title { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -.01em; }

@@ -162,6 +162,10 @@ model Service {
   durationMin Int       @map("duration_min") /// [public]
   bufferMin   Int       @default(0) @map("buffer_min") /// [private] gap kept free after each booking
   bookable    Boolean   @default(true) /// [public] false = shown on the page but enquiry only
+  /// [public] deposit to pay before the booking is confirmed; null = none. Only applies
+  /// when BookingRules.depositUrl is set. BookPage never touches the money: the customer
+  /// pays through the owner's own payment link and the owner confirms receipt.
+  depositMinor Int?     @map("deposit_minor")
   position    Int       @default(0) /// [public] display order
   archivedAt  DateTime? @map("archived_at") @db.Timestamptz(3) /// [owner] hidden, kept for past bookings
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
@@ -221,6 +225,9 @@ model BookingRules {
   /// Which customer details to ask for: { phone: "required"|"optional"|"off", email: …, note: … }
   customerFields  Json     @default("{\"phone\":\"required\",\"email\":\"required\",\"note\":\"optional\"}") @map("customer_fields")
   alertChannels   String[] @default(["email"]) @map("alert_channels") /// owner alerts; MVP: "email"
+  depositUrl         String? @map("deposit_url") /// the owner's own payment link (Stripe Payment Link, PayPal.me…); https only
+  depositHoldMin     Int     @default(120) @map("deposit_hold_min") /// how long an unpaid deposit holds the slot
+  depositRefundHours Int     @default(24) @map("deposit_refund_hours") /// refund promised if the customer cancels this far ahead
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
@@ -295,6 +302,11 @@ model Booking {
   customerNote    String?   @map("customer_note") /// [owner]
   manageTokenHash String?   @unique @map("manage_token_hash") /// [private] customer's cancel link
   reminderSentAt  DateTime? @map("reminder_sent_at") @db.Timestamptz(3)
+  /// Deposit snapshot. A booking with a deposit starts pending; the owner confirms when the
+  /// money arrives (sets depositPaidAt), or the hold lapses at depositDueAt and the slot frees.
+  depositMinor    Int?      @map("deposit_minor")
+  depositDueAt    DateTime? @map("deposit_due_at") @db.Timestamptz(3)
+  depositPaidAt   DateTime? @map("deposit_paid_at") @db.Timestamptz(3)
   confirmedAt     DateTime? @map("confirmed_at") @db.Timestamptz(3)
   cancelledAt     DateTime? @map("cancelled_at") @db.Timestamptz(3)
   cancelReason    String?   @map("cancel_reason") /// [owner]
@@ -310,6 +322,7 @@ model Booking {
   @@index([staffId, startsAt])
   @@index([customerId])
   @@index([status, startsAt]) // reminder cron: confirmed bookings starting tomorrow
+  @@index([status, depositDueAt]) // deposit cron: unpaid holds that have lapsed
   @@map("bookings")
 }
 

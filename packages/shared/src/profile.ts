@@ -41,7 +41,16 @@ export interface OwnerBusiness {
   hours: { weekday: number; opensAt: number; closesAt: number }[];
   services: (ServiceInput & { id: string; image: SiteImage | null })[];
   staff: { id: string; name: string; photo: SiteImage | null }[];
-  rules: { minNoticeMin: number; windowDays: number; autoConfirm: boolean; customerFields: CustomerFields };
+  rules: {
+    minNoticeMin: number;
+    windowDays: number;
+    autoConfirm: boolean;
+    customerFields: CustomerFields;
+    /** The owner's own payment link for deposits; null = no deposits. */
+    depositUrl: string | null;
+    depositHoldMin: number;
+    depositRefundHours: number;
+  };
 }
 
 /** Onboarding steps, in order. `onboardingStep` counts how many are done. */
@@ -54,7 +63,11 @@ export interface PublishIssue {
 }
 
 /** Everything that must be true before a page goes live. Shared so the UI shows the same list the API enforces. */
-export function publishIssues(b: Pick<OwnerBusiness, 'name' | 'category' | 'locationType' | 'addressLine1' | 'city' | 'serviceAreas' | 'phone' | 'hours' | 'services' | 'staff'>): PublishIssue[] {
+export function publishIssues(
+  b: Pick<OwnerBusiness, 'name' | 'category' | 'locationType' | 'addressLine1' | 'city' | 'serviceAreas' | 'phone' | 'hours' | 'services' | 'staff'> & {
+    rules?: Pick<OwnerBusiness['rules'], 'depositUrl'>;
+  },
+): PublishIssue[] {
   const issues: PublishIssue[] = [];
   const needsAddress = b.locationType === 'premises' || b.locationType === 'both';
   const needsAreas = b.locationType === 'mobile' || b.locationType === 'both';
@@ -67,5 +80,8 @@ export function publishIssues(b: Pick<OwnerBusiness, 'name' | 'category' | 'loca
   if (b.services.length === 0) issues.push({ step: 3, message: 'Add at least one service' });
   if (b.hours.length === 0) issues.push({ step: 4, message: 'Open at least one day' });
   if (b.staff.length === 0) issues.push({ step: 4, message: 'Keep at least one person on the team' });
+  if (b.rules && !b.rules.depositUrl && b.services.some((s) => s.depositMinor)) {
+    issues.push({ step: 4, message: 'Add your payment link so customers can pay deposits' });
+  }
   return issues;
 }

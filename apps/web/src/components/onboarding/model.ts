@@ -158,6 +158,8 @@ export interface ServiceDraft {
   durationMin: number;
   bufferMin: number;
   bookable: boolean;
+  /** Deposit as typed; empty = none. */
+  deposit: string;
 }
 
 let nextKey = 0;
@@ -174,6 +176,7 @@ export const servicesFrom = (b: OwnerBusiness): ServiceDraft[] =>
     durationMin: s.durationMin,
     bufferMin: s.bufferMin,
     bookable: s.bookable,
+    deposit: s.depositMinor ? fromMinor(s.depositMinor) : '',
   }));
 
 /** The row as the API wants it, or why it can't be saved yet. */
@@ -182,6 +185,12 @@ export function serviceTo(d: ServiceDraft): { input: ServiceInput } | { problem:
   const priced = d.priceType === 'fixed' || d.priceType === 'from';
   const priceMinor = priced ? toMinor(d.price) : null;
   if (priced && (priceMinor === null || priceMinor === 0)) return { problem: 'Add a price, like 45 or 45.50' };
+  const bookable = d.priceType === 'quote' ? false : d.bookable;
+  // Deposits only make sense for priced services booked online; otherwise ignore what was typed.
+  const takesDeposit = priced && bookable && d.deposit.trim() !== '';
+  const depositMinor = takesDeposit ? toMinor(d.deposit) : null;
+  if (takesDeposit && !depositMinor) return { problem: 'Enter the deposit as an amount, like 10, or leave it empty' };
+  if (depositMinor && priceMinor !== null && depositMinor > priceMinor) return { problem: "The deposit can't be more than the price" };
   return {
     input: {
       ...(d.id ? { id: d.id } : {}),
@@ -191,7 +200,8 @@ export function serviceTo(d: ServiceDraft): { input: ServiceInput } | { problem:
       priceMinor,
       durationMin: d.durationMin,
       bufferMin: d.bufferMin,
-      bookable: d.priceType === 'quote' ? false : d.bookable,
+      bookable,
+      depositMinor,
     },
   };
 }
@@ -269,6 +279,7 @@ export function previewBusiness(input: {
       priceMinor: r.input.priceMinor,
       durationMin: r.input.durationMin,
       bookable: r.input.bookable && r.input.priceType !== 'quote',
+      depositMinor: saved.rules.depositUrl ? r.input.depositMinor : null,
       image: stored?.image ?? null,
     }];
   });
@@ -306,6 +317,10 @@ export function previewBusiness(input: {
       photo: (p.id && saved.staff.find((s) => s.id === p.id)?.photo) || null,
     })),
     faqs: [],
-    booking: { windowDays: saved.rules.windowDays, customerFields: saved.rules.customerFields },
+    booking: {
+      windowDays: saved.rules.windowDays,
+      customerFields: saved.rules.customerFields,
+      deposits: saved.rules.depositUrl ? { holdMin: saved.rules.depositHoldMin, refundHours: saved.rules.depositRefundHours } : null,
+    },
   };
 }

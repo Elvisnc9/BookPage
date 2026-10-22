@@ -21,9 +21,9 @@ export function owner(patch: Partial<OwnerBusiness> = {}): OwnerBusiness {
     site: { template: { id: classic.id, slug: 'classic', name: 'Classic', version: 1, schemaVersion: 1, layout: classic.layout }, theme: classic.defaultTheme, notice: null },
     logo: null, hero: img('hero'), gallery: [], onboardingStep: 2, publishedAt: null, updatedAt: '2030-01-01T00:00:00.000Z',
     hours: [{ weekday: 1, opensAt: 540, closesAt: 1080 }],
-    services: [{ id: 's1', name: 'Tasting menu', description: null, priceType: 'fixed', priceMinor: 6500, durationMin: 120, bufferMin: 0, bookable: true, image: img('s1') }],
+    services: [{ id: 's1', name: 'Tasting menu', description: null, priceType: 'fixed', priceMinor: 6500, durationMin: 120, bufferMin: 0, bookable: true, depositMinor: null, image: img('s1') }],
     staff: [{ id: 'p1', name: 'Rae', photo: img('p1') }],
-    rules: { minNoticeMin: 60, windowDays: 60, autoConfirm: true, customerFields: { phone: 'required', note: 'optional' } },
+    rules: { minNoticeMin: 60, windowDays: 60, autoConfirm: true, customerFields: { phone: 'required', note: 'optional' }, depositUrl: null, depositHoldMin: 120, depositRefundHours: 24 },
     ...patch,
   };
 }
@@ -37,7 +37,7 @@ describe('the preview draft', () => {
     const b = owner();
     const d = draft(b);
     d.about.name = 'Kantine Rae & Söhne';
-    d.services.push({ key: 'new', name: 'Wine flight', description: 'Three glasses', priceType: 'fixed', price: '18', durationMin: 45, bufferMin: 0, bookable: true });
+    d.services.push({ key: 'new', name: 'Wine flight', description: 'Three glasses', priceType: 'fixed', price: '18', durationMin: 45, bufferMin: 0, bookable: true, deposit: '' });
     const site = buildSite(previewBusiness({ ...d, site: draftSite(templates, designFrom(b), b) }), 'preview');
     expect(site.name).toBe('Kantine Rae & Söhne');
     expect(site.services.map((s) => [s.name, s.price])).toEqual([['Tasting menu', '€65'], ['Wine flight', '€18']]);
@@ -50,7 +50,7 @@ describe('the preview draft', () => {
   it('leaves half-finished services out, as the live page would', () => {
     const b = owner();
     const d = draft(b);
-    d.services.push({ key: 'x', name: 'Mystery', description: '', priceType: 'fixed', price: '', durationMin: 30, bufferMin: 0, bookable: true });
+    d.services.push({ key: 'x', name: 'Mystery', description: '', priceType: 'fixed', price: '', durationMin: 30, bufferMin: 0, bookable: true, deposit: '' });
     const pub = previewBusiness({ ...d, site: draftSite(templates, designFrom(b), b) });
     expect(pub.services.map((s) => s.name)).toEqual(['Tasting menu']);
   });

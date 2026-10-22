@@ -75,7 +75,7 @@ export default function MyPage(props: { initial: OwnerBusiness; tab: string }) {
 
       <div class="mp-body">
         {tab === 'services' && (
-          <StepServices services={services} category={props.initial.category as never} currency={props.initial.currency}
+          <StepServices services={services} category={props.initial.category as never} currency={props.initial.currency} depositsOn={!!rules.depositUrl}
             onServices={(update) => setServices((cur) => { const next = update(cur); servicesSave.queue(next); return next; })}
             heading={{ kicker: 'My page · Services', title: 'Services', intro: 'Changes show on your page straight away. Removed services stay on past bookings.' }} />
         )}

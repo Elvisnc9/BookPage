@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { customerConfirmation, customerReminder, escape, ownerEnquiry, ownerNewBooking, when } from './templates';
+import { customerConfirmation, customerReminder, customerRescheduled, escape, ownerCancelled, ownerEnquiry, ownerNewBooking, when } from './templates';
 
 const base = {
   businessName: 'Glow Studio',
@@ -63,5 +63,37 @@ describe('email templates', () => {
     expect(e.html).not.toContain('<script>');
     expect(e.html).toContain('&lt;script&gt;');
     expect(escape(`a&b<'"`)).toBe('a&amp;b&lt;&#39;&quot;');
+  });
+  describe('deposits', () => {
+    const deposit = { amountMinor: 2000, payUrl: 'https://buy.stripe.com/test_x', dueAt: new Date('2030-01-14T17:00:00Z'), refundHours: 24 };
+
+    it('asks the customer to pay through the owner link, with the deadline and refund rule', () => {
+      const e = customerConfirmation({ ...base, status: 'pending', manageUrl: 'https://m', calendarUrl: 'https://c', deposit });
+      expect(e.subject).toBe('Pay deposit to confirm: Silk press at Glow Studio, Tuesday 15 January, 10:30 AM');
+      expect(e.text).toContain('Pay $20 deposit: https://buy.stripe.com/test_x');
+      expect(e.text).toContain('held until Monday 14 January, 12:00 PM');
+      expect(e.text).toContain('Refunded if you cancel at least 24 hours before.');
+      expect(e.text).toContain('Change or cancel: https://m');
+    });
+
+    it('tells the owner a deposit is due and when the hold ends', () => {
+      const e = ownerNewBooking({ ...base, status: 'pending', customerEmail: 'd@x.com', customerPhone: null, customerNote: null, dashboardUrl: 'https://app', deposit });
+      expect(e.subject).toBe('Deposit due: Dana Whitfield, Silk press, Tuesday 15 January, 10:30 AM');
+      expect(e.text).toContain('Deposit: $20 · due by Monday 14 January, 12:00 PM');
+      expect(e.text).toContain('Deposit received');
+    });
+
+    it('tells the owner whether their policy says to refund a cancelled paid deposit', () => {
+      const inTime = ownerCancelled({ ...base, dashboardUrl: 'https://app', depositPaid: { amountMinor: 2000, refundDue: true } });
+      expect(inTime.text).toContain('$20 paid. They cancelled in time, so your policy says refund it.');
+      const late = ownerCancelled({ ...base, dashboardUrl: 'https://app', depositPaid: { amountMinor: 2000, refundDue: false } });
+      expect(late.text).toContain('your policy lets you keep it');
+    });
+  });
+
+  it('sends the new time when a booking moves', () => {
+    const e = customerRescheduled({ ...base, previousStart: new Date('2030-01-14T15:30:00Z'), manageUrl: 'https://m', calendarUrl: 'https://c' });
+    expect(e.subject).toBe('New time: Silk press at Glow Studio, Tuesday 15 January, 10:30 AM');
+    expect(e.text).toContain('Your old time (Monday 14 January, 10:30 AM) is free again.');
   });
 });

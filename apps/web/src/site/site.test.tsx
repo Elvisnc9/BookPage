@@ -26,12 +26,12 @@ function full(slug: string): PublicBusiness {
     site: siteFor(slug), timezone: 'Europe/Berlin', currency: 'EUR',
     hours: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, opensAt: 540, closesAt: 1320 })),
     services: [
-      { id: 's1', name: 'Tasting menu', description: 'Seven courses', priceType: 'fixed', priceMinor: 6500, durationMin: 120, bookable: true, image: img('s1') },
-      { id: 's2', name: 'Private room', description: 'Up to twelve', priceType: 'quote', priceMinor: null, durationMin: 180, bookable: false, image: img('s2') },
+      { id: 's1', name: 'Tasting menu', description: 'Seven courses', priceType: 'fixed', priceMinor: 6500, durationMin: 120, bookable: true, depositMinor: null, image: img('s1') },
+      { id: 's2', name: 'Private room', description: 'Up to twelve', priceType: 'quote', priceMinor: null, durationMin: 180, bookable: false, depositMinor: null, image: img('s2') },
     ],
     staff: [{ id: 'p1', name: 'Rae Okafor', serviceIds: ['s1'], photo: img('p1') }],
     faqs: [{ question: 'Is there parking?', answer: 'On the street.' }],
-    booking: { windowDays: 60, customerFields: { phone: 'optional', note: 'optional' } },
+    booking: { windowDays: 60, customerFields: { phone: 'optional', note: 'optional' }, deposits: null },
   };
 }
 
@@ -43,7 +43,7 @@ function worst(slug: string): PublicBusiness {
     description: null, logo: null, hero: null, gallery: [], phone: null, whatsapp: null, email: null, addressLine1: null, city: null, postalCode: null,
     locationType: 'mobile', serviceAreas: ['Bartholomew-Fitzgerald-Northwind-Industries-Holdings-Estate'],
     hours: [],
-    services: [{ id: 's1', name: 'Brow lamination with tint, shape and a very long description-like name', description: null, priceType: 'free', priceMinor: null, durationMin: 15, bookable: true, image: null }],
+    services: [{ id: 's1', name: 'Brow lamination with tint, shape and a very long description-like name', description: null, priceType: 'free', priceMinor: null, durationMin: 15, bookable: true, depositMinor: null, image: null }],
     staff: [{ id: 'p1', name: 'Jo', serviceIds: ['s1'], photo: null }],
     faqs: [],
   };

@@ -64,7 +64,7 @@ function draft(): OwnerBusiness {
     logo: null, hero: null, gallery: [], onboardingStep: 0, publishedAt: null, updatedAt: '2030-01-01T00:00:00.000Z',
     hours: [1, 2, 3, 4, 5].map((weekday) => ({ weekday, opensAt: 540, closesAt: 1080 })),
     services: [], staff: [{ id: 'p0', name: 'Rae', photo: null }],
-    rules: { minNoticeMin: 120, windowDays: 60, autoConfirm: true, customerFields: { phone: 'required', note: 'optional' } },
+    rules: { minNoticeMin: 120, windowDays: 60, autoConfirm: true, customerFields: { phone: 'required', note: 'optional' }, depositUrl: null, depositHoldMin: 120, depositRefundHours: 24 },
   };
 }
 

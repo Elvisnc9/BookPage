@@ -17,6 +17,8 @@ export interface OwnerBooking {
   customer: { name: string; email: string | null; phone: string | null };
   createdAt: string;
   cancelReason: string | null;
+  /** Present when the booking asked for a deposit. Confirming the booking marks it received. */
+  deposit: { amountMinor: number; dueAt: string; paidAt: string | null } | null;
 }
 
 export interface OwnerSummary {

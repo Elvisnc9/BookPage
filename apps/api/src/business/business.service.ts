@@ -303,6 +303,7 @@ function toOwnerView(b: BusinessWithView, site: ResolvedSite): OwnerBusiness {
       durationMin: s.durationMin,
       bufferMin: s.bufferMin,
       bookable: s.bookable,
+      depositMinor: s.depositMinor,
       image: media.forService(s.id),
     })),
     staff: b.staff.map((s) => ({ id: s.id, name: s.name, photo: media.forStaff(s.id) })),
@@ -311,6 +312,9 @@ function toOwnerView(b: BusinessWithView, site: ResolvedSite): OwnerBusiness {
       windowDays: rules.windowDays,
       autoConfirm: rules.autoConfirm,
       customerFields: customerFieldsSchema.parse(rules.customerFields),
+      depositUrl: rules.depositUrl,
+      depositHoldMin: rules.depositHoldMin,
+      depositRefundHours: rules.depositRefundHours,
     },
   };
 }

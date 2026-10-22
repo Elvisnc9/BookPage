@@ -65,6 +65,8 @@ export const serviceSchema = z
     durationMin: z.number().int().min(5).max(1440),
     bufferMin: z.number().int().min(0).max(240).default(0),
     bookable: z.boolean(),
+    /** Asked before the booking is confirmed (paid through the owner's own payment link). */
+    depositMinor: z.number().int().min(1).max(100_000_00).nullable().default(null),
   })
   .refine((s) => (s.priceType === 'fixed' || s.priceType === 'from') === (s.priceMinor !== null), {
     message: 'Fixed and "from" prices need an amount; quote and free don\'t',
@@ -73,6 +75,14 @@ export const serviceSchema = z
   .refine((s) => !(s.priceType === 'quote' && s.bookable), {
     message: 'Quote-only services send an enquiry, so they can\'t be booked directly',
     path: ['bookable'],
+  })
+  .refine((s) => s.depositMinor === null || (s.bookable && (s.priceType === 'fixed' || s.priceType === 'from')), {
+    message: 'Deposits are for priced services customers book online',
+    path: ['depositMinor'],
+  })
+  .refine((s) => s.depositMinor === null || s.priceMinor === null || s.depositMinor <= s.priceMinor, {
+    message: "The deposit can't be more than the price",
+    path: ['depositMinor'],
   });
 export const servicesSchema = z.array(serviceSchema).max(50);
 export type ServiceInput = z.infer<typeof serviceSchema>;
@@ -97,6 +107,12 @@ export const rulesPatchSchema = z
     windowDays: z.number().int().min(1).max(365),
     autoConfirm: z.boolean(),
     customerFields: customerFieldsSchema,
+    /** The owner's own payment link for deposits. null turns deposits off. */
+    depositUrl: z.url({ protocol: /^https$/, error: 'Paste a full https:// payment link' }).max(500).nullable(),
+    /** How long an unpaid deposit holds the time before it's released. */
+    depositHoldMin: z.number().int().min(15).max(2880),
+    /** Refund promised when the customer cancels at least this many hours ahead. */
+    depositRefundHours: z.number().int().min(0).max(168),
   })
   .partial()
   .strict();

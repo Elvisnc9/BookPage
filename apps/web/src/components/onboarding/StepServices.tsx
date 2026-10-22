@@ -15,6 +15,8 @@ export function StepServices(props: {
   onServices: ListEdit<ServiceDraft>;
   category: CategoryKey | null;
   currency: string;
+  /** Whether a payment link is set, so deposits actually apply. */
+  depositsOn?: boolean;
   /** Photos: the saved business and how to update it. Omitted on My page for now. */
   media?: { biz: OwnerBusiness; onBiz: (b: OwnerBusiness) => void };
 }) {
@@ -37,6 +39,7 @@ export function StepServices(props: {
         durationMin: t.durationMin,
         bufferMin: 0,
         bookable: t.priceMinor !== null,
+        deposit: '',
       },
     ]);
   };
@@ -114,6 +117,18 @@ export function StepServices(props: {
                       note={s.bookable ? 'Customers book a time on your page.' : 'Shown on your page; customers ask first.'}
                       onChange={(bookable) => update(s.key, { bookable })} />
                   ) : <p class="ob-hint">Quote-only services send you an enquiry instead of a booking.</p>}
+                  {priced && s.bookable && (
+                    <Field label="Deposit to confirm (optional)"
+                      hint={props.depositsOn ? 'Customers pay this through your payment link before the time is confirmed.' : 'Add your payment link under Booking to turn deposits on.'}>
+                      {(id, d) => (
+                        <div class="ob-money">
+                          <span aria-hidden="true">{symbol}</span>
+                          <input id={id} aria-describedby={d} class="ob-input" inputMode="decimal" value={s.deposit} placeholder="e.g. 10"
+                            onInput={(e) => update(s.key, { deposit: e.currentTarget.value.replace(/[^\d.,]/g, '') })} />
+                        </div>
+                      )}
+                    </Field>
+                  )}
                 </div>
               </div>
               {showProblem && <p class="ob-error" role="alert">{check.problem}</p>}

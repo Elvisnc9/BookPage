@@ -87,7 +87,12 @@ export class PublicService {
     // The id is chosen here so the manage token (derived from it) can be stored as a hash.
     const id = randomUUID();
     const token = manageToken(id);
-    const status = b.bookingRules!.autoConfirm ? 'confirmed' : 'pending';
+    // A deposit holds the slot as pending until the owner sees the money arrive,
+    // for at most depositHoldMin and never past the start time.
+    const rules = b.bookingRules!;
+    const depositMinor = rules.depositUrl && service.depositMinor ? service.depositMinor : null;
+    const depositDueAt = depositMinor ? new Date(Math.min(Date.now() + rules.depositHoldMin * 60_000, startsAt.getTime())) : null;
+    const status = depositMinor || !rules.autoConfirm ? 'pending' : 'confirmed';
     const endsAt = slot.end;
     const blockedUntil = new Date(endsAt.getTime() + service.bufferMin * 60_000);
 
@@ -114,6 +119,8 @@ export class PublicService {
             customerNote: fields.note === 'off' ? null : req.customer.note || null,
             manageTokenHash: hashToken(token),
             confirmedAt: status === 'confirmed' ? new Date() : null,
+            depositMinor,
+            depositDueAt,
           },
         });
         void this.notifications.dispatch('booking emails', () => this.notifications.bookingCreated(booking.id));
@@ -288,7 +295,7 @@ export class PublicService {
     const b = await this.prisma.booking.findUniqueOrThrow({
       where: { id },
       include: {
-        business: { select: { name: true, timezone: true } },
+        business: { select: { name: true, timezone: true, bookingRules: { select: { depositUrl: true, depositRefundHours: true } } } },
         service: { select: { bookable: true, priceType: true, archivedAt: true } },
         staff: { select: { name: true } },
         customer: { select: { name: true } },
@@ -312,6 +319,16 @@ export class PublicService {
       customerName: b.customer.name,
       cancellable,
       reschedulable: cancellable && b.service.bookable && b.service.priceType !== 'quote' && !b.service.archivedAt,
+      deposit:
+        b.depositMinor && b.depositDueAt
+          ? {
+              amountMinor: b.depositMinor,
+              payUrl: b.business.bookingRules?.depositUrl ?? null,
+              dueAt: b.depositDueAt.toISOString(),
+              paid: b.depositPaidAt !== null,
+              refundHours: b.business.bookingRules?.depositRefundHours ?? 24,
+            }
+          : null,
     };
   }
 }
@@ -354,10 +371,15 @@ function toPublic(b: LoadedBusiness, site: ResolvedSite): PublicBusiness {
       priceMinor: s.priceMinor,
       durationMin: s.durationMin,
       bookable: s.bookable && s.priceType !== 'quote',
+      depositMinor: rules.depositUrl ? s.depositMinor : null,
       image: media.forService(s.id),
     })),
     staff: b.staff.map((s) => ({ id: s.id, name: s.name, serviceIds: s.services.map((l) => l.serviceId), photo: media.forStaff(s.id) })),
     faqs: b.faqs,
-    booking: { windowDays: rules.windowDays, customerFields: customerFieldsSchema.parse(rules.customerFields) },
+    booking: {
+      windowDays: rules.windowDays,
+      customerFields: customerFieldsSchema.parse(rules.customerFields),
+      deposits: rules.depositUrl ? { holdMin: rules.depositHoldMin, refundHours: rules.depositRefundHours } : null,
+    },
   };
 }

@@ -1,5 +1,5 @@
 ---
-import { formatDuration, localDate } from '@bookpage/shared';
+import { formatDuration, formatMoney, localDate } from '@bookpage/shared';
 import BookingLayout from '../../../layouts/BookingLayout.astro';
 import Icon from '../../../components/booking/Icon.astro';
 import { createBooking, initials, loadBusiness, PublicApiError, price, TOO_MANY_ATTEMPTS, whenLabel } from '../../../lib/public';
@@ -17,6 +17,9 @@ const start = q.get('start') ?? '';
 if (!service || Number.isNaN(Date.parse(start))) return Astro.redirect('/#services', 303);
 const staff = b.staff.find((p) => p.id === q.get('staff') && p.serviceIds.includes(service.id)) ?? null;
 const fields = b.booking.customerFields;
+const deposits = b.booking.deposits;
+const deposit = deposits && service.depositMinor ? formatMoney(service.depositMinor, b.currency) : null;
+const holdLabel = deposits ? (deposits.holdMin % 60 === 0 ? `${deposits.holdMin / 60} hour${deposits.holdMin === 60 ? '' : 's'}` : `${deposits.holdMin} minutes`) : '';
 // Back to the same day's times, not the first open day.
 const day = localDate(new Date(start), b.timezone).date;
 
@@ -122,8 +125,17 @@ const back = `/book?${new URLSearchParams({ service: service.id, date: day, ...(
         <label>Company <input name="company" tabindex="-1" autocomplete="off" /></label>
       </div>
 
-      <button class="btn btn-ink bk-submit" type="submit">{service.priceType === 'free' ? 'Book now' : 'Confirm booking'} <Icon name="arrow" size={16} /></button>
-      <p class="bk-note">No payment needed to book</p>
+      {deposit && deposits && (
+        <div class="bk-deposit-note">
+          <strong>{deposit} deposit to confirm</strong>
+          <span>After you book, you'll get a link to pay {b.name} directly. Your time is held for {holdLabel}.</span>
+          <span>{deposits.refundHours === 0 ? 'Refunded if you cancel before your time.' : `Refunded if you cancel at least ${deposits.refundHours} hours before.`}</span>
+        </div>
+      )}
+      <button class="btn btn-ink bk-submit" type="submit">{deposit ? 'Book and pay deposit' : service.priceType === 'free' ? 'Book now' : 'Confirm booking'} <Icon name="arrow" size={16} /></button>
+      <p class="bk-note">
+        {!deposit ? 'No payment needed to book' : service.priceMinor !== null && service.depositMinor! < service.priceMinor ? 'You pay the rest at your appointment' : 'Payment goes straight to the business'}
+      </p>
     </form>
   </main>
 </BookingLayout>

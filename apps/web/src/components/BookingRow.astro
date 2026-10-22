@@ -1,5 +1,5 @@
 ---
-import { allowedChanges, type OwnerBooking } from '@bookpage/shared';
+import { allowedChanges, formatMoney, type OwnerBooking } from '@bookpage/shared';
 import AppIcon from './AppIcon.astro';
 import { avatarFor } from '../lib/people';
 import { price, timeOf, whenLabel } from '../lib/public';
@@ -25,7 +25,9 @@ const STATUS = {
   completed: { label: 'Done', tone: 'ok' },
   no_show: { label: 'No-show', tone: 'bad' },
 } as const;
-const s = STATUS[b.status];
+// A deposit booking waits on the money, not on the owner's opinion.
+const depositDue = pending && b.deposit && !b.deposit.paidAt ? b.deposit : null;
+const s = depositDue ? { label: 'Deposit due', tone: 'wait' } : STATUS[b.status];
 const { initials, hue } = avatarFor(b.customer.name);
 const tel = b.customer.phone ? `tel:${b.customer.phone}` : null;
 const wa = b.customer.phone ? `https://wa.me/${b.customer.phone.replace(/\D/g, '')}` : null;
@@ -50,14 +52,17 @@ const wa = b.customer.phone ? `https://wa.me/${b.customer.phone.replace(/\D/g, '
     <span>{showDate ? whenLabel(b.startsAt, timezone).split(',')[0] : `to ${timeOf(b.endsAt, timezone)}`}</span>
   </div>
 
-  <div class="ap-row-status"><span class="pill" data-tone={s.tone}>{s.label}</span></div>
+  <div class="ap-row-status">
+    <span class="pill" data-tone={s.tone}>{s.label}</span>
+    {depositDue && <span class="mono ap-row-due">{formatMoney(depositDue.amountMinor, b.currency)} by {timeOf(depositDue.dueAt, timezone)}</span>}
+  </div>
 
   <div class="ap-row-price mono">{price(b, b.currency)}</div>
 
   <div class="ap-row-actions">
     {actions.includes('confirmed') && (
       <form method="post"><input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value="confirmed" />
-        <button class="btn btn-primary ap-btn" type="submit"><AppIcon name="check" size={16} />Approve</button></form>
+        <button class="btn btn-primary ap-btn" type="submit"><AppIcon name="check" size={16} />{depositDue ? 'Deposit received' : 'Approve'}</button></form>
     )}
     {actions.includes('completed') && (
       <form method="post"><input type="hidden" name="id" value={b.id} /><input type="hidden" name="status" value="completed" />
@@ -82,7 +87,7 @@ const wa = b.customer.phone ? `https://wa.me/${b.customer.phone.replace(/\D/g, '
     )}
   </div>
 
-  {(b.customer.phone || b.customer.email || b.note || b.cancelReason) && (
+  {(b.customer.phone || b.customer.email || b.note || b.cancelReason || b.deposit) && (
     <details class="ap-row-more">
       <summary class="mono">Details</summary>
       <dl>
@@ -92,6 +97,9 @@ const wa = b.customer.phone ? `https://wa.me/${b.customer.phone.replace(/\D/g, '
         {b.customer.email && <div><dt>Email</dt><dd><a href={`mailto:${b.customer.email}`}><AppIcon name="mail" size={14} />{b.customer.email}</a></dd></div>}
         {b.note && <div><dt>Note</dt><dd>{b.note}</dd></div>}
         {b.cancelReason && <div><dt>Reason</dt><dd>{b.cancelReason}</dd></div>}
+        {b.deposit && (
+          <div><dt>Deposit</dt><dd>{formatMoney(b.deposit.amountMinor, b.currency)} · {b.deposit.paidAt ? 'received' : `due by ${whenLabel(b.deposit.dueAt, timezone)}`}</dd></div>
+        )}
       </dl>
     </details>
   )}

@@ -323,7 +323,7 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
             <p class="ob-kicker mono">Step {step} of 5 · {ONBOARDING_STEPS[step - 1]}</p>
             {step === 1 && <StepTemplate templates={templates} design={design} onDesign={editDesign} notice={design.templateId === biz.templateId ? biz.site.notice : null} />}
             {step === 2 && <StepAbout about={about} onAbout={editAbout} issues={aboutSave.issues} biz={biz} onBiz={onBiz} />}
-            {step === 3 && <StepServices services={services} onServices={editServices} category={about.category} currency={about.currency} media={{ biz, onBiz }} />}
+            {step === 3 && <StepServices services={services} onServices={editServices} category={about.category} currency={about.currency} depositsOn={!!rules.depositUrl} media={{ biz, onBiz }} />}
             {step === 4 && <StepBooking rules={rules} onRules={editRules} staff={staff} onStaff={editStaff} hours={{ days, onDays: editDays }} media={{ biz, onBiz }} />}
             {step === 5 && (
               <StepPublish biz={biz} site={site} slug={slug} onSlug={setSlug} slugStatus={slugStatus} rootDomain={origin.rootDomain}

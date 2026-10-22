@@ -1,5 +1,5 @@
 ---
-import { type PublicBooking } from '@bookpage/shared';
+import { formatMoney, type PublicBooking } from '@bookpage/shared';
 import BookingLayout from '../../../../layouts/BookingLayout.astro';
 import Icon from '../../../../components/booking/Icon.astro';
 import { cancelBooking, getBooking, loadBusiness, PublicApiError, price, TOO_MANY_ATTEMPTS, whenLabel } from '../../../../lib/public';
@@ -37,9 +37,10 @@ const self = `/booked/${id}?t=${encodeURIComponent(token)}`;
 const ics = `/booked/${id}/calendar.ics?t=${encodeURIComponent(token)}`;
 const move = `/booked/${id}/reschedule?t=${encodeURIComponent(token)}`;
 const moved = Astro.url.searchParams.has('moved') && !failure;
+const depositDue = booking.deposit && !booking.deposit.paid ? booking.deposit : null;
 const heading = {
   confirmed: { kicker: '✓ You are booked', title: `See you soon, ${first}.` },
-  pending: { kicker: 'Request sent', title: `Thanks, ${first}.` },
+  pending: depositDue ? { kicker: 'Deposit to confirm', title: `Almost booked, ${first}.` } : { kicker: 'Request sent', title: `Thanks, ${first}.` },
   cancelled: { kicker: 'Cancelled', title: 'Your booking is cancelled.' },
   completed: { kicker: 'Done', title: `Thanks for visiting, ${first}.` },
   no_show: { kicker: 'Missed', title: 'This booking was marked as missed.' },
@@ -59,8 +60,23 @@ const heading = {
         <div><dt>With</dt><dd>{booking.staffName}</dd></div>
         {address && <div><dt>Where</dt><dd>{address}</dd></div>}
       </dl>
-      {booking.status === 'pending' && (
+      {booking.status === 'pending' && depositDue && (
+        <div class="bk-deposit">
+          <p class="bk-deposit-title">Pay your {formatMoney(depositDue.amountMinor, booking.currency)} deposit to confirm</p>
+          <p class="bk-hint">
+            Your time is held until {whenLabel(depositDue.dueAt, booking.timezone)}. {booking.businessName} confirms by email once the deposit arrives.
+            {depositDue.refundHours === 0 ? ' Refunded if you cancel before your time.' : ` Refunded if you cancel at least ${depositDue.refundHours} hours before.`}
+          </p>
+          {depositDue.payUrl
+            ? <a class="btn btn-ink" href={depositDue.payUrl} rel="noopener noreferrer" target="_blank">Pay deposit <Icon name="arrow" size={16} /></a>
+            : <p class="bk-hint">Contact {booking.businessName}{b.phone ? ` on ${b.phone}` : ''} to pay.</p>}
+        </div>
+      )}
+      {booking.status === 'pending' && !depositDue && (
         <p class="bk-hint">{booking.businessName} will confirm by email. The time is held for you meanwhile.</p>
+      )}
+      {booking.status === 'confirmed' && booking.deposit?.paid && (
+        <p class="bk-hint">Deposit of {formatMoney(booking.deposit.amountMinor, booking.currency)} received.</p>
       )}
       {booking.status === 'confirmed' && <p class="bk-hint">A confirmation is on its way to your email.</p>}
 

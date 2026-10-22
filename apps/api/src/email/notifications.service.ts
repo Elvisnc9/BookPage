@@ -4,19 +4,22 @@ import { EmailService } from './email.service';
 import { calendarUrl, dashboardUrl, manageUrl, pageOrigin } from './links';
 import {
   type BookingDetails,
+  type DepositDue,
   customerApproved,
   customerCancelledByBusiness,
   customerConfirmation,
+  customerHoldExpired,
   customerReminder,
   customerRescheduled,
   ownerCancelled,
   ownerEnquiry,
+  ownerHoldExpired,
   ownerRescheduled,
   ownerNewBooking,
 } from './templates';
 
 const BOOKING_INCLUDE = {
-  business: { include: { owner: { select: { email: true } } } },
+  business: { include: { owner: { select: { email: true } }, bookingRules: { select: { depositUrl: true, depositRefundHours: true } } } },
   staff: { select: { name: true } },
   customer: true,
 } as const;
@@ -45,6 +48,7 @@ export class NotificationsService {
     if (b.status !== 'confirmed' && b.status !== 'pending') return;
     const details = toDetails(b);
     const fromName = `${b.business.name} via BookPage`;
+    const deposit = depositDue(b);
 
     await Promise.all([
       b.customer.email &&
@@ -54,6 +58,7 @@ export class NotificationsService {
             status: b.status,
             manageUrl: manageUrl(b.business.slug, b.id),
             calendarUrl: calendarUrl(b.business.slug, b.id),
+            deposit,
           }),
           to: b.customer.email,
           fromName,
@@ -69,6 +74,7 @@ export class NotificationsService {
           customerPhone: b.customer.phone,
           customerNote: b.customerNote,
           dashboardUrl: dashboardUrl(),
+          deposit,
         }),
         to: b.business.owner.email,
         replyTo: b.customer.email,
@@ -81,13 +87,44 @@ export class NotificationsService {
   /** Tells the owner a customer cancelled, so the freed time isn't a surprise. */
   async bookingCancelled(bookingId: string): Promise<void> {
     const b = await this.prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, include: BOOKING_INCLUDE });
+    // The owner holds the money, so they need to know whether the policy says refund.
+    const refundHours = b.business.bookingRules?.depositRefundHours ?? 24;
+    const cancelledAt = b.cancelledAt ?? new Date();
+    const depositPaid =
+      b.depositMinor && b.depositPaidAt
+        ? { amountMinor: b.depositMinor, refundDue: b.startsAt.getTime() - cancelledAt.getTime() >= refundHours * 3_600_000 }
+        : null;
     await this.email.send({
-      ...ownerCancelled({ ...toDetails(b), dashboardUrl: dashboardUrl() }),
+      ...ownerCancelled({ ...toDetails(b), dashboardUrl: dashboardUrl(), depositPaid }),
       to: b.business.owner.email,
       replyTo: b.customer.email,
       idempotencyKey: `owner-cancelled/${b.id}`,
       kind: 'owner-cancelled',
     });
+  }
+
+  /** An unpaid deposit hold lapsed and the slot was released: tell both sides. */
+  async holdExpired(bookingId: string): Promise<void> {
+    const b = await this.prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, include: BOOKING_INCLUDE });
+    const details = toDetails(b);
+    await Promise.all([
+      b.customer.email &&
+        this.email.send({
+          ...customerHoldExpired({ ...details, bookAgainUrl: `${pageOrigin(b.business.slug)}/#services` }),
+          to: b.customer.email,
+          fromName: `${b.business.name} via BookPage`,
+          replyTo: b.business.email ?? b.business.owner.email,
+          idempotencyKey: `booking-hold-expired/${b.id}`,
+          kind: 'booking-hold-expired',
+        }),
+      this.email.send({
+        ...ownerHoldExpired({ ...details, depositMinor: b.depositMinor ?? 0, dashboardUrl: dashboardUrl() }),
+        to: b.business.owner.email,
+        replyTo: b.customer.email,
+        idempotencyKey: `owner-hold-expired/${b.id}`,
+        kind: 'owner-hold-expired',
+      }),
+    ]);
   }
 
   /** The customer moved their booking: new details to them, a heads-up to the owner. */
@@ -145,7 +182,12 @@ export class NotificationsService {
     const b = await this.prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, include: BOOKING_INCLUDE });
     if (!b.customer.email) return;
     await this.email.send({
-      ...customerApproved({ ...toDetails(b), manageUrl: manageUrl(b.business.slug, b.id), calendarUrl: calendarUrl(b.business.slug, b.id) }),
+      ...customerApproved({
+        ...toDetails(b),
+        manageUrl: manageUrl(b.business.slug, b.id),
+        calendarUrl: calendarUrl(b.business.slug, b.id),
+        depositMinor: b.depositPaidAt ? b.depositMinor : null,
+      }),
       to: b.customer.email,
       fromName: `${b.business.name} via BookPage`,
       replyTo: b.business.email ?? b.business.owner.email,
@@ -192,6 +234,19 @@ type LoadedBooking = Awaited<ReturnType<PrismaService['booking']['findUniqueOrTh
   staff: { name: string };
   customer: { name: string };
 };
+
+/** The deposit still owed on a pending booking, with the owner's current payment link. */
+function depositDue(
+  b: LoadedBooking & { business: { bookingRules: { depositUrl: string | null; depositRefundHours: number } | null } },
+): DepositDue | null {
+  if (b.status !== 'pending' || !b.depositMinor || !b.depositDueAt || b.depositPaidAt) return null;
+  return {
+    amountMinor: b.depositMinor,
+    payUrl: b.business.bookingRules?.depositUrl ?? null,
+    dueAt: b.depositDueAt,
+    refundHours: b.business.bookingRules?.depositRefundHours ?? 24,
+  };
+}
 
 function toDetails(b: LoadedBooking): BookingDetails {
   const atPremises = b.business.locationType === 'premises' || b.business.locationType === 'both';

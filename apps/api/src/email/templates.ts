@@ -92,9 +92,23 @@ function bookingRows(d: BookingDetails): Row[] {
   ];
 }
 
+/** A deposit the customer still has to pay (through the owner's own payment link). */
+export interface DepositDue {
+  amountMinor: number;
+  payUrl: string | null;
+  dueAt: Date;
+  refundHours: number;
+}
+
+const refundRule = (hours: number) =>
+  hours === 0 ? 'Refunded if you cancel before your time.' : `Refunded if you cancel at least ${hours} hours before.`;
+
 // ─── Customer emails ────────────────────────────────────────────────────────
 
-export function customerConfirmation(d: BookingDetails & { status: 'confirmed' | 'pending'; manageUrl: string; calendarUrl: string }): Email {
+export function customerConfirmation(
+  d: BookingDetails & { status: 'confirmed' | 'pending'; manageUrl: string; calendarUrl: string; deposit?: DepositDue | null },
+): Email {
+  if (d.deposit && d.status === 'pending') return customerDepositDue({ ...d, deposit: d.deposit });
   const confirmed = d.status === 'confirmed';
   const subject = confirmed
     ? `Booked: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}`
@@ -112,13 +126,32 @@ export function customerConfirmation(d: BookingDetails & { status: 'confirmed' |
   return { subject, ...body };
 }
 
-/** The owner approved a pending booking. */
-export function customerApproved(d: BookingDetails & { manageUrl: string; calendarUrl: string }): Email {
+/** Booked with a deposit: pay to confirm, or the hold lapses. */
+function customerDepositDue(d: BookingDetails & { deposit: DepositDue; manageUrl: string }): Email {
+  const amount = formatMoney(d.deposit.amountMinor, d.currency);
+  const until = when(d.deposit.dueAt, d.timezone);
+  const body = layout({
+    preheader: `Pay your ${amount} deposit by ${until} to confirm your booking.`,
+    kicker: 'Deposit to confirm',
+    title: `Almost booked, ${firstName(d.customerName)}.`,
+    intro: `${d.businessName} asks for a ${amount} deposit to confirm. Your time is held until ${until}. If the deposit hasn't arrived by then, the time is released.`,
+    rows: [...bookingRows(d), { label: 'Deposit', value: `${amount} · ${refundRule(d.deposit.refundHours)}` }],
+    button: d.deposit.payUrl ? { label: `Pay ${amount} deposit`, url: d.deposit.payUrl } : { label: 'View booking', url: d.manageUrl },
+    secondary: d.deposit.payUrl ? { label: 'Change or cancel', url: d.manageUrl } : undefined,
+    footer: `${d.businessName}${d.businessPhone ? ` · ${d.businessPhone}` : ''} · Your payment goes straight to ${d.businessName}; BookPage never handles it.`,
+  });
+  return { subject: `Pay deposit to confirm: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}`, ...body };
+}
+
+/** The owner approved a pending booking (for a deposit booking: the deposit arrived). */
+export function customerApproved(d: BookingDetails & { manageUrl: string; calendarUrl: string; depositMinor?: number | null }): Email {
   const body = layout({
     preheader: `${d.businessName} confirmed your booking for ${when(d.startsAt, d.timezone)}.`,
     kicker: '✓ Confirmed',
     title: `You're confirmed, ${firstName(d.customerName)}.`,
-    intro: `${d.businessName} has confirmed your booking.`,
+    intro: d.depositMinor
+      ? `${d.businessName} received your ${formatMoney(d.depositMinor, d.currency)} deposit. You're all set.`
+      : `${d.businessName} has confirmed your booking.`,
     rows: bookingRows(d),
     button: { label: 'Change or cancel', url: d.manageUrl },
     secondary: { label: 'Add to calendar', url: d.calendarUrl },
@@ -163,6 +196,20 @@ export function customerRescheduled(d: BookingDetails & { previousStart: Date; m
   return { subject: `New time: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}`, ...body };
 }
 
+/** The deposit didn't arrive in time, so the held time was released. */
+export function customerHoldExpired(d: BookingDetails & { bookAgainUrl: string }): Email {
+  const body = layout({
+    preheader: `Your held time with ${d.businessName} was released.`,
+    kicker: 'Time released',
+    title: `Your hold has ended, ${firstName(d.customerName)}.`,
+    intro: `The deposit wasn't confirmed in time, so this time was released. If you've already paid, reply to this email and ${d.businessName} will sort it out.`,
+    rows: bookingRows(d),
+    button: { label: 'Book another time', url: d.bookAgainUrl },
+    footer: `${d.businessName}${d.businessPhone ? ` · ${d.businessPhone}` : ''} · Sent by BookPage on behalf of ${d.businessName}.`,
+  });
+  return { subject: `Time released: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}`, ...body };
+}
+
 export function customerReminder(d: BookingDetails & { manageUrl: string }): Email {
   const body = layout({
     preheader: `Reminder: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}.`,
@@ -180,6 +227,7 @@ export function customerReminder(d: BookingDetails & { manageUrl: string }): Ema
 
 export interface OwnerBookingAlert extends BookingDetails {
   status: 'confirmed' | 'pending';
+  deposit?: DepositDue | null;
   customerEmail: string;
   customerPhone: string | null;
   customerNote: string | null;
@@ -188,12 +236,17 @@ export interface OwnerBookingAlert extends BookingDetails {
 
 export function ownerNewBooking(d: OwnerBookingAlert): Email {
   const pending = d.status === 'pending';
+  const deposit = pending && d.deposit ? d.deposit : null;
+  const amount = deposit ? formatMoney(deposit.amountMinor, d.currency) : '';
   const body = layout({
     preheader: `${d.customerName} booked ${d.serviceName} for ${when(d.startsAt, d.timezone)}.`,
-    kicker: pending ? 'New booking · needs your OK' : 'New booking',
+    kicker: deposit ? 'New booking · deposit due' : pending ? 'New booking · needs your OK' : 'New booking',
     title: `${d.customerName} booked ${d.serviceName}.`,
-    intro: pending ? 'You approve bookings before they are confirmed. The time is held until you decide.' : undefined,
+    intro: deposit
+      ? `When the ${amount} deposit arrives in your payment app, tap "Deposit received" in your dashboard. If you haven't by ${when(deposit.dueAt, d.timezone)}, the time is released automatically.`
+      : pending ? 'You approve bookings before they are confirmed. The time is held until you decide.' : undefined,
     rows: [
+      ...(deposit ? [{ label: 'Deposit', value: `${amount} · due by ${when(deposit.dueAt, d.timezone)}` }] : []),
       { label: 'When', value: when(d.startsAt, d.timezone) },
       { label: 'With', value: d.staffName },
       { label: 'Price', value: price(d) },
@@ -203,10 +256,10 @@ export function ownerNewBooking(d: OwnerBookingAlert): Email {
     button: { label: pending ? 'Review booking' : 'Open dashboard', url: d.dashboardUrl },
     footer: `Your BookPage for ${d.businessName}.`,
   });
-  return { subject: `${pending ? 'Needs your OK' : 'New booking'}: ${d.customerName}, ${d.serviceName}, ${when(d.startsAt, d.timezone)}`, ...body };
+  return { subject: `${deposit ? 'Deposit due' : pending ? 'Needs your OK' : 'New booking'}: ${d.customerName}, ${d.serviceName}, ${when(d.startsAt, d.timezone)}`, ...body };
 }
 
-export function ownerCancelled(d: BookingDetails & { dashboardUrl: string }): Email {
+export function ownerCancelled(d: BookingDetails & { dashboardUrl: string; depositPaid?: { amountMinor: number; refundDue: boolean } | null }): Email {
   const body = layout({
     preheader: `${d.customerName} cancelled ${d.serviceName} on ${when(d.startsAt, d.timezone)}. The time is free again.`,
     kicker: 'Cancelled',
@@ -215,11 +268,33 @@ export function ownerCancelled(d: BookingDetails & { dashboardUrl: string }): Em
     rows: [
       { label: 'Was', value: `${d.serviceName} · ${when(d.startsAt, d.timezone)}` },
       { label: 'With', value: d.staffName },
+      ...(d.depositPaid
+        ? [{
+            label: 'Deposit',
+            value: `${formatMoney(d.depositPaid.amountMinor, d.currency)} paid. ${d.depositPaid.refundDue ? 'They cancelled in time, so your policy says refund it.' : 'They cancelled late, so your policy lets you keep it.'}`,
+          }]
+        : []),
     ],
     button: { label: 'Open dashboard', url: d.dashboardUrl },
     footer: `Your BookPage for ${d.businessName}.`,
   });
   return { subject: `Cancelled: ${d.customerName}, ${d.serviceName}, ${when(d.startsAt, d.timezone)}`, ...body };
+}
+
+export function ownerHoldExpired(d: BookingDetails & { depositMinor: number; dashboardUrl: string }): Email {
+  const body = layout({
+    preheader: `No deposit confirmed for ${d.customerName}: ${when(d.startsAt, d.timezone)} is free again.`,
+    kicker: 'Hold released',
+    title: `${d.customerName}'s hold ended.`,
+    intro: `The ${formatMoney(d.depositMinor, d.currency)} deposit wasn't marked as received in time, so the time is open again on your page. If they did pay, refund them or ask them to book again.`,
+    rows: [
+      { label: 'Was', value: `${d.serviceName} · ${when(d.startsAt, d.timezone)}` },
+      { label: 'With', value: d.staffName },
+    ],
+    button: { label: 'Open dashboard', url: d.dashboardUrl },
+    footer: `Your BookPage for ${d.businessName}.`,
+  });
+  return { subject: `Hold released: ${d.customerName}, ${d.serviceName}, ${when(d.startsAt, d.timezone)}`, ...body };
 }
 
 export function ownerRescheduled(d: BookingDetails & { previousStart: Date; dashboardUrl: string }): Email {

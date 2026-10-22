@@ -7,7 +7,9 @@ import type { CreatedBooking, PublicBusiness, PublicDay } from '@bookpage/shared
 import { AppModule } from '../app.module';
 import { CLIENT_IP_HEADER, PROXY_SECRET_HEADER } from '../common/client-ip';
 import { addDays, localDate } from '@bookpage/shared';
+import { OwnerBookingsService } from '../business/owner-bookings.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { DepositHoldsService, HOLD_EXPIRED_REASON } from '../reminders/deposit-holds.service';
 
 let app: INestApplication;
 let prisma: PrismaService;
@@ -221,6 +223,62 @@ describe('public booking page', () => {
     const { json } = await call('POST', '/bookings', booking(at('21:00')));
     expect(json.booking.status).toBe('pending');
     await prisma.bookingRules.updateMany({ where: { business: { slug } }, data: { autoConfirm: true } });
+  });
+
+  describe('deposits', () => {
+    const payUrl = 'https://buy.stripe.com/test_deposit';
+    beforeAll(async () => {
+      await prisma.bookingRules.updateMany({ where: { business: { slug } }, data: { depositUrl: payUrl, depositHoldMin: 120, depositRefundHours: 24 } });
+      await prisma.service.update({ where: { id: cutId }, data: { depositMinor: 1000 } });
+    });
+    afterAll(async () => {
+      await prisma.service.update({ where: { id: cutId }, data: { depositMinor: null } });
+      await prisma.bookingRules.updateMany({ where: { business: { slug } }, data: { depositUrl: null } });
+    });
+
+    it('shows the deposit on the page and holds the booking as pending until it is paid', async () => {
+      const profile = (await call('GET', '')).json as PublicBusiness;
+      expect(profile.services.find((s) => s.id === cutId)?.depositMinor).toBe(1000);
+      expect(profile.booking.deposits).toEqual({ holdMin: 120, refundHours: 24 });
+
+      const before = Date.now();
+      const created = (await call('POST', '/bookings', booking(at('08:00', addDays(tomorrow(), 2)), { staffId: staffA }))).json as CreatedBooking;
+      expect(created.booking.status).toBe('pending');
+      expect(created.booking.deposit).toMatchObject({ amountMinor: 1000, payUrl, paid: false, refundHours: 24 });
+      const due = Date.parse(created.booking.deposit!.dueAt);
+      expect(due).toBeGreaterThanOrEqual(before + 119 * 60_000);
+      expect(due).toBeLessThanOrEqual(Date.now() + 121 * 60_000);
+
+      // The owner tapping "Deposit received" confirms it and records the payment.
+      const owner = app.get(OwnerBookingsService);
+      await owner.changeStatus(ownerId, created.booking.id, { status: 'confirmed' });
+      const viewed = await call('GET', `/bookings/${created.booking.id}?token=${created.manageToken}`);
+      expect(viewed.json).toMatchObject({ status: 'confirmed', deposit: { paid: true } });
+    });
+
+    it('releases an unpaid hold after its deadline and frees the slot, but never a paid one', async () => {
+      const day = addDays(tomorrow(), 2);
+      const unpaid = (await call('POST', '/bookings', booking(at('11:00', day), { staffId: staffA }))).json as CreatedBooking;
+      const paid = (await call('POST', '/bookings', booking(at('11:00', day), { staffId: staffB }))).json as CreatedBooking;
+      await prisma.booking.update({ where: { id: paid.booking.id }, data: { depositPaidAt: new Date() } });
+
+      const holds = app.get(DepositHoldsService);
+      expect(await holds.run(new Date())).toBe(0); // nothing is due yet
+      await holds.run(new Date(Date.now() + 3 * 3_600_000));
+
+      const rows = await prisma.booking.findMany({ where: { id: { in: [unpaid.booking.id, paid.booking.id] } } });
+      expect(rows.find((r) => r.id === unpaid.booking.id)).toMatchObject({ status: 'cancelled', cancelReason: HOLD_EXPIRED_REASON });
+      expect(rows.find((r) => r.id === paid.booking.id)?.status).toBe('pending');
+      expect((await call('POST', '/bookings', booking(at('11:00', day), { staffId: staffA }))).status).toBe(201);
+    });
+
+    it('never holds longer than the start time', async () => {
+      // Opens all day with no notice, so a slot starting within the hold window exists.
+      const soon = new Date(Math.ceil((Date.now() + 40 * 60_000) / 1_800_000) * 1_800_000);
+      const created = await call('POST', '/bookings', booking(soon.toISOString(), { staffId: staffB }));
+      if (created.status !== 201) return; // that slot was used by an earlier test; nothing to check
+      expect(Date.parse(created.json.booking.deposit.dueAt)).toBeLessThanOrEqual(soon.getTime());
+    });
   });
 
   it('sends quote requests as enquiries', async () => {

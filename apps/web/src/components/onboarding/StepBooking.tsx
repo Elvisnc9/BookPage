@@ -1,4 +1,5 @@
 import type { CustomerFields, OwnerBusiness } from '@bookpage/shared';
+import { useState } from 'preact/hooks';
 import { Icon } from '../../site/parts';
 import { HoursEditor } from './HoursEditor';
 import { ImageSlot } from './ImageSlot';
@@ -21,6 +22,66 @@ const WINDOW = [
   { value: 60, label: '2 months' },
   { value: 90, label: '3 months' },
 ];
+
+const HOLD = [
+  { value: 60, label: '1 hour' },
+  { value: 120, label: '2 hours' },
+  { value: 360, label: '6 hours' },
+  { value: 1440, label: '24 hours' },
+];
+const REFUND = [
+  { value: 0, label: 'Any time before' },
+  { value: 24, label: '24 hours before' },
+  { value: 48, label: '48 hours before' },
+];
+
+const isPaymentLink = (url: string) => {
+  try {
+    return new URL(url).protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Deposits without BookPage touching money: the owner pastes their own payment
+ * link, the booking waits as pending, and they tap "Deposit received".
+ */
+function DepositsCard(props: { rules: Rules; onRules: (patch: Partial<Rules>) => void }) {
+  const { rules, onRules } = props;
+  // The link is saved only once it's a valid https URL (or cleared), so a half-typed link never reaches the API.
+  const [link, setLink] = useState(rules.depositUrl ?? '');
+  const trimmed = link.trim();
+  const invalid = trimmed !== '' && !isPaymentLink(trimmed);
+  const hold = HOLD.some((h) => h.value === rules.depositHoldMin) ? HOLD : [...HOLD, { value: rules.depositHoldMin, label: `${rules.depositHoldMin} min` }];
+  const refund = REFUND.some((r) => r.value === rules.depositRefundHours) ? REFUND : [...REFUND, { value: rules.depositRefundHours, label: `${rules.depositRefundHours} hours before` }];
+
+  return (
+    <Card title="Deposits (optional)" hint="Stop no-shows: customers pay a deposit through your own payment link before their time is confirmed. The money goes straight to you.">
+      <Field label="Your payment link" error={invalid ? 'Paste the full link, starting with https://' : undefined}
+        hint="A Stripe Payment Link, PayPal.me, Revolut or Monzo link, or similar. Then set a deposit amount on each service.">
+        {(id, d) => (
+          <input id={id} aria-describedby={d} class="ob-input" type="url" inputMode="url" value={link} maxLength={500} autoComplete="off"
+            placeholder="https://paypal.me/yourname" aria-invalid={invalid ? 'true' : undefined}
+            onInput={(e) => {
+              const value = e.currentTarget.value;
+              setLink(value);
+              const next = value.trim();
+              if (next === '') onRules({ depositUrl: null });
+              else if (isPaymentLink(next)) onRules({ depositUrl: next });
+            }} />
+        )}
+      </Field>
+      {rules.depositUrl && (
+        <>
+          <Chips label="Hold the time while they pay" value={rules.depositHoldMin} options={hold} onChange={(depositHoldMin) => onRules({ depositHoldMin })} />
+          <Chips label="Refund the deposit if they cancel" value={rules.depositRefundHours} options={refund} onChange={(depositRefundHours) => onRules({ depositRefundHours })} />
+          <p class="ob-hint">When the money arrives, tap "Deposit received" on the booking. Unpaid holds are released automatically. You handle refunds in your payment app.</p>
+        </>
+      )}
+    </Card>
+  );
+}
 
 export function StepBooking(props: {
   /** Overrides the onboarding heading (used on My page). */
@@ -85,6 +146,8 @@ export function StepBooking(props: {
           <Icon name="plus" size={18} /> Add a person
         </button>
       </Card>
+
+      <DepositsCard rules={rules} onRules={onRules} />
 
       <Card title="What to ask customers" hint="Name and email are always asked: confirmations and reminders go by email.">
         <Chips label="Phone number" value={rules.customerFields.phone}

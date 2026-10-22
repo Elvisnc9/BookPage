@@ -85,7 +85,8 @@ export class OwnerBookingsService {
       where: { id: booking.id, status: booking.status },
       data: {
         status: change.status,
-        ...(change.status === 'confirmed' ? { confirmedAt: now } : {}),
+        // For a deposit booking, confirming is the owner saying the money arrived.
+        ...(change.status === 'confirmed' ? { confirmedAt: now, ...(booking.depositMinor ? { depositPaidAt: now } : {}) } : {}),
         ...(change.status === 'cancelled' ? { cancelledAt: now, cancelReason: change.reason || (booking.status === 'pending' ? 'Declined by business' : 'Cancelled by business') } : {}),
       },
     });
@@ -129,5 +130,9 @@ function toOwner(b: Row): OwnerBooking {
     customer: { name: b.customer.name, email: b.customer.email, phone: b.customer.phone },
     createdAt: b.createdAt.toISOString(),
     cancelReason: b.cancelReason,
+    deposit:
+      b.depositMinor && b.depositDueAt
+        ? { amountMinor: b.depositMinor, dueAt: b.depositDueAt.toISOString(), paidAt: b.depositPaidAt?.toISOString() ?? null }
+        : null,
   };
 }

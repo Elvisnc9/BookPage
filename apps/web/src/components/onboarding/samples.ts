@@ -103,6 +103,7 @@ export function sampleBusiness(template: SiteTemplate): PublicBusiness {
     priceMinor: minor || null,
     durationMin: minutes,
     bookable: minor !== null,
+    depositMinor: null,
     image: photo ? img(photo) : null,
   }));
   return {
@@ -131,6 +132,6 @@ export function sampleBusiness(template: SiteTemplate): PublicBusiness {
     services,
     staff: s.staff.map(([name, photo], i) => ({ id: `p${i}`, name, serviceIds: services.filter((x) => x.bookable).map((x) => x.id), photo: photo ? img(photo) : null })),
     faqs: [],
-    booking: { windowDays: 60, customerFields: { phone: 'optional', note: 'optional' } },
+    booking: { windowDays: 60, customerFields: { phone: 'optional', note: 'optional' }, deposits: null },
   };
 }
