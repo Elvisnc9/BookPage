@@ -147,6 +147,8 @@ export function MadeWith(props: { class?: string }) {
   return (
     <p class={`s-made ${props.class ?? ''}`}>
       <a href="https://bookpage.app/?ref=page">Made with BookPage · Get your free page</a>
+      <span aria-hidden="true"> · </span>
+      <a href="https://bookpage.app/privacy">Privacy</a>
     </p>
   );
 }

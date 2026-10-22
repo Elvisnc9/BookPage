@@ -1,0 +1,68 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import { LEGAL, PROCESSORS } from '../lib/legal';
+
+// Plain-language privacy notice. Written to match what the code actually does;
+// change it whenever data handling changes (new processor, analytics, payments…).
+---
+
+<MarketingLayout title="Privacy · BookPage" description="What BookPage collects, why, who processes it, and your rights.">
+  <main id="main" class="mk-w lg">
+    <p class="mono lg-k">Last updated {LEGAL.updated}</p>
+    <h1 class="lg-h1">Privacy notice</h1>
+    <p class="lg-lede">BookPage gives local businesses a booking page. This notice explains what personal data we handle, why, and what you can ask us to do with it. We don't sell data, show ads, or use tracking or analytics cookies.</p>
+
+    <h2>Who we are</h2>
+    <p>BookPage is run by {LEGAL.operator}, {LEGAL.address}. Contact us about privacy at <strong>{LEGAL.contactEmail}</strong>.</p>
+    <p>There are two roles, depending on whose data it is:</p>
+    <ul>
+      <li><strong>Business owners</strong> (people who make a BookPage): we are the <em>controller</em> of your account data.</li>
+      <li><strong>Customers</strong> (people who book with a business): the <em>business</em> is the controller of your booking details, and BookPage processes them on the business's behalf. For questions about a booking, contact the business first; we'll help them answer.</li>
+    </ul>
+
+    <h2>What we collect</h2>
+    <h3>If you run a business on BookPage</h3>
+    <ul>
+      <li>Your Google account name, email address and profile picture, when you sign in with Google.</li>
+      <li>What you put on your page: business name, address, phone, WhatsApp, contact email, services, prices, opening hours, team names, photos and your payment link for deposits.</li>
+      <li>A session cookie that keeps you signed in (strictly necessary; no consent banner needed).</li>
+    </ul>
+    <h3>If you book with a business</h3>
+    <ul>
+      <li>Your name, email address, and phone number and note if the business asks for them.</li>
+      <li>The booking itself: service, time, person, status, and whether you asked for a reminder.</li>
+      <li>Your IP address, used only for a short time in memory to stop spam and abuse (rate limiting). It isn't stored with your booking.</li>
+    </ul>
+    <p>Booking pages set no cookies. Deposits are paid through the business's own payment provider; BookPage never sees card or bank details.</p>
+
+    <h2>Why we use it (legal bases)</h2>
+    <ul>
+      <li><strong>To provide the service</strong> (contract): showing pages, taking bookings, sending confirmations, change and cancel links, and owner alerts.</li>
+      <li><strong>Reminder emails</strong> (consent): only if you tick the reminder box when booking. You can ask the business to stop them at any time.</li>
+      <li><strong>Security and abuse prevention</strong> (legitimate interest): rate limiting and keeping the service running.</li>
+    </ul>
+
+    <h2>Who processes it for us</h2>
+    <p>We use these providers, under data processing agreements:</p>
+    <table class="lg-table">
+      <thead><tr><th>Provider</th><th>What for</th><th>Where</th></tr></thead>
+      <tbody>{PROCESSORS.map((p) => <tr><td>{p.name}</td><td>{p.purpose}</td><td>{p.where}</td></tr>)}</tbody>
+    </table>
+    <p>Some providers are in the United States. Transfers from the UK and EU rely on the EU–US Data Privacy Framework or Standard Contractual Clauses, as offered by each provider.</p>
+
+    <h2>How long we keep it</h2>
+    <ul>
+      <li>Account and page data: while the account exists. Ask us and we'll delete the account and its page.</li>
+      <li>Bookings and customer details: while the business's account exists, so the business keeps its records. A business can ask us to anonymise a customer; their name and contact details are then removed and the booking kept without them.</li>
+      <li>Email delivery logs at our email provider: as set by that provider (typically up to 30 days).</li>
+    </ul>
+
+    <h2>Your rights</h2>
+    <p>You can ask to access, correct, delete or export your data, to restrict or object to how it's used, and to withdraw consent (for reminders) at any time. Email <strong>{LEGAL.contactEmail}</strong>. If you booked with a business, you can also ask the business directly. We reply within one month.</p>
+    <p>If you're unhappy with how we handle your data, you can complain to your local data protection authority (in the UK, the ICO; in the EU, the authority in your country).</p>
+
+    <h2>Changes</h2>
+    <p>If we change how we handle data, we'll update this page and the date at the top. Significant changes are emailed to business owners.</p>
+  </main>
+</MarketingLayout>
+

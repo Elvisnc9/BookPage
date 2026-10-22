@@ -1,0 +1,55 @@
+---
+import MarketingLayout from '../layouts/MarketingLayout.astro';
+import { LEGAL } from '../lib/legal';
+
+// Plain-language terms for business owners. Keep them honest about what ships today.
+---
+
+<MarketingLayout title="Terms · BookPage" description="The terms for using BookPage to take bookings.">
+  <main id="main" class="mk-w lg">
+    <p class="mono lg-k">Last updated {LEGAL.updated}</p>
+    <h1 class="lg-h1">Terms of use</h1>
+    <p class="lg-lede">These terms apply when you make a BookPage for your business. They're short on purpose. BookPage is run by {LEGAL.operator}, {LEGAL.address} ("we").</p>
+
+    <h2>1. Your page</h2>
+    <ul>
+      <li>You can make a booking page for a business you run or are allowed to represent. Keep its details (prices, hours, address, policies) accurate.</li>
+      <li>You own your content: text, photos, services and your client list. You give us permission to host and show it so your page works.</li>
+      <li>Your page address ({'{name}'}.bookpage.app) is yours to use while your account is active. We may reclaim an address that impersonates someone else or breaks these terms.</li>
+    </ul>
+
+    <h2>2. Your customers</h2>
+    <ul>
+      <li>Bookings are agreements between you and your customers. You decide your prices, cancellation rules and refunds, and you deliver the service.</li>
+      <li>You are the controller of your customers' personal data (see the <a href="/privacy">privacy notice</a>); we process it for you to run your page, send booking emails and reminders. Only use it to serve those customers.</li>
+    </ul>
+
+    <h2>3. Deposits</h2>
+    <ul>
+      <li>If you ask for deposits, customers pay you directly through the payment link you provide. BookPage never receives, holds or moves money, and isn't a party to those payments.</li>
+      <li>You're responsible for confirming payments, honouring the refund window you choose, handling refunds and disputes, and any taxes.</li>
+      <li>Unpaid holds are released automatically when the time you set runs out.</li>
+    </ul>
+
+    <h2>4. Fair use</h2>
+    <p>Don't use BookPage for anything illegal, misleading or harmful; to send spam; to impersonate others; or to try to break, overload or get around the service's protections. We may suspend pages that do, and will tell you why when we can.</p>
+
+    <h2>5. Price</h2>
+    <p>Taking bookings on BookPage is free. If we add paid plans, we'll show the price before you choose one, bill monthly, email you before any charge, and let you cancel any time. We'll give at least 30 days' notice before changing what's free.</p>
+
+    <h2>6. Availability and changes</h2>
+    <p>We work hard to keep BookPage running and your data safe, but the service is provided "as is", without guarantees that it will always be available or error-free. We may improve or change features; if we ever shut BookPage down, we'll give you at least 30 days' notice and a way to export your bookings and clients.</p>
+
+    <h2>7. Liability</h2>
+    <p>To the extent the law allows, we aren't liable for indirect losses (such as lost profits or missed bookings), and our total liability is limited to the amount you paid us in the 12 months before the claim (which is zero on the free plan). Nothing here limits liability that can't be limited by law.</p>
+
+    <h2>8. Ending</h2>
+    <p>You can stop using BookPage at any time and ask us to delete your account. We may end or suspend accounts that seriously or repeatedly break these terms.</p>
+
+    <h2>9. Law</h2>
+    <p>These terms are governed by the law of {LEGAL.governingLaw}. If you're a consumer, you keep the protections of the law where you live.</p>
+
+    <h2>Questions</h2>
+    <p>Email <strong>{LEGAL.contactEmail}</strong>.</p>
+  </main>
+</MarketingLayout>

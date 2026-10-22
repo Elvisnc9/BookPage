@@ -359,3 +359,17 @@ html.lenis, html.lenis body { height: auto; }
 @media (prefers-reduced-motion: reduce) {
   .blink, .mk-mq-track, .mk-strip-track { animation: none; }
 }
+
+/* Legal pages (privacy, terms): plain reading column. */
+.lg { max-width: 760px; padding-top: 32px; padding-bottom: 64px; }
+.lg-k { margin: 0 0 8px; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #5C5C66); }
+.lg-h1 { margin: 0 0 16px; font-size: clamp(36px, 6vw, 56px); line-height: 1.02; letter-spacing: -.03em; }
+.lg-lede { font-size: 18px; line-height: 1.55; }
+.lg h2 { margin: 36px 0 10px; font-size: 22px; letter-spacing: -.01em; }
+.lg h3 { margin: 20px 0 6px; font-size: 16px; }
+.lg p, .lg li { line-height: 1.6; }
+.lg ul { padding-left: 20px; display: grid; gap: 6px; }
+.lg-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.lg-table th, .lg-table td { padding: 8px 10px; border: 1.5px solid #0D0D10; text-align: left; vertical-align: top; }
+.lg-table th { background: #F2EFE9; }
+@media (max-width: 560px) { .lg-table { display: block; overflow-x: auto; } }
