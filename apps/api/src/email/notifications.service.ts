@@ -8,8 +8,10 @@ import {
   customerCancelledByBusiness,
   customerConfirmation,
   customerReminder,
+  customerRescheduled,
   ownerCancelled,
   ownerEnquiry,
+  ownerRescheduled,
   ownerNewBooking,
 } from './templates';
 
@@ -86,6 +88,33 @@ export class NotificationsService {
       idempotencyKey: `owner-cancelled/${b.id}`,
       kind: 'owner-cancelled',
     });
+  }
+
+  /** The customer moved their booking: new details to them, a heads-up to the owner. */
+  async bookingRescheduled(bookingId: string, previousStart: Date): Promise<void> {
+    const b = await this.prisma.booking.findUniqueOrThrow({ where: { id: bookingId }, include: BOOKING_INCLUDE });
+    if (b.status !== 'confirmed' && b.status !== 'pending') return;
+    const details = { ...toDetails(b), previousStart };
+    // Keyed by the new time: moving twice sends twice, a retried send doesn't.
+    const key = `${b.id}/${b.startsAt.toISOString()}`;
+    await Promise.all([
+      b.customer.email &&
+        this.email.send({
+          ...customerRescheduled({ ...details, manageUrl: manageUrl(b.business.slug, b.id), calendarUrl: calendarUrl(b.business.slug, b.id) }),
+          to: b.customer.email,
+          fromName: `${b.business.name} via BookPage`,
+          replyTo: b.business.email ?? b.business.owner.email,
+          idempotencyKey: `booking-rescheduled/${key}`,
+          kind: 'booking-rescheduled',
+        }),
+      this.email.send({
+        ...ownerRescheduled({ ...details, dashboardUrl: dashboardUrl() }),
+        to: b.business.owner.email,
+        replyTo: b.customer.email,
+        idempotencyKey: `owner-rescheduled/${key}`,
+        kind: 'owner-rescheduled',
+      }),
+    ]);
   }
 
   /** Enquiries go to the owner by email; reply-to is the customer so they can answer straight away. */

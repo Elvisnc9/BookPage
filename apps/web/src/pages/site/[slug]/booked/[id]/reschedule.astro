@@ -1,0 +1,127 @@
+---
+import { type PublicBooking } from '@bookpage/shared';
+import BookingLayout from '../../../../../layouts/BookingLayout.astro';
+import Icon from '../../../../../components/booking/Icon.astro';
+import { dayLabel, getAvailability, getBooking, loadBusiness, PublicApiError, rescheduleBooking, timeOf, TOO_MANY_ATTEMPTS, whenLabel } from '../../../../../lib/public';
+
+/**
+ * Move a booking to another time, from the manage link. Same no-JS pattern as
+ * /book: days and times are links, picking a time posts the change.
+ * ?t=token&staff=…&date=YYYY-MM-DD
+ */
+const b = await loadBusiness(Astro.params.slug, Astro.request);
+if (b instanceof Response) return b;
+
+const id = Astro.params.id ?? '';
+const q = Astro.url.searchParams;
+const token = q.get('t') ?? '';
+const manage = `/booked/${id}?t=${encodeURIComponent(token)}`;
+
+let booking: PublicBooking;
+try {
+  booking = await getBooking(b.slug, id, token, Astro.request);
+} catch (error) {
+  if (error instanceof PublicApiError && (error.status === 404 || error.status === 400)) return new Response('Booking not found', { status: 404 });
+  throw error;
+}
+if (!booking.reschedulable) return Astro.redirect(manage, 303);
+
+let failure = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const start = String(form.get('start') ?? '');
+  const staffId = String(form.get('staff') ?? '');
+  try {
+    await rescheduleBooking(b.slug, id, { token, startsAt: start, ...(staffId ? { staffId } : {}) }, Astro.request);
+    return Astro.redirect(`${manage}&moved=1`, 303);
+  } catch (error) {
+    if (!(error instanceof PublicApiError)) throw error;
+    if (error.tooManyAttempts) failure = TOO_MANY_ATTEMPTS;
+    else if (error.status === 409) failure = 'Sorry, that time was just taken. Please pick another.';
+    else failure = error.body.message ?? "We couldn't move your booking just now. Please try again.";
+  }
+}
+
+const service = b.services.find((s) => s.id === booking.serviceId);
+if (!service) return Astro.redirect(manage, 303);
+const team = b.staff.filter((p) => p.serviceIds.includes(service.id));
+// Default to the same person; "anyone" is an explicit choice.
+const staffParam = q.get('staff');
+const staff = staffParam === 'any' ? null : team.find((p) => p.id === (staffParam ?? booking.staffId)) ?? null;
+const days = await getAvailability(b.slug, service.id, staff?.id ?? null, Astro.request, 14);
+const firstOpen = days.find((d) => d.slots.length)?.date;
+const date = days.some((d) => d.date === q.get('date')) ? q.get('date')! : firstOpen ?? days[0]?.date;
+const selected = days.find((d) => d.date === date);
+
+const link = (patch: Record<string, string>) => {
+  const p = new URLSearchParams({ t: token, staff: staff?.id ?? 'any', ...(date ? { date } : {}), ...patch });
+  return `/booked/${id}/reschedule?${p}`;
+};
+---
+
+<BookingLayout business={b} title={`Change time · ${b.name}`} bar={false} noReferrer>
+  <main class="bk-flow">
+    <a class="bk-back" href={manage}><Icon name="back" size={14} /> Keep my booking</a>
+    <h1 class="bk-flow-title">Pick a new time</h1>
+
+    <div class="bk-summary">
+      <span>
+        <strong>{booking.serviceName}</strong>
+        <small>Now: {whenLabel(booking.startsAt, booking.timezone)} · with {booking.staffName}</small>
+      </span>
+    </div>
+
+    {failure && <p class="bk-alert" role="alert">{failure}</p>}
+
+    <div class="bk-panel">
+      {team.length > 1 && (
+        <section class="bk-step" aria-labelledby="who">
+          <h2 id="who" class="bk-step-title">Who would you like?</h2>
+          <div class="bk-chips">
+            <a class="chip" aria-current={staff ? undefined : 'true'} href={link({ staff: 'any' })}>Anyone</a>
+            {team.map((p) => (
+              <a class="chip" aria-current={staff?.id === p.id ? 'true' : undefined} href={link({ staff: p.id })}>{p.name}</a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section class="bk-step" aria-labelledby="when">
+        <h2 id="when" class="bk-step-title">Pick a day</h2>
+        <nav class="bk-days" aria-label="Days">
+          {days.map((d) => {
+            const l = dayLabel(d.date);
+            return d.slots.length === 0 ? (
+              <span class="bk-day" aria-disabled="true"><span class="mono">{l.weekday}</span><strong>{l.day}</strong><span class="mono">—</span></span>
+            ) : (
+              <a class="bk-day" href={link({ date: d.date })} aria-current={d.date === date ? 'date' : undefined}
+                aria-label={`${l.long}, ${d.slots.length} times free`}>
+                <span class="mono">{l.weekday}</span><strong>{l.day}</strong><span class="mono">{l.month}</span>
+              </a>
+            );
+          })}
+        </nav>
+
+        <h2 class="bk-step-title">{selected && selected.slots.length ? `Times on ${dayLabel(selected.date).long}` : 'Pick a time'}</h2>
+        {selected && selected.slots.length ? (
+          <ul class="bk-times">
+            {selected.slots.map((s) => (
+              <li>
+                <form method="post">
+                  <input type="hidden" name="start" value={s.start} />
+                  {staff && <input type="hidden" name="staff" value={staff.id} />}
+                  <button class="bk-time" type="submit" aria-label={`Move to ${whenLabel(s.start, b.timezone)}`}>{timeOf(s.start, b.timezone)}</button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="bk-empty">
+            {firstOpen ? 'No free times that day. Pick another day above.' : `No other free times in the next two weeks.${b.phone ? ` Call ${b.phone} to ask.` : ''}`}
+          </p>
+        )}
+        <p class="bk-note">Times shown in {b.timezone.split('/').pop()!.replace(/_/g, ' ')} time. Your current time stays booked until you pick a new one.</p>
+      </section>
+    </div>
+  </main>
+</BookingLayout>

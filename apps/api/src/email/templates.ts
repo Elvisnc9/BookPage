@@ -148,6 +148,21 @@ export function customerCancelledByBusiness(d: BookingDetails & { declined: bool
   };
 }
 
+/** The customer moved their booking to another time. */
+export function customerRescheduled(d: BookingDetails & { previousStart: Date; manageUrl: string; calendarUrl: string }): Email {
+  const body = layout({
+    preheader: `Your booking with ${d.businessName} is now ${when(d.startsAt, d.timezone)}.`,
+    kicker: 'Time changed',
+    title: `You're moved, ${firstName(d.customerName)}.`,
+    intro: `Your new time is below. Your old time (${when(d.previousStart, d.timezone)}) is free again.`,
+    rows: bookingRows(d),
+    button: { label: 'Change or cancel', url: d.manageUrl },
+    secondary: { label: 'Add to calendar', url: d.calendarUrl },
+    footer: `${d.businessName}${d.businessPhone ? ` · ${d.businessPhone}` : ''} · Sent by BookPage on behalf of ${d.businessName}.`,
+  });
+  return { subject: `New time: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}`, ...body };
+}
+
 export function customerReminder(d: BookingDetails & { manageUrl: string }): Email {
   const body = layout({
     preheader: `Reminder: ${d.serviceName} at ${d.businessName}, ${when(d.startsAt, d.timezone)}.`,
@@ -205,6 +220,24 @@ export function ownerCancelled(d: BookingDetails & { dashboardUrl: string }): Em
     footer: `Your BookPage for ${d.businessName}.`,
   });
   return { subject: `Cancelled: ${d.customerName}, ${d.serviceName}, ${when(d.startsAt, d.timezone)}`, ...body };
+}
+
+export function ownerRescheduled(d: BookingDetails & { previousStart: Date; dashboardUrl: string }): Email {
+  const body = layout({
+    preheader: `${d.customerName} moved ${d.serviceName} to ${when(d.startsAt, d.timezone)}.`,
+    kicker: 'Booking moved',
+    title: `${d.customerName} changed their time.`,
+    intro: 'The old time is open again on your page.',
+    rows: [
+      { label: 'Now', value: when(d.startsAt, d.timezone) },
+      { label: 'Was', value: when(d.previousStart, d.timezone) },
+      { label: 'What', value: d.serviceName },
+      { label: 'With', value: d.staffName },
+    ],
+    button: { label: 'Open dashboard', url: d.dashboardUrl },
+    footer: `Your BookPage for ${d.businessName}.`,
+  });
+  return { subject: `Moved: ${d.customerName}, ${d.serviceName}, now ${when(d.startsAt, d.timezone)}`, ...body };
 }
 
 export function ownerEnquiry(d: {

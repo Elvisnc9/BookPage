@@ -8,6 +8,7 @@ import {
   type PublicBooking,
   type PublicBusiness,
   type PublicDay,
+  type RescheduleRequest,
   type ResolvedSite,
 } from '@bookpage/shared';
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min';
@@ -140,6 +141,48 @@ export class PublicService {
     return this.view(id);
   }
 
+  /**
+   * Moves a live booking to another free time, keeping the same person when
+   * they're free. The row is updated in place, so the booking's own old time
+   * never blocks the new one, and the exclusion constraint still guards races.
+   */
+  async reschedule(slug: string, id: string, req: RescheduleRequest): Promise<PublicBooking> {
+    const checked = await this.checkToken(slug, id, req.token);
+    if (!isCancellable(checked.status, checked.startsAt)) throw new BadRequestException('This booking can no longer be changed');
+    const current = await this.prisma.booking.findUniqueOrThrow({ where: { id }, select: { serviceId: true, staffId: true, startsAt: true } });
+
+    const b = await this.load(slug);
+    const service = b.services.find((s) => s.id === current.serviceId && s.bookable && s.priceType !== 'quote');
+    if (!service) throw new BadRequestException('This booking can’t be moved online. Please contact the business.');
+
+    const startsAt = new Date(req.startsAt);
+    if (startsAt.getTime() === current.startsAt.getTime() && (!req.staffId || req.staffId === current.staffId)) return this.view(id);
+    const { date } = localDate(startsAt, b.timezone);
+    const [day] = await this.slots(b, service.id, req.staffId, date, 1, id);
+    const slot = day?.slots.find((s) => s.start.getTime() === startsAt.getTime());
+    if (!slot) throw new SlotTakenException();
+
+    // Same person if they're free, otherwise whoever the engine offers first.
+    const order = [...slot.staffIds].sort((a, c) => Number(c === current.staffId) - Number(a === current.staffId));
+    const endsAt = slot.end;
+    const blockedUntil = new Date(endsAt.getTime() + service.bufferMin * 60_000);
+    for (const staffId of order) {
+      try {
+        // Conditional on the time we checked, so two tabs can't both move it.
+        const moved = await this.prisma.booking.updateMany({
+          where: { id, status: { in: [...ACTIVE] }, startsAt: current.startsAt },
+          data: { startsAt, endsAt, blockedUntil, staffId, durationMin: service.durationMin, reminderSentAt: null },
+        });
+        if (moved.count !== 1) throw new BadRequestException('This booking just changed. Please reload and try again.');
+        void this.notifications.dispatch('reschedule emails', () => this.notifications.bookingRescheduled(id, current.startsAt));
+        return this.view(id);
+      } catch (error) {
+        if (!isSlotTaken(error)) throw error;
+      }
+    }
+    throw new SlotTakenException();
+  }
+
   async enquire(slug: string, req: EnquiryRequest): Promise<{ ok: true }> {
     const b = await this.load(slug);
     if (req.serviceId && !b.services.some((s) => s.id === req.serviceId)) throw new NotFoundException('Unknown service');
@@ -167,7 +210,7 @@ export class PublicService {
   }
 
   /** Runs the engine for a service (and optionally one person) over a date range, using live bookings. */
-  private async slots(b: LoadedBusiness, serviceId: string, staffId: string | undefined, fromDate: string, days: number) {
+  private async slots(b: LoadedBusiness, serviceId: string, staffId: string | undefined, fromDate: string, days: number, excludeBookingId?: string) {
     const service = b.services.find((s) => s.id === serviceId && s.bookable && s.priceType !== 'quote');
     if (!service) throw new NotFoundException('That service can’t be booked online');
 
@@ -182,6 +225,7 @@ export class PublicService {
       where: {
         staffId: { in: team.map((s) => s.id) },
         status: { in: [...ACTIVE] },
+        ...(excludeBookingId ? { id: { not: excludeBookingId } } : {}),
         startsAt: { lt: rangeEnd },
         blockedUntil: { gt: rangeStart },
       },
@@ -243,11 +287,19 @@ export class PublicService {
   private async view(id: string): Promise<PublicBooking> {
     const b = await this.prisma.booking.findUniqueOrThrow({
       where: { id },
-      include: { business: { select: { name: true, timezone: true } }, staff: { select: { name: true } }, customer: { select: { name: true } } },
+      include: {
+        business: { select: { name: true, timezone: true } },
+        service: { select: { bookable: true, priceType: true, archivedAt: true } },
+        staff: { select: { name: true } },
+        customer: { select: { name: true } },
+      },
     });
+    const cancellable = isCancellable(b.status, b.startsAt);
     return {
       id: b.id,
       status: b.status,
+      serviceId: b.serviceId,
+      staffId: b.staffId,
       businessName: b.business.name,
       timezone: b.business.timezone,
       serviceName: b.serviceName,
@@ -258,7 +310,8 @@ export class PublicService {
       priceMinor: b.priceMinor,
       currency: b.currency,
       customerName: b.customer.name,
-      cancellable: isCancellable(b.status, b.startsAt),
+      cancellable,
+      reschedulable: cancellable && b.service.bookable && b.service.priceType !== 'quote' && !b.service.archivedAt,
     };
   }
 }

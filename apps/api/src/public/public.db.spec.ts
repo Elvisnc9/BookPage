@@ -172,6 +172,39 @@ describe('public booking page', () => {
     expect((await call('POST', '/bookings', booking(at('18:00'), { staffId: staffA }))).status).toBe(201);
   });
 
+  it('moves a booking with its link, even onto its own old time, and keeps the person', async () => {
+    const day = addDays(tomorrow(), 1);
+    const created = (await call('POST', '/bookings', booking(at('10:00', day), { staffId: staffA }))).json as CreatedBooking;
+    const id = created.booking.id;
+    expect(created.booking).toMatchObject({ reschedulable: true, staffId: staffA });
+
+    // 10:30 overlaps the booking's own 10:00 slot; that must not block the move.
+    const moved = await call('POST', `/bookings/${id}/reschedule`, { token: created.manageToken, startsAt: at('10:30', day) });
+    expect(moved.status).toBe(200);
+    expect(moved.json).toMatchObject({ id, status: 'confirmed', staffId: staffA, startsAt: at('10:30', day) });
+    const row = await prisma.booking.findUniqueOrThrow({ where: { id } });
+    expect(row.endsAt.toISOString()).toBe(at('11:30', day));
+    expect(row.reminderSentAt).toBeNull();
+
+    // The old 10:00 time is free again for someone else with the same person.
+    expect((await call('POST', '/bookings', booking(at('09:00', day), { staffId: staffA }))).status).toBe(201);
+  });
+
+  it('refuses a move onto a taken time, a wrong link, or a cancelled booking', async () => {
+    const day = addDays(tomorrow(), 1);
+    const mine = (await call('POST', '/bookings', booking(at('14:00', day), { staffId: staffB }))).json as CreatedBooking;
+    await call('POST', '/bookings', booking(at('16:00', day), { staffId: staffB }));
+
+    const taken = await call('POST', `/bookings/${mine.booking.id}/reschedule`, { token: mine.manageToken, startsAt: at('16:00', day), staffId: staffB });
+    expect(taken.status).toBe(409);
+    const wrong = await call('POST', `/bookings/${mine.booking.id}/reschedule`, { token: 'wrong-token-that-is-long-enough', startsAt: at('17:30', day) });
+    expect(wrong.status).toBe(404);
+
+    await call('POST', `/bookings/${mine.booking.id}/cancel`, { token: mine.manageToken });
+    const afterCancel = await call('POST', `/bookings/${mine.booking.id}/reschedule`, { token: mine.manageToken, startsAt: at('17:30', day) });
+    expect(afterCancel.status).toBe(400);
+  });
+
   it('stores customers once per business with a lower-cased email', async () => {
     const email = `Same.${randomUUID().slice(0, 6)}@Example.com`;
     const customer = { name: 'Sam', email, phone: '+12125550100' };

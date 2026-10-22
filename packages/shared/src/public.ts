@@ -57,6 +57,8 @@ export interface PublicDay {
 export interface PublicBooking {
   id: string;
   status: BookingStatus;
+  serviceId: string;
+  staffId: string;
   businessName: string;
   timezone: string;
   serviceName: string;
@@ -68,6 +70,8 @@ export interface PublicBooking {
   currency: string;
   customerName: string;
   cancellable: boolean;
+  /** Can move to another time online (active, in the future, service still bookable). */
+  reschedulable: boolean;
 }
 
 /** The booking plus the secret that lets the customer view or cancel it later. */

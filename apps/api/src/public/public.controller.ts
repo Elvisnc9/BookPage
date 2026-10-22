@@ -6,6 +6,8 @@ import {
   cancelRequestSchema,
   type EnquiryRequest,
   enquiryRequestSchema,
+  type RescheduleRequest,
+  rescheduleRequestSchema,
 } from '@bookpage/shared';
 import { ZodPipe } from '../common/zod.pipe';
 import { PUBLIC_READ_LIMITS, PublicThrottlerGuard } from './public-throttler.guard';
@@ -62,6 +64,16 @@ export class PublicController {
     @Body(new ZodPipe(cancelRequestSchema)) body: { token: string },
   ) {
     return this.pub.cancel(slug, id, body.token);
+  }
+
+  @Post('bookings/:id/reschedule')
+  @HttpCode(200)
+  reschedule(
+    @Param('slug') slug: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodPipe(rescheduleRequestSchema)) body: RescheduleRequest,
+  ) {
+    return this.pub.reschedule(slug, id, body);
   }
 
   @Post('enquiries')

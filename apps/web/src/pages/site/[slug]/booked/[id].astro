@@ -35,6 +35,8 @@ const when = whenLabel(booking.startsAt, booking.timezone);
 const address = [b.addressLine1, b.city].filter(Boolean).join(', ');
 const self = `/booked/${id}?t=${encodeURIComponent(token)}`;
 const ics = `/booked/${id}/calendar.ics?t=${encodeURIComponent(token)}`;
+const move = `/booked/${id}/reschedule?t=${encodeURIComponent(token)}`;
+const moved = Astro.url.searchParams.has('moved') && !failure;
 const heading = {
   confirmed: { kicker: '✓ You are booked', title: `See you soon, ${first}.` },
   pending: { kicker: 'Request sent', title: `Thanks, ${first}.` },
@@ -48,6 +50,7 @@ const heading = {
   <main class="bk-flow">
     <div class="bk-done" data-status={booking.status}>
       {failure && <p class="bk-alert" role="alert">{failure}</p>}
+      {moved && <p class="bk-flash" role="status">Your new time is saved. We've emailed you the details.</p>}
       <p class="bk-badge"><i><Icon name={booking.status === 'cancelled' || booking.status === 'no_show' ? 'undo' : 'check'} size={14} /></i>{heading.kicker.replace('✓ ', '')}</p>
       <h1 class="bk-flow-title">{heading.title}</h1>
       <dl class="bk-receipt">
@@ -64,6 +67,7 @@ const heading = {
       {booking.cancellable && (
         <div class="bk-actions">
           <a class="btn" href={ics}>Add to calendar</a>
+          {booking.reschedulable && <a class="btn" href={move}>Change time</a>}
           <form method="post" action={self}>
             <button class="btn bk-cancel" type="submit">Cancel booking</button>
           </form>
@@ -71,6 +75,6 @@ const heading = {
       )}
       {booking.status === 'cancelled' && <a class="btn btn-ink" href="/#services">Book another time</a>}
     </div>
-    <p class="bk-note">Keep this page's link to change or cancel later.</p>
+    <p class="bk-note">Keep this page's link to change your time or cancel later.</p>
   </main>
 </BookingLayout>

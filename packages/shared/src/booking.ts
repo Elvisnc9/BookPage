@@ -27,3 +27,11 @@ export const enquiryRequestSchema = z.object({
 export type EnquiryRequest = z.infer<typeof enquiryRequestSchema>;
 
 export const cancelRequestSchema = z.object({ token: z.string().min(20).max(100) });
+
+/** Moves a booking to another free time. Omitting staffId keeps the same person when they're free, else anyone. */
+export const rescheduleRequestSchema = z.object({
+  token: z.string().min(20).max(100),
+  startsAt: z.iso.datetime({ offset: true }),
+  staffId: z.uuid().optional(),
+});
+export type RescheduleRequest = z.infer<typeof rescheduleRequestSchema>;

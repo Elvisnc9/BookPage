@@ -50,6 +50,9 @@ export const getBooking = (slug: string, id: string, token: string, visitor: Req
 export const cancelBooking = (slug: string, id: string, token: string, visitor: Request) =>
   call<PublicBooking>(slug, `/bookings/${id}/cancel`, visitor, { method: 'POST', body: JSON.stringify({ token }) });
 
+export const rescheduleBooking = (slug: string, id: string, body: { token: string; startsAt: string; staffId?: string }, visitor: Request) =>
+  call<PublicBooking>(slug, `/bookings/${id}/reschedule`, visitor, { method: 'POST', body: JSON.stringify(body) });
+
 export const sendEnquiry = (slug: string, body: EnquiryRequest, visitor: Request) =>
   call<{ ok: true }>(slug, '/enquiries', visitor, { method: 'POST', body: JSON.stringify(body) });
 
