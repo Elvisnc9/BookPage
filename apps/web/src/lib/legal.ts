@@ -21,6 +21,6 @@ export const PROCESSORS = [
   { name: 'Cloudflare', purpose: 'Hosting the website and booking pages', where: 'Global network' },
   { name: 'Neon', purpose: 'Database (business profiles, bookings, customers)', where: 'United States (AWS us-east-2)' },
   { name: 'Resend', purpose: 'Sending booking emails and reminders', where: 'United States' },
-  { name: 'Google', purpose: 'Owner sign-in (Google account)', where: 'United States' },
+  { name: 'Clerk', purpose: 'Owner sign-in, sessions and account security', where: 'United States' },
   { name: '[API host]', purpose: 'Running the BookPage server', where: '[region]' },
 ];

@@ -8,7 +8,7 @@ Everything in the code is ready to deploy. What's left is accounts, DNS and secr
 
 - [ ] **You own the domain.** It must be in an account you control. (On 22 Oct, `bookpage.app` was registered since 2023 via Squarespace Domains but pointed nowhere; confirm it's yours. If not, buy one now.)
 - [ ] **Fill in `apps/web/src/lib/legal.ts`**: your legal name or company, address, a real privacy contact email, and the country whose law applies. The privacy and terms pages show `[placeholders]` until you do.
-- [ ] Accounts you'll need (all have free tiers except Render): Cloudflare, Neon, Render, Resend, Google Cloud.
+- [ ] Accounts you'll need (all have free tiers except Render): Cloudflare, Neon, Render, Resend, Clerk, Google Cloud (for Clerk's Google sign-in).
 
 Generate two secrets now and keep them in your password manager:
 
@@ -52,18 +52,21 @@ The API applies migrations on every start, so there's nothing to run by hand yet
 
 ✅ Check: the domain shows **Verified**.
 
-## 4. Google sign-in
+## 4. Owner sign-in (Clerk)
 
-1. Google Cloud Console → **APIs & Services** → **OAuth consent screen**: app name BookPage, support email, authorised domain `bookpage.app`, scopes `email`, `profile`, `openid`. **Publish app** (status "In production"; these basic scopes don't need Google review).
-2. **Credentials** → **Create OAuth client ID** → Web application:
-   - Authorised JavaScript origin: `https://app.bookpage.app`
-   - Authorised redirect URI: `https://app.bookpage.app/api/auth/google/callback`
-3. Copy the client ID and secret.
+Clerk handles sign-in (Google and email), sessions and cookies. Development keys only work on localhost, so production needs Clerk's production instance.
+
+1. Clerk dashboard → **Go to prod** (creates the production instance) → domain `bookpage.app`.
+2. Add the DNS records Clerk lists (CNAMEs such as `clerk.`, `accounts.` and the email ones) in Cloudflare as **DNS only (grey cloud)**, then wait for Clerk to show them verified.
+3. **Google**: production needs your own Google OAuth client. Google Cloud Console → OAuth consent screen (app BookPage, scopes `email`, `profile`, `openid`, **Publish app**) → Credentials → OAuth client ID (Web), with the redirect URI Clerk shows under **SSO connections → Google**. Paste the client ID and secret into Clerk.
+4. Under **Configure → Paths / Domains**, the app lives at `https://app.bookpage.app` (sign-in at `/sign-in`).
+5. Copy the production keys from **API keys**: publishable key (`pk_live_…`), secret key (`sk_live_…`) and the JWT public key (PEM). You'll paste them into Render (step 5) and Cloudflare (step 6).
 
 ## 5. API (Render)
 
 1. Render → **New → Blueprint** → connect the GitHub repo → it reads `render.yaml` and creates **bookpage-api** (Docker, Ohio, Starter plan, about $7/month). It must be an always-on plan, because the reminder and deposit-hold jobs run inside the server.
-2. Fill in the secret values it asks for: `DATABASE_URL`, `DIRECT_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `RESEND_API_KEY`, `PROXY_SECRET`, `MANAGE_TOKEN_SECRET`.
+2. Fill in the secret values it asks for: `DATABASE_URL`, `DIRECT_URL`, `CLERK_SECRET_KEY`, `CLERK_JWT_KEY` (the PEM on one line, `
+` between lines), `RESEND_API_KEY`, `PROXY_SECRET`, `MANAGE_TOKEN_SECRET`.
 3. Wait for the first deploy (it builds the image, runs migrations, starts).
 4. **Custom domain**: Settings → Custom Domains → `api.bookpage.app`. In Cloudflare DNS add the CNAME Render shows, and set it to **DNS only (grey cloud)**. Otherwise the Worker's wildcard route would catch it.
 5. Load the templates and the Glow Studio demo (the marketing page's "example" link points to it). From your machine, with the production URLs in your shell:
@@ -81,13 +84,13 @@ The API applies migrations on every start, so there's nothing to run by hand yet
 
 1. Log in once: `cd apps/web && corepack pnpm exec wrangler login`.
 2. Deploy: `corepack pnpm --filter @bookpage/web run deploy`. This builds with the production settings in `wrangler.jsonc` (domain, app host, API URL) and attaches the routes `bookpage.app/*` and `*.bookpage.app/*`.
-3. Add the secret: Cloudflare → **Workers & Pages** → **bookpage-web** → **Settings → Variables and Secrets** → add **Secret** `PROXY_SECRET` with the same value as on Render. Redeploy (step 2) so it takes effect.
+3. Add the secrets: Cloudflare → **Workers & Pages** → **bookpage-web** → **Settings → Variables and Secrets** → add **Secret** `PROXY_SECRET` (same value as on Render) and **Secret** `CLERK_SECRET_KEY`. The publishable key is read at build time: put `PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_…` in `apps/web/.env.production` (or your shell) before step 2. Redeploy so it all takes effect.
 
 ✅ Check: `https://bookpage.app`, `https://bookpage.app/privacy` and `https://glowstudio.bookpage.app` load.
 
 ## 7. Smoke test on a phone (15 minutes)
 
-- [ ] `https://app.bookpage.app` → **Sign in with Google** → onboarding → publish a test page (e.g. `yourname-test`).
+- [ ] `https://app.bookpage.app` → **Continue with Google** (or email) → onboarding → publish a test page (e.g. `yourname-test`).
 - [ ] Open `https://yourname-test.bookpage.app` on your phone → book a time → the confirmation email arrives (check spam).
 - [ ] Open the email's **Change or cancel** link → **Change time** → pick another → the "moved" email arrives, for you and for the owner.
 - [ ] On **My page → Booking rules**, paste a payment link (a Stripe Payment Link or PayPal.me) and set a deposit on one service. Book it → the email shows **Pay deposit** → in the dashboard, tap **Deposit received** → the customer gets "confirmed".

@@ -28,9 +28,9 @@ services:
         sync: false
       - key: DIRECT_URL
         sync: false
-      - key: GOOGLE_CLIENT_ID
+      - key: CLERK_SECRET_KEY
         sync: false
-      - key: GOOGLE_CLIENT_SECRET
+      - key: CLERK_JWT_KEY
         sync: false
       - key: RESEND_API_KEY
         sync: false
