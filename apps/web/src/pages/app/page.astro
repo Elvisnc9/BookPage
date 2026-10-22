@@ -6,7 +6,7 @@ import AppLayout from '../../layouts/AppLayout.astro';
 import { apiFetch } from '../../lib/api';
 
 // My page: edit services, hours and booking rules. Middleware guarantees a published business.
-const res = await apiFetch('/business', Astro.request);
+const res = await apiFetch('/business', Astro);
 if (!res.ok) throw new Error(`GET /business failed: ${res.status}`);
 const { business } = (await res.json()) as { business: OwnerBusiness };
 ---

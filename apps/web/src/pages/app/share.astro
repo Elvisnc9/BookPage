@@ -10,7 +10,7 @@ import { apiFetch } from '../../lib/api';
  * clients already are (Instagram bio, WhatsApp, a printed QR at the counter).
  * Server-rendered; the copy buttons are the only script (in AppLayout).
  */
-const res = await apiFetch('/business', Astro.request);
+const res = await apiFetch('/business', Astro);
 if (!res.ok) throw new Error(`GET /business failed: ${res.status}`);
 const { business } = (await res.json()) as { business: { slug: string; name: string; timezone: string } };
 

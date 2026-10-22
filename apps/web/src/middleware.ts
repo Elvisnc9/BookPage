@@ -1,13 +1,22 @@
 import { defineMiddleware } from 'astro:middleware';
+import type { APIContext, MiddlewareNext } from 'astro';
 import { APP_HOST, ROOT_DOMAIN } from 'astro:env/server';
+import { clerkMiddleware } from '@clerk/astro/server';
 import { isValidSlug } from '@bookpage/shared';
 import { getMe } from './lib/api';
 import { isInternalPath, resolveSite } from './lib/host';
 
 const notFound = () => new Response('Not found', { status: 404 });
 
-/** Owner-app paths reachable without a session. */
+/** Owner-app paths reachable without being signed in. */
 const PUBLIC_APP_PATHS = new Set(['/sign-in']);
+
+/**
+ * Clerk runs for the owner app only: it reads and refreshes its own session
+ * cookies and adds `locals.auth()`. Marketing and booking pages never touch it,
+ * so customers' browsers load no Clerk script and set no Clerk cookies.
+ */
+const withClerk = clerkMiddleware();
 
 // next(path) rewrites without running this middleware a second time.
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -32,32 +41,29 @@ export const onRequest = defineMiddleware(async (context, next) => {
     case 'unknown':
       return notFound();
     case 'app':
-      break;
+      // Clerk's handler is typed as possibly returning nothing; ours always returns a response.
+      return (await withClerk(context, () => ownerApp(context, next, pathname, rest, search))) ?? notFound();
   }
+});
 
-  // Owner app. /api/* is proxied straight to the API, which checks the session itself.
+async function ownerApp(context: APIContext, next: MiddlewareNext, pathname: string, rest: string, search: string): Promise<Response> {
+  const auth = context.locals.auth();
+  // The owner's Clerk session token (about a minute long) for this request's API calls.
+  context.locals.apiToken = auth.userId ? await auth.getToken() : null;
+
+  // /api/* is proxied straight to the API, which checks the token itself.
   if (pathname === '/api' || pathname.startsWith('/api/')) return next(`/app${pathname}${search}`);
 
-  const { me, setCookies } = await getMe(context.request);
   const isPublic = PUBLIC_APP_PATHS.has(pathname);
+  if (!auth.userId) return isPublic ? next(`/app${rest}${search}`) : context.redirect('/sign-in', 303);
 
-  let response: Response;
-  if (!me && !isPublic) {
-    response = context.redirect('/sign-in', 303);
-  } else if (me && isPublic) {
-    response = context.redirect('/', 303);
-  } else if (me && !me.business?.publishedAt && pathname !== '/onboarding') {
-    // The dashboard needs a live page; finish onboarding first.
-    response = context.redirect('/onboarding', 303);
-  } else {
-    if (me) context.locals.me = me;
-    response = await next(`/app${rest}${search}`);
-  }
+  const me = await getMe(context);
+  // Signed in to Clerk but the API refused the account (e.g. unverified email): explain on the sign-in page.
+  if (!me) return isPublic ? next(`/app${rest}${search}`) : context.redirect('/sign-in?error=account', 303);
+  if (isPublic) return context.redirect('/', 303);
+  // The dashboard needs a live page; finish onboarding first.
+  if (!me.business?.publishedAt && pathname !== '/onboarding') return context.redirect('/onboarding', 303);
 
-  // A sliding session renewal comes back from /auth/me; hand it to the browser.
-  if (setCookies.length) {
-    response = new Response(response.body, response);
-    for (const cookie of setCookies) response.headers.append('set-cookie', cookie);
-  }
-  return response;
-});
+  context.locals.me = me;
+  return next(`/app${rest}${search}`);
+}

@@ -1,23 +1,23 @@
 import type { AstroGlobal } from 'astro';
 import type { BookingStatus, OwnerBooking, OwnerSummary } from '@bookpage/shared';
-import { apiFetch } from './api';
+import { type ApiContext, apiFetch } from './api';
 
 /** Server-side calls from dashboard pages to the API, as the signed-in owner. */
-async function get<T>(path: string, request: Request): Promise<T> {
-  const res = await apiFetch(path, request);
+async function get<T>(path: string, ctx: ApiContext): Promise<T> {
+  const res = await apiFetch(path, ctx);
   if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
   return (await res.json()) as T;
 }
 
-export const getSummary = (request: Request) => get<OwnerSummary>('/business/summary', request);
+export const getSummary = (ctx: ApiContext) => get<OwnerSummary>('/business/summary', ctx);
 
-export async function getBookings(request: Request, q: { from?: Date; to?: Date; status?: BookingStatus[]; order?: 'asc' | 'desc' }) {
+export async function getBookings(ctx: ApiContext, q: { from?: Date; to?: Date; status?: BookingStatus[]; order?: 'asc' | 'desc' }) {
   const p = new URLSearchParams();
   if (q.from) p.set('from', q.from.toISOString());
   if (q.to) p.set('to', q.to.toISOString());
   if (q.status?.length) p.set('status', q.status.join(','));
   if (q.order) p.set('order', q.order);
-  return (await get<{ bookings: OwnerBooking[] }>(`/business/bookings?${p}`, request)).bookings;
+  return (await get<{ bookings: OwnerBooking[] }>(`/business/bookings?${p}`, ctx)).bookings;
 }
 
 const DONE: Record<string, string> = {
@@ -40,7 +40,7 @@ export async function handleBookingAction(Astro: AstroGlobal): Promise<Response 
   const reason = String(form.get('reason') ?? '').trim();
   const wasPending = form.get('was') === 'pending';
 
-  const res = await apiFetch(`/business/bookings/${encodeURIComponent(id)}/status`, Astro.request, {
+  const res = await apiFetch(`/business/bookings/${encodeURIComponent(id)}/status`, Astro, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ status, ...(reason ? { reason } : {}) }),

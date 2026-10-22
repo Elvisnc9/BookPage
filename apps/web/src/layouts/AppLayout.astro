@@ -2,6 +2,7 @@
 import { ROOT_DOMAIN } from 'astro:env/server';
 import { localDate } from '@bookpage/shared';
 import AppIcon from '../components/AppIcon.astro';
+import ClerkScript from '../components/ClerkScript.astro';
 import Base from './Base.astro';
 import '../styles/app.css';
 import { dayLabel, initials } from '../lib/public';
@@ -69,9 +70,7 @@ const nav = [
           <strong>{who}</strong>
           <span class="mono">{business?.name}</span>
         </span>
-        <form method="post" action="/api/auth/logout">
-          <button class="ap-out" type="submit" aria-label="Sign out" title="Sign out"><AppIcon name="logout" /></button>
-        </form>
+        <button class="ap-out" type="button" data-sign-out aria-label="Sign out" title="Sign out"><AppIcon name="logout" /></button>
       </div>
     </aside>
 
@@ -81,9 +80,7 @@ const nav = [
         BookPage
       </a>
       <a class="pill ap-bar-live" data-tone="ok" href={pageUrl} target="_blank" rel="noopener"><i aria-hidden="true"></i>Page live</a>
-      <form method="post" action="/api/auth/logout">
-        <button class="icon-btn ap-bar-out" type="submit" aria-label="Sign out"><AppIcon name="logout" /></button>
-      </form>
+      <button class="icon-btn ap-bar-out" type="button" data-sign-out aria-label="Sign out"><AppIcon name="logout" /></button>
     </header>
 
     <main class="ap-main" id="main">
@@ -103,7 +100,18 @@ const nav = [
     </nav>
   </div>
 
+  <ClerkScript />
   <script>
+    // Sign out through Clerk (it clears its own cookies), then back to sign-in.
+    for (const button of document.querySelectorAll<HTMLButtonElement>('[data-sign-out]')) {
+      button.addEventListener('click', () => {
+        button.disabled = true;
+        const clerk = (window as { Clerk?: { signOut: (o: { redirectUrl: string }) => Promise<unknown> } }).Clerk;
+        if (clerk) void clerk.signOut({ redirectUrl: '/sign-in' });
+        else location.href = '/sign-in';
+      });
+    }
+
     // Copy buttons (page link, share messages). The label says what happened, then resets.
     for (const button of document.querySelectorAll<HTMLButtonElement>('[data-copy]')) {
       const label = button.querySelector<HTMLElement>('[data-copy-label]');

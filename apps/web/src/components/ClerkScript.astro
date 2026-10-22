@@ -1,0 +1,14 @@
+---
+/**
+ * Starts Clerk in the browser: it keeps the session cookie fresh (tokens last
+ * about a minute) and mounts Clerk's UI, such as <SignIn />. Included only on
+ * owner-app pages, never on booking pages or the marketing site. The publishable
+ * key comes from the data the Clerk middleware writes into the page.
+ */
+---
+
+<script>
+  import { runInjectionScript } from '@clerk/astro/internal';
+
+  void runInjectionScript({});
+</script>

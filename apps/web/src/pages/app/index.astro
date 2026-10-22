@@ -11,7 +11,7 @@ import { timeOf, whenLabel } from '../../lib/public';
 const action = await handleBookingAction(Astro);
 if (action) return action;
 
-const summary = await getSummary(Astro.request);
+const summary = await getSummary(Astro);
 const tz = summary.timezone;
 const dayStart = zonedToUtc(summary.today, 0, tz);
 const dayEnd = zonedToUtc(addDays(summary.today, 1), 0, tz);
@@ -19,9 +19,9 @@ const monday = addDays(summary.today, 1 - weekdayOf(summary.today));
 const lastMonday = addDays(monday, -7);
 
 const [today, pending, fortnight] = await Promise.all([
-  getBookings(Astro.request, { from: dayStart, to: dayEnd, status: ['pending', 'confirmed', 'completed', 'no_show'] }),
-  getBookings(Astro.request, { from: new Date(), status: ['pending'] }),
-  getBookings(Astro.request, { from: zonedToUtc(lastMonday, 0, tz), to: zonedToUtc(addDays(monday, 7), 0, tz), status: ['pending', 'confirmed', 'completed', 'no_show'] }),
+  getBookings(Astro, { from: dayStart, to: dayEnd, status: ['pending', 'confirmed', 'completed', 'no_show'] }),
+  getBookings(Astro, { from: new Date(), status: ['pending'] }),
+  getBookings(Astro, { from: zonedToUtc(lastMonday, 0, tz), to: zonedToUtc(addDays(monday, 7), 0, tz), status: ['pending', 'confirmed', 'completed', 'no_show'] }),
 ]);
 
 // Bookings per day, Monday to Sunday, in the business's time zone.

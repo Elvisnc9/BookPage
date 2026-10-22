@@ -5,11 +5,12 @@ import { apiFetch } from '../../../lib/api';
 const FORWARDED = ['accept', 'accept-language', 'content-type', 'origin'];
 
 /**
- * ${APP_ORIGIN}/api/* → API /*. Keeping the API behind the owner app's origin
- * means the session cookie is host-only on the app host and no CORS is needed.
- * Redirects and Set-Cookie headers pass through untouched.
+ * ${APP_ORIGIN}/api/* → API /*. The browser's Clerk cookies stay here: middleware
+ * turns the session into a short-lived token, which apiFetch sends as a Bearer token.
+ * Keeping the API behind the owner app's origin means no CORS is needed.
  */
-export const ALL: APIRoute = async ({ request, url }) => {
+export const ALL: APIRoute = async (context) => {
+  const { request, url } = context;
   // params.path is empty after the middleware rewrite, so derive it from the URL.
   const path = url.pathname.replace(/^(\/app)?\/api(?=\/|$)/, '') || '/';
 
@@ -21,7 +22,7 @@ export const ALL: APIRoute = async ({ request, url }) => {
 
   const init: RequestInit = { method: request.method, headers };
   if (request.method !== 'GET' && request.method !== 'HEAD') init.body = await request.arrayBuffer();
-  const upstream = await apiFetch(`${path}${url.search}`, request, init);
+  const upstream = await apiFetch(`${path}${url.search}`, context, init);
 
   return new Response(upstream.body, {
     status: upstream.status,

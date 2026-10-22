@@ -258,10 +258,12 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
     }
   };
 
-  const logout = useRef<HTMLFormElement>(null);
+  // Everything is saved, so signing out (through Clerk) is safe; they pick up here next time.
   const finishLater = async () => {
     await flushAll();
-    logout.current?.submit();
+    const clerk = (window as { Clerk?: { signOut: (o: { redirectUrl: string }) => Promise<unknown> } }).Clerk;
+    if (clerk) await clerk.signOut({ redirectUrl: '/sign-in' });
+    else location.href = '/sign-in';
   };
 
   const domain = `${origin.rootDomain}${origin.port ? `:${origin.port}` : ''}`;
@@ -306,7 +308,6 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
         <button type="button" class="ob-later" onClick={() => void finishLater()}>
           <span class="ob-later-long">Save and finish later</span><span class="ob-later-short">Later</span>
         </button>
-        <form ref={logout} method="post" action="/api/auth/logout" hidden />
       </header>
 
       {elsewhere && (

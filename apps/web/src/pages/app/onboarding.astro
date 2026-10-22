@@ -4,6 +4,7 @@ import { ROOT_DOMAIN } from 'astro:env/server';
 import Onboarding from '../../components/onboarding/Onboarding';
 import '../../site/index.css';
 import '../../components/onboarding/onboarding.css';
+import ClerkScript from '../../components/ClerkScript.astro';
 import Base from '../../layouts/Base.astro';
 import { apiFetch } from '../../lib/api';
 
@@ -12,7 +13,7 @@ const { business: summary } = Astro.locals.me!;
 if (summary?.publishedAt) return Astro.redirect('/', 303);
 
 // The business draft and the template gallery (active, validated rows from the database).
-const [bizRes, tplRes] = await Promise.all([apiFetch('/business', Astro.request), apiFetch('/templates', Astro.request)]);
+const [bizRes, tplRes] = await Promise.all([apiFetch('/business', Astro), apiFetch('/templates', Astro)]);
 if (!bizRes.ok) throw new Error(`GET /business failed: ${bizRes.status}`);
 if (!tplRes.ok) throw new Error(`GET /templates failed: ${tplRes.status}`);
 const { business } = (await bizRes.json()) as { business: OwnerBusiness | null };
@@ -25,4 +26,5 @@ const origin = { protocol: Astro.url.protocol, rootDomain: ROOT_DOMAIN, port: As
   <main class="ob-root">
     <Onboarding client:load initial={business} templates={templates} origin={origin} />
   </main>
+  <ClerkScript />
 </Base>

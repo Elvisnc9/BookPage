@@ -24,8 +24,8 @@ const q = (params.get('q') ?? '').trim().slice(0, 80);
 const v = VIEWS[view];
 const now = new Date();
 const [summary, all] = await Promise.all([
-  getSummary(Astro.request),
-  getBookings(Astro.request, {
+  getSummary(Astro),
+  getBookings(Astro, {
     status: v.status,
     ...(v.future === true ? { from: now, order: 'asc' as const } : v.future === false ? { to: now, order: 'desc' as const } : { order: 'desc' as const }),
   }),
