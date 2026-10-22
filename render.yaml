@@ -1,0 +1,40 @@
+# Render Blueprint for the BookPage API. In Render: New → Blueprint → pick this repo.
+# Secrets marked `sync: false` are asked for once in the dashboard; see docs/DEPLOY.md.
+services:
+  - type: web
+    name: bookpage-api
+    runtime: docker
+    dockerfilePath: ./deploy/api.Dockerfile
+    dockerContext: .
+    # Ohio, next to the Neon database (aws us-east-2). Keep them in the same region.
+    region: ohio
+    # An always-on instance: the reminder and deposit-hold jobs run inside the server,
+    # so a plan that sleeps when idle would stop them.
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ORIGIN
+        value: https://app.bookpage.app
+      - key: PAGE_URL_TEMPLATE
+        value: https://{slug}.bookpage.app
+      - key: EMAIL_FROM
+        value: bookings@mail.bookpage.app
+      - key: REMINDERS_ENABLED
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: PROXY_SECRET
+        sync: false
+      - key: MANAGE_TOKEN_SECRET
+        sync: false

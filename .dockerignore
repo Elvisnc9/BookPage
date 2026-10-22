@@ -1,0 +1,16 @@
+**/node_modules
+**/dist
+**/.astro
+**/.wrangler
+**/.env
+**/.env.*
+!**/.env.example
+**/.dev.vars
+apps/api/src/generated
+apps/web/*
+!apps/web/package.json
+design
+design-refs
+docs
+.git
+.claude
