@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gradient-text",
+        "value": "*",
+        "files": [
+          "src/styles/booking.css"
+        ],
+        "createdAt": "2026-10-16T21:02:37.948Z",
+        "reason": "Task brief: business name's second word is set in the reference's striped/outlined style (design-refs/booking-page-*.webp); stripes are a solid repeating pattern, not a colour gradient"
+      }
+    ]
+  }
+}
