@@ -145,6 +145,9 @@ importers:
       preact:
         specifier: ^11.0.1
         version: 11.0.1(preact-render-to-string@6.8.1)
+      uqr:
+        specifier: 0.1.3
+        version: 0.1.3
     devDependencies:
       '@astrojs/check':
         specifier: ^0.9.10
@@ -3891,6 +3894,9 @@ packages:
     hasBin: true
     peerDependencies:
       browserslist: '>= 4.21.0'
+
+  uqr@0.1.3:
+    resolution: {integrity: sha512-0rjE8iEJe4YmT9TOhwsZtqCMRLc5DXZUI2UEYUUg63ikBkqqE5EYWaI0etFe/5KUcmcYwLih2RND1kq+hrUJXA==}
 
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
@@ -7978,6 +7984,8 @@ snapshots:
       browserslist: 4.29.3
       escalade: 3.2.0
       picocolors: 1.1.1
+
+  uqr@0.1.3: {}
 
   utils-merge@1.0.1: {}
 

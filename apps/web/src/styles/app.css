@@ -38,6 +38,7 @@
 .ap-share-live { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
 .ap-share-live i, .ap-bar-live i, .ap-date i { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); outline: 1.5px solid var(--ink); }
 .ap-share-url { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.ap-share-more { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--ink); }
 .ap-copy { min-height: 40px; }
 
 .ap-me { display: flex; align-items: center; gap: 10px; }

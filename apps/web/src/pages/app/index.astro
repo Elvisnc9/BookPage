@@ -94,7 +94,7 @@ const first = (Astro.locals.me!.user.name ?? '').split(' ')[0];
         {today.map((b) => <BookingRow booking={b} timezone={tz} />)}
       </div>
     ) : (
-      <p class="ap-empty">No bookings today. Share your page link to fill your diary.</p>
+      <p class="ap-empty">No bookings today. <a href="/share">Share your page link</a> to fill your diary.</p>
     )}
   </section>
 

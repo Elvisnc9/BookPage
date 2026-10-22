@@ -1,0 +1,118 @@
+---
+import { ROOT_DOMAIN } from 'astro:env/server';
+import { renderSVG } from 'uqr';
+import AppIcon from '../../components/AppIcon.astro';
+import AppLayout from '../../layouts/AppLayout.astro';
+import { apiFetch } from '../../lib/api';
+
+/**
+ * Share kit: everything an owner needs to put their booking link where their
+ * clients already are (Instagram bio, WhatsApp, a printed QR at the counter).
+ * Server-rendered; the copy buttons are the only script (in AppLayout).
+ */
+const res = await apiFetch('/business', Astro.request);
+if (!res.ok) throw new Error(`GET /business failed: ${res.status}`);
+const { business } = (await res.json()) as { business: { slug: string; name: string; timezone: string } };
+
+const { protocol, port } = Astro.url;
+const host = `${business.slug}.${ROOT_DOMAIN}${port ? `:${port}` : ''}`;
+const url = `${protocol}//${host}`;
+
+// Printable QR: black on white with a quiet zone, scales to any size as SVG.
+const qr = renderSVG(url, { ecc: 'M', border: 2, whiteColor: '#FFFFFF', blackColor: '#0D0D10' });
+const qrDownload = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(qr)}`;
+
+const messages = [
+  {
+    key: 'bio',
+    title: 'Instagram or TikTok bio',
+    hint: 'Paste it as your bio link, or in the bio text.',
+    text: `📅 Book online: ${url}`,
+  },
+  {
+    key: 'reply',
+    title: 'Reply to "how much / are you free?"',
+    hint: 'Save it as a quick reply in WhatsApp Business or Instagram.',
+    text: `Hi! You can see all my prices and free times, and book straight away, here: ${url} 😊`,
+  },
+  {
+    key: 'status',
+    title: 'WhatsApp status or story',
+    hint: 'Post it when you have gaps to fill this week.',
+    text: `New times open this week ✨ Book in a few taps: ${url}`,
+  },
+];
+const whatsapp = `https://wa.me/?text=${encodeURIComponent(messages[1]!.text)}`;
+---
+
+<AppLayout title="Share" active="share" timezone={business.timezone}>
+  <div class="ap-head">
+    <h1 class="ap-h1">Share your page</h1>
+  </div>
+  <p class="ap-lede">Clients book themselves when your link is where they already look. Put it in three places today.</p>
+
+  <section class="ap-panel sh-link" aria-labelledby="sh-link">
+    <h2 id="sh-link" class="ap-h2">Your booking link</h2>
+    <div class="sh-url">
+      <a class="mono" href={url} target="_blank" rel="noopener">{host}</a>
+      <button type="button" class="btn btn-primary ap-btn" data-copy={url}><AppIcon name="copy" size={16} /> <span data-copy-label>Copy link</span></button>
+      <a class="btn ap-btn" href={whatsapp} target="_blank" rel="noopener"><AppIcon name="share" size={16} /> Send on WhatsApp</a>
+    </div>
+  </section>
+
+  <div class="sh-grid">
+    <section class="ap-panel sh-qr" aria-labelledby="sh-qr">
+      <h2 id="sh-qr" class="ap-h2">QR code</h2>
+      <p class="ap-muted">Print it for your counter, mirror or business cards. Phones open your page when they scan it.</p>
+      <div class="sh-qr-code" role="img" aria-label={`QR code for ${host}`} set:html={qr} />
+      <a class="btn ap-btn" href={qrDownload} download={`${business.slug}-booking-qr.svg`}><AppIcon name="download" size={16} /> Download QR</a>
+    </section>
+
+    <section class="ap-panel sh-msgs" aria-labelledby="sh-msgs">
+      <h2 id="sh-msgs" class="ap-h2">Ready-to-paste messages</h2>
+      <ul class="sh-list">
+        {messages.map((m) => (
+          <li class="sh-msg">
+            <div>
+              <strong>{m.title}</strong>
+              <span class="ap-muted">{m.hint}</span>
+            </div>
+            <p class="sh-text" id={`msg-${m.key}`}>{m.text}</p>
+            <button type="button" class="btn ap-btn" data-copy={m.text} data-copy-text="Copy text">
+              <AppIcon name="copy" size={16} /> <span data-copy-label>Copy text</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </div>
+
+  <section class="ap-panel sh-google" aria-labelledby="sh-google">
+    <h2 id="sh-google" class="ap-h2">Google Business Profile</h2>
+    <p class="ap-muted">People who find you on Google Maps can book straight away. Where your country and category allow it:</p>
+    <ol class="sh-steps">
+      <li>Open your Business Profile on Google (search your business name while signed in).</li>
+      <li>Choose <strong>Edit profile</strong>, then <strong>Bookings</strong> (or <strong>Contact → Appointment links</strong>).</li>
+      <li>Paste <span class="mono">{url}</span> and save. Google may take a few days to show it.</li>
+    </ol>
+  </section>
+</AppLayout>
+
+<style>
+  .ap-lede { margin: -4px 0 16px; max-width: 60ch; color: var(--muted); }
+  .ap-muted { margin: 0; color: var(--muted); font-size: 14px; }
+  .sh-link, .sh-qr, .sh-msgs, .sh-google { display: grid; gap: 12px; padding: 18px; margin-bottom: 16px; }
+  .sh-url { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .sh-url a.mono { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; font-size: 15px; font-weight: 600; }
+  .sh-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .sh-grid { grid-template-columns: 280px minmax(0, 1fr); align-items: start; } }
+  .sh-qr { justify-items: start; }
+  .sh-qr-code { width: 100%; max-width: 220px; aspect-ratio: 1; border: var(--border); border-radius: var(--r); background: #fff; }
+  .sh-qr-code :global(svg) { display: block; width: 100%; height: 100%; }
+  .sh-list { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+  .sh-msg { display: grid; gap: 8px; justify-items: start; padding: 14px; border: var(--border); border-radius: var(--r); }
+  .sh-msg div { display: grid; gap: 2px; }
+  .sh-text { margin: 0; padding: 10px 12px; width: 100%; box-sizing: border-box; border-radius: 8px; background: var(--surface-2); overflow-wrap: anywhere; }
+  .sh-steps { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+  .sh-steps .mono { overflow-wrap: anywhere; }
+</style>
