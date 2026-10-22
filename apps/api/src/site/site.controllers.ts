@@ -1,12 +1,12 @@
 import { Controller, Get, NotFoundException, Param, ParseUUIDPipe, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
-import { SessionGuard } from '../auth/session.guard';
+import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { MediaService } from './media.service';
 import { SiteTemplatesService } from './site-templates.service';
 
 /** The template gallery for onboarding: active, validated templates in order. */
 @Controller('templates')
-@UseGuards(SessionGuard)
+@UseGuards(ClerkAuthGuard)
 export class TemplatesController {
   constructor(private readonly templates: SiteTemplatesService) {}
 

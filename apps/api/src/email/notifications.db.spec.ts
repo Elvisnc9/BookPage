@@ -87,7 +87,7 @@ beforeAll(async () => {
   expect(email.live).toBe(false); // never send real email from tests
 
   slug = `test-${randomUUID().slice(0, 8)}`;
-  ownerId = (await prisma.user.create({ data: { googleId: `test-${randomUUID()}`, email: ownerEmail } })).id;
+  ownerId = (await prisma.user.create({ data: { clerkUserId: `user_test_${randomUUID()}`, email: ownerEmail } })).id;
   const business = await prisma.business.create({
     data: {
       ownerId,

@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { OwnerBooking, OwnerSummary } from '@bookpage/shared';
 import { AppModule } from '../app.module';
-import { SessionGuard } from '../auth/session.guard';
+import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -69,7 +69,7 @@ async function sent(kind: string) {
 
 beforeAll(async () => {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-    .overrideGuard(SessionGuard)
+    .overrideGuard(ClerkAuthGuard)
     .useClass(TestSessionGuard)
     .compile();
   app = moduleRef.createNestApplication();
@@ -79,7 +79,7 @@ beforeAll(async () => {
   prisma = app.get(PrismaService);
   email = app.get(EmailService);
 
-  const user = (n: string) => prisma.user.create({ data: { googleId: `test-${randomUUID()}`, email: `${n}-${randomUUID().slice(0, 6)}@bookpage.test` } });
+  const user = (n: string) => prisma.user.create({ data: { clerkUserId: `user_test_${randomUUID()}`, email: `${n}-${randomUUID().slice(0, 6)}@bookpage.test` } });
   ownerId = (await user('owner')).id;
   otherOwnerId = (await user('other')).id;
   businessId = (await prisma.business.create({

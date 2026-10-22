@@ -12,7 +12,7 @@ import {
   type ResolvedSite,
 } from '@bookpage/shared';
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/min';
-import { hashToken } from '../auth/session.service';
+import { hashToken } from '../common/tokens';
 import { findSlots } from '../availability/engine';
 import { manageToken } from '../email/links';
 import { NotificationsService } from '../email/notifications.service';

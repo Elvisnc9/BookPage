@@ -1,25 +1,42 @@
+import { createSign, generateKeyPairSync } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import cookieParser from 'cookie-parser';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { AppModule } from '../app.module';
 import { PrismaService } from '../prisma/prisma.service';
-import { SessionService } from './session.service';
+import { OwnersService } from './owners.service';
 
-// HTTP-level checks that need no database: the session lookup is stubbed.
-describe('auth routes', () => {
+// HTTP-level checks of the Clerk token guard, with no database and no Clerk:
+// tokens are signed here with a throwaway key pair whose public half the API trusts.
+const APP = 'http://localhost:4321';
+const keys = generateKeyPairSync('rsa', { modulusLength: 2048 });
+const stranger = generateKeyPairSync('rsa', { modulusLength: 2048 });
+
+function sign(claims: Record<string, unknown>, key = keys.privateKey) {
+  const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  const now = Math.floor(Date.now() / 1000);
+  const body = `${b64({ alg: 'RS256', typ: 'JWT', kid: 'test' })}.${b64({ iss: 'https://test.clerk.accounts.dev', sub: 'user_123', azp: APP, iat: now, nbf: now - 5, exp: now + 60, sid: 'sess_1', ...claims })}`;
+  return `${body}.${createSign('RSA-SHA256').update(body).sign(key, 'base64url')}`;
+}
+
+describe('owner authentication (Clerk tokens)', () => {
   let app: INestApplication;
   let base: string;
+  const resolved: string[] = [];
 
   beforeAll(async () => {
+    process.env.CLERK_JWT_KEY = keys.publicKey.export({ type: 'spki', format: 'pem' }).toString();
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(PrismaService)
-      .useValue({})
-      .overrideProvider(SessionService)
-      .useValue({ validate: async () => null, revoke: async () => undefined })
+      .useValue({
+        user: {
+          findUniqueOrThrow: async () => ({ id: 'u1', email: 'maya@example.com', name: 'Maya', avatarUrl: null, businesses: [] }),
+        },
+      })
+      .overrideProvider(OwnersService)
+      .useValue({ resolve: async (clerkUserId: string) => (resolved.push(clerkUserId), { userId: 'u1', clerkUserId }) })
       .compile();
     app = moduleRef.createNestApplication();
-    app.use(cookieParser());
     await app.listen(0);
     base = await app.getUrl();
   });
@@ -28,53 +45,35 @@ describe('auth routes', () => {
     await app.close();
   });
 
-  it('starts Google sign-in with a state cookie', async () => {
-    const res = await fetch(`${base}/auth/google`, { redirect: 'manual' });
-    expect(res.status).toBe(302);
-    const location = new URL(res.headers.get('location')!);
-    expect(location.origin).toBe('https://accounts.google.com');
-    expect(location.searchParams.get('redirect_uri')).toBe('http://localhost:4321/api/auth/google/callback');
-    expect(location.searchParams.get('prompt')).toBe('select_account');
+  const me = (token?: string) => fetch(`${base}/auth/me`, { headers: token ? { authorization: `Bearer ${token}` } : {} });
 
-    const state = location.searchParams.get('state');
-    expect(state).toBeTruthy();
-    const cookie = res.headers.getSetCookie().find((c) => c.startsWith('bp_oauth='));
-    expect(cookie).toContain(`bp_oauth=${state}`);
-    expect(cookie).toMatch(/HttpOnly/i);
-    expect(cookie).toMatch(/SameSite=Lax/i);
+  it('rejects requests without a token', async () => {
+    expect((await me()).status).toBe(401);
+    expect((await fetch(`${base}/auth/me`, { headers: { authorization: 'Basic abc' } })).status).toBe(401);
   });
 
-  it('sends a callback with a forged state back to sign-in', async () => {
-    const res = await fetch(`${base}/auth/google/callback?code=x&state=forged`, {
-      redirect: 'manual',
-      headers: { cookie: 'bp_oauth=expected-state-value' },
-    });
-    expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe('http://localhost:4321/sign-in?error=google');
+  it('returns the owner for a valid token issued to the owner app', async () => {
+    const res = await me(sign({}));
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ user: { id: 'u1', email: 'maya@example.com', name: 'Maya', avatarUrl: null }, business: null });
+    expect(resolved).toContain('user_123');
   });
 
-  it('rejects /auth/me without a valid session', async () => {
-    expect((await fetch(`${base}/auth/me`)).status).toBe(401);
-    expect((await fetch(`${base}/auth/me`, { headers: { cookie: 'bp_session=nope' } })).status).toBe(401);
+  it('rejects a token signed by someone else', async () => {
+    expect((await me(sign({}, stranger.privateKey))).status).toBe(401);
+  });
+
+  it('rejects a token issued to another site', async () => {
+    expect((await me(sign({ azp: 'https://evil.example' }))).status).toBe(401);
+  });
+
+  it('rejects an expired token', async () => {
+    const past = Math.floor(Date.now() / 1000) - 3600;
+    expect((await me(sign({ iat: past - 60, nbf: past - 60, exp: past }))).status).toBe(401);
   });
 
   it('blocks cross-origin writes', async () => {
-    const res = await fetch(`${base}/auth/logout`, {
-      method: 'POST',
-      redirect: 'manual',
-      headers: { origin: 'http://glowstudio.localhost:4321' },
-    });
+    const res = await fetch(`${base}/business`, { method: 'PATCH', headers: { origin: 'http://glowstudio.localhost:4321', authorization: `Bearer ${sign({})}` } });
     expect(res.status).toBe(403);
-  });
-
-  it('signs out from the app origin and clears the cookie', async () => {
-    const res = await fetch(`${base}/auth/logout`, {
-      method: 'POST',
-      redirect: 'manual',
-      headers: { origin: 'http://localhost:4321', cookie: 'bp_session=abc' },
-    });
-    expect(res.status).toBe(303);
-    expect(res.headers.get('location')).toBe('http://localhost:4321/sign-in');
-    expect(res.headers.getSetCookie().join()).toMatch(/bp_session=;/);
   });
 });

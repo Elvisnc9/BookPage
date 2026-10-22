@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { OwnerBusiness } from '@bookpage/shared';
 import { AppModule } from '../app.module';
-import { SessionGuard } from '../auth/session.guard';
+import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 import { PrismaService } from '../prisma/prisma.service';
 
 /** Signs requests in as whoever `x-test-user` names. */
@@ -15,7 +15,7 @@ class TestSessionGuard implements CanActivate {
     const req = context.switchToHttp().getRequest();
     const userId = req.headers['x-test-user'];
     if (!userId) return false;
-    req.auth = { sessionId: 'test', userId };
+    req.auth = { userId, clerkUserId: 'test' };
     return true;
   }
 }
@@ -41,7 +41,7 @@ const asBusiness = (json: unknown) => json as OwnerBusiness;
 
 beforeAll(async () => {
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-    .overrideGuard(SessionGuard)
+    .overrideGuard(ClerkAuthGuard)
     .useClass(TestSessionGuard)
     .compile();
   app = moduleRef.createNestApplication();
@@ -51,7 +51,7 @@ beforeAll(async () => {
   prisma = app.get(PrismaService);
 
   const make = (name: string) =>
-    prisma.user.create({ data: { googleId: `test-${randomUUID()}`, email: `test-${randomUUID()}@bookpage.test`, name } });
+    prisma.user.create({ data: { clerkUserId: `user_test_${randomUUID()}`, email: `test-${randomUUID()}@bookpage.test`, name } });
   ownerId = (await make('Ava Stone')).id;
   otherOwnerId = (await make('Other Owner')).id;
 });

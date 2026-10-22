@@ -22,10 +22,13 @@ async function syncTemplates() {
 
 async function main() {
   await syncTemplates();
+  // The demo owner is matched by email. Set DEMO_OWNER_EMAIL to the email you sign in to
+  // Clerk with (locally) and your first sign-in is linked to Glow Studio's owner account.
+  const demoEmail = (process.env.DEMO_OWNER_EMAIL || 'demo-owner@bookpage.app').trim().toLowerCase();
   const owner = await prisma.user.upsert({
-    where: { googleId: 'seed-demo-owner' },
+    where: { email: demoEmail },
     update: {},
-    create: { googleId: 'seed-demo-owner', email: 'demo-owner@bookpage.app', name: 'Maya Brooks' },
+    create: { email: demoEmail, name: 'Maya Brooks' },
   });
 
   // Bookings restrict deletes of their customer/service/staff, so clear them first.

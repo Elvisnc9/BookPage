@@ -14,45 +14,45 @@ import {
   type StaffInput,
   staffSchema,
 } from '@bookpage/shared';
-import { CurrentAuth, SessionGuard } from '../auth/session.guard';
-import type { SessionUser } from '../auth/session.service';
+import { ClerkAuthGuard, CurrentAuth } from '../auth/clerk-auth.guard';
+import type { AuthUser } from '../auth/owners.service';
 import { ZodPipe } from '../common/zod.pipe';
 import { readBody } from '../site/media';
 import { BusinessService } from './business.service';
 
 /** The signed-in owner's business. Used by onboarding (autosave) and the dashboard. */
 @Controller('business')
-@UseGuards(SessionGuard)
+@UseGuards(ClerkAuthGuard)
 export class BusinessController {
   constructor(private readonly business: BusinessService) {}
 
   @Get()
-  async get(@CurrentAuth() auth: SessionUser) {
+  async get(@CurrentAuth() auth: AuthUser) {
     return { business: await this.business.get(auth.userId) };
   }
 
   @Patch()
-  patch(@CurrentAuth() auth: SessionUser, @Body(new ZodPipe(businessPatchSchema)) body: BusinessPatch) {
+  patch(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(businessPatchSchema)) body: BusinessPatch) {
     return this.business.patch(auth.userId, body);
   }
 
   @Put('hours')
-  hours(@CurrentAuth() auth: SessionUser, @Body(new ZodPipe(hoursSchema)) body: HoursInput) {
+  hours(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(hoursSchema)) body: HoursInput) {
     return this.business.putHours(auth.userId, body);
   }
 
   @Put('services')
-  services(@CurrentAuth() auth: SessionUser, @Body(new ZodPipe(servicesSchema)) body: ServiceInput[]) {
+  services(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(servicesSchema)) body: ServiceInput[]) {
     return this.business.putServices(auth.userId, body);
   }
 
   @Put('staff')
-  staff(@CurrentAuth() auth: SessionUser, @Body(new ZodPipe(staffSchema)) body: StaffInput) {
+  staff(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(staffSchema)) body: StaffInput) {
     return this.business.putStaff(auth.userId, body);
   }
 
   @Patch('rules')
-  rules(@CurrentAuth() auth: SessionUser, @Body(new ZodPipe(rulesPatchSchema)) body: RulesPatch) {
+  rules(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(rulesPatchSchema)) body: RulesPatch) {
     return this.business.patchRules(auth.userId, body);
   }
 
@@ -60,7 +60,7 @@ export class BusinessController {
   @Post('media')
   @HttpCode(200)
   async upload(
-    @CurrentAuth() auth: SessionUser,
+    @CurrentAuth() auth: AuthUser,
     @Req() req: Request,
     @Query('kind') kind = '',
     @Query('targetId') targetId?: string,
@@ -72,19 +72,19 @@ export class BusinessController {
   }
 
   @Delete('media/:id')
-  removeMedia(@CurrentAuth() auth: SessionUser, @Param('id', ParseUUIDPipe) id: string) {
+  removeMedia(@CurrentAuth() auth: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.business.removeMedia(auth.userId, id);
   }
 
   @Get('slug-available')
-  async slugAvailable(@CurrentAuth() auth: SessionUser, @Query('slug') slug = '') {
+  async slugAvailable(@CurrentAuth() auth: AuthUser, @Query('slug') slug = '') {
     const value = slug.trim().toLowerCase();
     return { slug: value, available: await this.business.slugAvailable(auth.userId, value) };
   }
 
   @Post('publish')
   @HttpCode(200)
-  publish(@CurrentAuth() auth: SessionUser, @Body(new ZodPipe(publishSchema)) body: { slug: string }) {
+  publish(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(publishSchema)) body: { slug: string }) {
     return this.business.publish(auth.userId, body.slug);
   }
 }

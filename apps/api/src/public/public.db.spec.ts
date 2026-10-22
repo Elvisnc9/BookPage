@@ -56,7 +56,7 @@ beforeAll(async () => {
   prisma = app.get(PrismaService);
 
   slug = `test-${randomUUID().slice(0, 8)}`;
-  const owner = await prisma.user.create({ data: { googleId: `test-${randomUUID()}`, email: `test-${randomUUID()}@bookpage.test` } });
+  const owner = await prisma.user.create({ data: { clerkUserId: `user_test_${randomUUID()}`, email: `test-${randomUUID()}@bookpage.test` } });
   ownerId = owner.id;
   const business = await prisma.business.create({
     data: {

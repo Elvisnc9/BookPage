@@ -9,10 +9,10 @@ export default defineConfig({
     include: process.env.TEST_DB ? ['src/**/*.db.spec.ts'] : ['src/**/*.spec.ts'],
     exclude: process.env.TEST_DB ? [] : ['src/**/*.db.spec.ts'],
     setupFiles: process.env.TEST_DB ? ['dotenv/config'] : [],
-    // Unit tests never talk to Google; these only satisfy loadConfig().
+    // Unit tests never talk to Clerk; these only satisfy loadConfig() (the auth spec sets its own key).
     env: {
-      GOOGLE_CLIENT_ID: 'test-client-id',
-      GOOGLE_CLIENT_SECRET: 'test-secret',
+      CLERK_SECRET_KEY: 'sk_test_unit',
+      CLERK_JWT_KEY: 'set-per-test',
       APP_ORIGIN: 'http://localhost:4321',
       PROXY_SECRET: 'test-proxy-secret',
     },

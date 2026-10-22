@@ -27,7 +27,7 @@ function book(staffId: string, start: string, end: string, blockedUntil = end, s
 
 beforeAll(async () => {
   const owner = await prisma.user.create({
-    data: { googleId: `test-${randomUUID()}`, email: `test-${randomUUID()}@bookpage.test` },
+    data: { clerkUserId: `user_test_${randomUUID()}`, email: `test-${randomUUID()}@bookpage.test` },
   });
   const business = await prisma.business.create({
     data: { ownerId: owner.id, slug: `test-${randomUUID().slice(0, 8)}`, name: 'Overlap test' },

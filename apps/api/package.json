@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "@bookpage/shared": "workspace:*",
+    "@clerk/backend": "3.26.1",
     "@nestjs/common": "^12.1.3",
     "@nestjs/core": "^12.1.3",
-    "@nestjs/passport": "^12.0.0",
     "@nestjs/platform-express": "^12.1.3",
     "@nestjs/schedule": "^12.0.2",
     "@nestjs/throttler": "^6.7.1",
@@ -27,8 +27,6 @@
     "@prisma/client": "^7.10.0",
     "cookie-parser": "^1.4.7",
     "libphonenumber-js": "^1.13.15",
-    "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "^4.6.7"
@@ -41,8 +39,6 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
-    "@types/passport": "^1.0.17",
-    "@types/passport-google-oauth20": "^2.0.17",
     "dotenv": "^18.0.8",
     "prisma": "~7.10.0",
     "tsx": "^4.23.15",

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { BOOKING_STATUSES, type BookingStatus, type BookingStatusChange, bookingStatusChangeSchema } from '@bookpage/shared';
-import { CurrentAuth, SessionGuard } from '../auth/session.guard';
-import type { SessionUser } from '../auth/session.service';
+import { ClerkAuthGuard, CurrentAuth } from '../auth/clerk-auth.guard';
+import type { AuthUser } from '../auth/owners.service';
 import { ZodPipe } from '../common/zod.pipe';
 import { OwnerBookingsService } from './owner-bookings.service';
 
@@ -9,19 +9,19 @@ const asDate = (value?: string) => (value && !Number.isNaN(Date.parse(value)) ? 
 
 /** The dashboard's bookings: Today numbers, lists by date/status, and approve/decline/cancel. */
 @Controller('business')
-@UseGuards(SessionGuard)
+@UseGuards(ClerkAuthGuard)
 export class OwnerBookingsController {
   constructor(private readonly bookings: OwnerBookingsService) {}
 
   @Get('summary')
-  summary(@CurrentAuth() auth: SessionUser) {
+  summary(@CurrentAuth() auth: AuthUser) {
     return this.bookings.summary(auth.userId);
   }
 
   /** ?from=ISO&to=ISO&status=pending,confirmed&order=asc|desc */
   @Get('bookings')
   async list(
-    @CurrentAuth() auth: SessionUser,
+    @CurrentAuth() auth: AuthUser,
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('status') status?: string,
@@ -42,7 +42,7 @@ export class OwnerBookingsController {
   @Post('bookings/:id/status')
   @HttpCode(200)
   change(
-    @CurrentAuth() auth: SessionUser,
+    @CurrentAuth() auth: AuthUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodPipe(bookingStatusChangeSchema)) body: BookingStatusChange,
   ) {

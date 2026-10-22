@@ -24,35 +24,18 @@ datasource db {
 // ─── Owners & auth ──────────────────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(uuid(7)) @db.Uuid
-  googleId  String   @unique @map("google_id") /// [owner]
-  email     String   @unique /// [owner]
-  name      String? /// [owner]
-  avatarUrl String?  @map("avatar_url") /// [owner]
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  id          String   @id @default(uuid(7)) @db.Uuid
+  /// [owner] Clerk's user id (user_…). Clerk owns sign-in, sessions and cookies; set on first sign-in.
+  clerkUserId String?  @unique @map("clerk_user_id")
+  email       String   @unique /// [owner] primary email from Clerk, lower-cased
+  name        String? /// [owner]
+  avatarUrl   String?  @map("avatar_url") /// [owner]
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions   Session[]
   businesses Business[]
 
   @@map("users")
-}
-
-/// The cookie holds a random token; only its SHA-256 hash is stored.
-model Session {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  tokenHash  String   @unique @map("token_hash")
-  userId     String   @map("user_id") @db.Uuid
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(3)
-  userAgent  String?  @map("user_agent")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([expiresAt])
-  @@map("sessions")
 }
 
 // ─── Business profile ───────────────────────────────────────────────────────

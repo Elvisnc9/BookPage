@@ -1,21 +1,13 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
-import { GoogleStrategy } from './google.strategy';
+import { ClerkAuthGuard } from './clerk-auth.guard';
 import { OriginGuard } from './origin.guard';
-import { SessionGuard } from './session.guard';
-import { SessionService } from './session.service';
+import { OwnersService } from './owners.service';
 
 @Module({
-  imports: [PassportModule.register({ session: false })],
   controllers: [AuthController],
-  providers: [
-    SessionService,
-    SessionGuard,
-    GoogleStrategy,
-    { provide: APP_GUARD, useClass: OriginGuard },
-  ],
-  exports: [SessionService, SessionGuard],
+  providers: [OwnersService, ClerkAuthGuard, { provide: APP_GUARD, useClass: OriginGuard }],
+  exports: [OwnersService, ClerkAuthGuard],
 })
 export class AuthModule {}
