@@ -1,0 +1,34 @@
+/* "Talk to Elvis" card: BookPage's own voice (cream, ink borders, one offset shadow),
+   set apart from the templates it sits beside without shouting like an ad. */
+.fl-card {
+  position: relative; display: grid; gap: 18px; align-items: center;
+  padding: 22px; border: 2px solid #0D0D10; border-radius: 14px;
+  background: #FFF7E3; color: #0D0D10;
+  box-shadow: 6px 6px 0 #0D0D10;
+}
+.fl-swatches { display: flex; gap: 0; }
+.fl-swatches span { width: 34px; height: 34px; margin-left: -8px; border: 2px solid #0D0D10; border-radius: 50%; }
+.fl-swatches span:first-child { margin-left: 0; background: #F09C84; }
+.fl-swatches span:nth-child(2) { background: #2F55D4; }
+.fl-swatches span:nth-child(3) { background: #F7D45C; }
+.fl-copy { display: grid; gap: 6px; min-width: 0; }
+.fl-tag { justify-self: start; margin: 0; padding: 3px 8px; border: 1.5px solid #0D0D10; border-radius: 4px; background: #fff; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+.fl-title { margin: 0; font-size: clamp(22px, 2.4vw, 30px); font-weight: 900; line-height: 1.05; letter-spacing: -0.03em; text-wrap: balance; }
+.fl-body { margin: 0; max-width: 52ch; font-size: 15px; line-height: 1.5; color: #3C3C44; }
+.fl-cta {
+  justify-self: start; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px;
+  border: 2px solid #0D0D10; border-radius: 8px; background: #0D0D10; color: #fff;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; text-decoration: none;
+  transition: transform 140ms cubic-bezier(.23, 1, .32, 1), box-shadow 160ms ease, background-color 160ms ease;
+  touch-action: manipulation; user-select: none;
+}
+.fl-cta:active { transform: scale(.97); }
+.fl-cta:focus-visible { outline: 3px solid #E07A3F; outline-offset: 3px; }
+.fl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (hover: hover) and (pointer: fine) {
+  .fl-cta:hover { background: #E07A3F; color: #0D0D10; box-shadow: 3px 3px 0 #0D0D10; }
+}
+@media (min-width: 720px) {
+  .fl-card { grid-template-columns: auto minmax(0, 1fr) auto; gap: 24px; padding: 26px 28px; }
+  .fl-cta { justify-self: end; }
+}

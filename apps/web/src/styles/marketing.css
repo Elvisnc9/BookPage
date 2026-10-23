@@ -202,6 +202,7 @@ html.lenis, html.lenis body { height: auto; }
 .mk-show-loop { position: absolute; bottom: 4px; left: 50%; width: 150px; translate: -50% 0; fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
 .mk-show-row[data-flip] .mk-show-loop { scale: -1 1; }
 .mk-show-end { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px; }
+.mk-show-freelance { max-width: 980px; margin: 48px auto 0; }
 
 @media (hover: hover) and (pointer: fine) {
   .mk-hc:hover { z-index: 2; rotate: 0deg; translate: 0 -6px; }

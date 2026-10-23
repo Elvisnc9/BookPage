@@ -8,7 +8,9 @@ import { sampleBusiness } from '../onboarding/samples';
 import { buildSite } from '../../site/model';
 import { Site } from '../../site/Site';
 import '../../site/index.css';
+import '../../styles/freelance.css';
 import NoIds from './NoIds.astro';
+import { FreelanceCard } from '../FreelanceCard';
 
 interface Props {
   templates: SiteTemplate[];
@@ -17,7 +19,7 @@ interface Props {
 
 const { templates, signUp } = Astro.props;
 // Four that look nothing alike; any the catalogue no longer offers are skipped.
-const FEATURED = ['classic', 'billboard', 'noir', 'pulse'];
+const FEATURED = ['classic', 'hatch', 'stockroom', 'bloom'];
 const featured = FEATURED.map((slug) => templates.find((t) => t.slug === slug)).filter((t): t is SiteTemplate => !!t);
 const shown = featured.length >= 2 ? featured : templates.slice(0, 4);
 const rows = shown.map((t) => {
@@ -73,6 +75,10 @@ const tints = ['var(--tint-sun)', 'var(--tint-periwinkle)', 'var(--tint-red)', '
       <div class="mk-show-end" data-reveal>
         <a class="btn btn-primary mk-btn-lg" href={signUp}>See all {templates.length} and pick yours →</a>
         <span class="mono mk-small">Switch any time. Your details stay.</span>
+      </div>
+
+      <div class="mk-show-freelance" data-reveal>
+        <FreelanceCard />
       </div>
     </div>
   </section>
