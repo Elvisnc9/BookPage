@@ -36,6 +36,15 @@ describe('marketing', () => {
     expect(await slug('ab')).toMatchObject({ valid: false });
   });
 
+  it('reports real totals of live pages and bookings, without the demo', async () => {
+    const res = await fetch(`${base}/marketing/stats`);
+    expect(res.status).toBe(200);
+    const stats = (await res.json()) as { businesses: number; bookings: number };
+    const real = { publishedAt: { not: null }, slug: { notIn: ['glowstudio'] } };
+    expect(stats.businesses).toBe(await prisma.business.count({ where: real }));
+    expect(stats.bookings).toBe(await prisma.booking.count({ where: { status: { not: 'cancelled' }, business: real } }));
+  });
+
   it('adds people to the Pro waitlist once, case-insensitively', async () => {
     expect((await join({ email })).status).toBe(200);
     expect((await join({ email: email.toUpperCase() })).status).toBe(200);
