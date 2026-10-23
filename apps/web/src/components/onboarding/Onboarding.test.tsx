@@ -111,7 +111,7 @@ describe('onboarding', () => {
     render(<Onboarding initial={draft()} templates={templates} origin={ORIGIN} />);
     fireEvent.click(screen.getByRole('radio', { name: 'Carte, Food & drink' }));
     await waitFor(() => expect(api.get().templateId).toBe(bySlug('carte').id), { timeout: 3000 });
-    expect(previewSite()?.dataset.template).toBe('carte');
+    await waitFor(() => expect(previewSite()?.dataset.template).toBe('carte'));
     expect(api.calls.find((c) => c.method === 'PATCH' && (c.body as { templateId?: string }).templateId)).toBeTruthy();
   });
 
@@ -231,7 +231,8 @@ describe('onboarding', () => {
   it('ends the gallery with the custom-design offer, linking to the one configured URL', () => {
     render(<Onboarding initial={draft()} templates={templates} origin={ORIGIN} />);
     const link = screen.getByRole('link', { name: /Talk to Elvis/ }) as HTMLAnchorElement;
-    expect(link.href).toBe(FREELANCE_URL);
+    expect(link.getAttribute('href')).toBe(FREELANCE_URL);
+    expect(link.rel).toBe('noopener');
     expect(link.target).toBe('_blank');
     expect(document.querySelector('.ob-gallery')?.lastElementChild?.classList.contains('fl-card')).toBe(true);
   });
