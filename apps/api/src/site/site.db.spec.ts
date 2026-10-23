@@ -92,7 +92,9 @@ describe('template catalogue', () => {
     templates = (json as { templates: SiteTemplate[] }).templates;
     const slugs = templates.map((t) => t.slug);
     expect(slugs[0]).toBe('classic');
-    expect(slugs).toEqual(expect.arrayContaining(['billboard', 'quiet', 'journal', 'carte', 'shelf', 'neighbour', 'noir', 'pulse', 'folio', 'practice']));
+    expect(slugs).toEqual(expect.arrayContaining(['billboard', 'quiet', 'journal', 'carte', 'shelf', 'neighbour', 'noir', 'pulse', 'folio', 'practice', 'bistro', 'hatch', 'hearth', 'atelier', 'stockroom', 'bloom']));
+    // Premium ones are offered (and marked) so owners can preview them.
+    expect(templates.filter((t) => t.isPremium).map((t) => t.slug).sort()).toEqual(['atelier', 'bloom', 'hearth', 'noir']);
     expect(new Set(slugs).size).toBe(slugs.length);
     // Retired and invalid rows never reach the gallery.
     expect(slugs.some((s) => s.startsWith('test-'))).toBe(false);
@@ -127,8 +129,8 @@ describe('choosing a template during onboarding', () => {
     await call('PUT', '/business/hours', [{ weekday: 3, opensAt: 720, closesAt: 1380 }]);
     const before = biz((await call('GET', '/business')).json!.business);
 
-    const after = biz((await call('PATCH', '/business', { templateId: bySlug('noir').id })).json);
-    expect(after.site.template.slug).toBe('noir');
+    const after = biz((await call('PATCH', '/business', { templateId: bySlug('journal').id })).json);
+    expect(after.site.template.slug).toBe('journal');
     for (const key of ['name', 'description', 'phone', 'category', 'services', 'hours', 'staff', 'rules'] as const) {
       expect(after[key]).toEqual(before[key]);
     }
@@ -136,15 +138,15 @@ describe('choosing a template during onboarding', () => {
 
   it('changes colour and font without touching the layout or the template', async () => {
     const themed = biz((await call('PATCH', '/business', { theme: { accent: '#2f55d4' } })).json);
-    expect(themed.site.template.slug).toBe('noir');
-    expect(themed.site.template.layout).toEqual(bySlug('noir').layout);
-    expect(themed.site.theme).toEqual({ accent: '#2F55D4', font: bySlug('noir').defaultTheme.font });
+    expect(themed.site.template.slug).toBe('journal');
+    expect(themed.site.template.layout).toEqual(bySlug('journal').layout);
+    expect(themed.site.theme).toEqual({ accent: '#2F55D4', font: bySlug('journal').defaultTheme.font });
 
     const font = biz((await call('PATCH', '/business', { theme: { accent: '#2f55d4', font: 'mono' } })).json);
     expect(font.theme).toEqual({ accent: '#2f55d4', font: 'mono' });
     // Leaving a key out goes back to the template's default.
     const reset = biz((await call('PATCH', '/business', { theme: { font: 'mono' } })).json);
-    expect(reset.site.theme).toEqual({ accent: bySlug('noir').defaultTheme.accent, font: 'mono' });
+    expect(reset.site.theme).toEqual({ accent: bySlug('journal').defaultTheme.accent, font: 'mono' });
     await call('PATCH', '/business', { theme: { accent: '#2f55d4', font: 'mono' } });
 
     expect((await call('PATCH', '/business', { theme: { layout: 'menu' } })).status).toBe(400);
@@ -157,7 +159,7 @@ describe('choosing a template during onboarding', () => {
       expect(res.status).toBe(400);
       expect(res.json?.issues).toEqual([{ path: 'templateId', message: "That template isn't available. Pick another." }]);
     }
-    expect(biz((await call('GET', '/business')).json!.business).site.template.slug).toBe('noir');
+    expect(biz((await call('GET', '/business')).json!.business).site.template.slug).toBe('journal');
   });
 
   it('falls back to Classic and tells the owner when the picked template is retired', async () => {
@@ -173,6 +175,39 @@ describe('choosing a template during onboarding', () => {
     const publish = await call('POST', '/business/publish', { slug: `rae-${randomUUID().slice(0, 6)}` });
     expect(publish.status).toBe(422);
     expect(publish.json?.issues).toEqual(expect.arrayContaining([{ step: 1, message: 'Pick one of the available templates' }]));
+
+    await call('PATCH', '/business', { templateId: bySlug('carte').id });
+  });
+});
+
+describe('premium templates', () => {
+  const setPlan = (plan: 'free' | 'pro') => prisma.business.updateMany({ where: { ownerId }, data: { plan } });
+
+  it('refuses a premium template on the free plan with a clear 403, and keeps the current pick', async () => {
+    const before = biz((await call('GET', '/business')).json!.business);
+    expect(before.plan).toBe('free');
+    const res = await call('PATCH', '/business', { templateId: bySlug('bloom').id });
+    expect(res.status).toBe(403);
+    expect(res.json).toMatchObject({ code: 'template_locked', message: 'Bloom is a Pro template. Upgrade to Pro to use it, or pick a free template.' });
+    expect(biz((await call('GET', '/business')).json!.business).templateId).toBe(before.templateId);
+  });
+
+  it('lets a Pro business pick and render one', async () => {
+    await setPlan('pro');
+    const picked = biz((await call('PATCH', '/business', { templateId: bySlug('bloom').id })).json);
+    expect(picked).toMatchObject({ plan: 'pro', templateId: bySlug('bloom').id, site: { template: { slug: 'bloom' }, notice: null } });
+  });
+
+  it('falls back to Classic, says why, and refuses to publish when the plan drops to free', async () => {
+    await setPlan('free');
+    const b = biz((await call('GET', '/business')).json!.business);
+    expect(b.templateId).toBe(bySlug('bloom').id); // kept, not silently switched
+    expect(b.site.template.slug).toBe('classic');
+    expect(b.site.notice).toEqual({ code: 'locked', requested: 'bloom' });
+
+    const publish = await call('POST', '/business/publish', { slug: `rae-${randomUUID().slice(0, 6)}` });
+    expect(publish.status).toBe(403);
+    expect(publish.json).toMatchObject({ code: 'template_locked' });
 
     await call('PATCH', '/business', { templateId: bySlug('carte').id });
   });
@@ -235,5 +270,16 @@ describe('publishing', () => {
     expect(page.name).toBe('Kantine Rae');
     expect(page.services[0]).toMatchObject({ name: 'Tasting menu', image: { url: expect.stringMatching(/^\/media\//) } });
     expect(page.hero?.url).toMatch(/^\/media\//);
+  });
+
+  it('keeps a live page up on Classic if its premium template is no longer paid for', async () => {
+    const b = biz((await call('GET', '/business')).json!.business);
+    await prisma.business.update({ where: { id: b.id }, data: { templateId: bySlug('atelier').id, plan: 'free' } });
+    const page = (await call('GET', `/public/${b.slug}`)).json as unknown as PublicBusiness;
+    expect(page.site.template.slug).toBe('classic');
+    expect(page.site.notice).toBeNull(); // customers never see why
+    expect(page.name).toBe(b.name);
+    await prisma.business.update({ where: { id: b.id }, data: { plan: 'pro' } });
+    expect(((await call('GET', `/public/${b.slug}`)).json as unknown as PublicBusiness).site.template.slug).toBe('atelier');
   });
 });

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { FALLBACK_TEMPLATE_SLUG, parseTemplate, type ResolvedSite, resolveSite, type SiteTemplate } from '@bookpage/shared';
+import { FALLBACK_TEMPLATE_SLUG, parseTemplate, type Plan, type ResolvedSite, resolveSite, type SiteTemplate } from '@bookpage/shared';
 import type { SiteTemplate as TemplateRow } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -41,9 +41,9 @@ export class SiteTemplatesService {
     return (await this.classicRow())?.id ?? null;
   }
 
-  /** What a business's page renders with, given its selected row (loaded with the business) and theme. */
-  async resolve(selected: TemplateRow | null, theme: unknown): Promise<ResolvedSite> {
-    const site = resolveSite({ selected, fallback: await this.classicRow(), theme });
+  /** What a business's page renders with, given its selected row (loaded with the business), theme and plan. */
+  async resolve(selected: TemplateRow | null, theme: unknown, plan: Plan): Promise<ResolvedSite> {
+    const site = resolveSite({ selected, fallback: await this.classicRow(), theme, plan });
     if (site.notice) this.log.warn(`Template fallback (${site.notice.code}) for "${site.notice.requested}"`);
     return site;
   }

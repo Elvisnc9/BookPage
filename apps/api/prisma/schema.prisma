@@ -77,6 +77,8 @@ model Business {
   template   SiteTemplate? @relation(fields: [templateId], references: [id], onDelete: Restrict)
   /// [public] owner's colour/font on top of the template's defaultTheme: { accent?, font? }
   theme      Json          @default("{}")
+  /// [owner] what the business pays for; Pro unlocks premium templates. Billing will set it; until then, by hand.
+  plan       Plan          @default(free)
 
   timezone String @default("America/New_York") /// [private] IANA zone, detected at onboarding
   currency String @default("USD") @db.Char(3) /// [public] ISO 4217
@@ -385,6 +387,13 @@ model SiteTemplate {
 
   @@index([isActive, position])
   @@map("site_templates")
+}
+
+enum Plan {
+  free
+  pro
+
+  @@map("plan")
 }
 
 enum MediaKind {

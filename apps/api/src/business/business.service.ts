@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto';
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   type BusinessPatch,
+  canUseTemplate,
   CLASSIC_FALLBACK,
   type ResolvedSite,
   siteThemePatchSchema,
@@ -55,17 +56,22 @@ export class BusinessService {
       orderBy: { createdAt: 'asc' },
       include: OWNER_VIEW,
     });
-    return business && toOwnerView(business, await this.templates.resolve(business.template, business.theme));
+    return business && toOwnerView(business, await this.templates.resolve(business.template, business.theme, business.plan));
   }
 
   /** Autosaves profile fields, creating the draft business on the first save. */
   async patch(ownerId: string, patch: BusinessPatch): Promise<OwnerBusiness> {
-    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true } });
+    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true, plan: true } });
     const data = normalise(patch, patch.country ?? existing?.country ?? 'US');
 
     // Only offered, valid templates can be picked; a stale or made-up id is a field error, never a silent swap.
-    if (patch.templateId !== undefined && !(await this.templates.findSelectable(patch.templateId))) {
-      throw new BadRequestException({ message: 'Invalid request', issues: [{ path: 'templateId', message: "That template isn't available. Pick another." }] });
+    if (patch.templateId !== undefined) {
+      const template = await this.templates.findSelectable(patch.templateId);
+      if (!template) {
+        throw new BadRequestException({ message: 'Invalid request', issues: [{ path: 'templateId', message: "That template isn't available. Pick another." }] });
+      }
+      // Premium templates need Pro. Owners can preview them in onboarding, but not pick them.
+      if (!canUseTemplate(template, existing?.plan ?? 'free')) throw lockedTemplate(template.name);
     }
     // The theme is the owner's whole set of overrides (a key left out means "the template's default"); it never touches the layout.
     if (patch.theme) data.theme = patch.theme;
@@ -156,6 +162,9 @@ export class BusinessService {
   async publish(ownerId: string, slug: string): Promise<OwnerBusiness> {
     const business = await this.get(ownerId);
     if (!business) throw new NotFoundException('Set up your business first');
+
+    // A premium pick on a free plan (e.g. after a downgrade) can't go live: same 403 as picking it.
+    if (business.site.notice?.code === 'locked') throw lockedTemplate(business.site.notice.requested);
 
     const issues = publishIssues(business);
     if (business.site.notice) issues.unshift({ step: 1, message: 'Pick one of the available templates' });
@@ -284,6 +293,7 @@ function toOwnerView(b: BusinessWithView, site: ResolvedSite): OwnerBusiness {
     email: b.email,
     timezone: b.timezone,
     currency: b.currency,
+    plan: b.plan,
     templateId: b.templateId,
     theme: theme.success ? theme.data : {},
     site,
@@ -317,4 +327,12 @@ function toOwnerView(b: BusinessWithView, site: ResolvedSite): OwnerBusiness {
       depositRefundHours: rules.depositRefundHours,
     },
   };
+}
+
+/** 403 for a premium template on the free plan. `code` lets the owner app show "Unlock with Pro". */
+function lockedTemplate(name: string) {
+  return new ForbiddenException({
+    message: `${name} is a Pro template. Upgrade to Pro to use it, or pick a free template.`,
+    code: 'template_locked',
+  });
 }

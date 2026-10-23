@@ -55,7 +55,8 @@ export class PublicService {
 
   async profile(slug: string): Promise<PublicBusiness> {
     const b = await this.load(slug);
-    return toPublic(b, await this.templates.resolve(b.template, b.theme));
+    // A premium template on a free plan renders Classic here (the owner sees why in onboarding).
+    return toPublic(b, await this.templates.resolve(b.template, b.theme, b.plan));
   }
 
   async availability(slug: string, serviceId: string, staffId: string | undefined, from: string | undefined, days: number): Promise<PublicDay[]> {
