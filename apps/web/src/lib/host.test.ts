@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isInternalPath, resolveSite } from './host';
+import { domainsFor, isInternalPath, resolveSite } from './host';
 
 describe('resolveSite in production', () => {
   const root = 'bookpage.app';
@@ -48,5 +48,20 @@ describe('isInternalPath', () => {
     expect(isInternalPath('/site/glowstudio')).toBe(true);
     expect(isInternalPath('/apples')).toBe(false);
     expect(isInternalPath('/')).toBe(false);
+  });
+});
+
+describe('domainsFor', () => {
+  it('lets a phone on the Wi-Fi use nip.io names in development', () => {
+    const hosts = domainsFor('glowstudio.10-66-252-254.nip.io', 'localhost', 'localhost', true);
+    expect(hosts).toEqual({ root: '10-66-252-254.nip.io', app: 'app.10-66-252-254.nip.io' });
+    expect(resolveSite('glowstudio.10-66-252-254.nip.io', hosts.root, hosts.app)).toEqual({ kind: 'booking', slug: 'glowstudio' });
+    expect(resolveSite('10-66-252-254.nip.io', hosts.root, hosts.app)).toEqual({ kind: 'marketing' });
+    expect(resolveSite('app.10-66-252-254.nip.io', hosts.root, hosts.app)).toEqual({ kind: 'app' });
+  });
+
+  it('never applies outside development', () => {
+    expect(domainsFor('glowstudio.10-66-252-254.nip.io', 'bookpage.app', 'app.bookpage.app', false)).toEqual({ root: 'bookpage.app', app: 'app.bookpage.app' });
+    expect(domainsFor('glowstudio.localhost', 'localhost', 'localhost', true)).toEqual({ root: 'localhost', app: 'localhost' });
   });
 });

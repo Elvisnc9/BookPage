@@ -4,7 +4,7 @@ import { APP_HOST, ROOT_DOMAIN } from 'astro:env/server';
 import { clerkMiddleware } from '@clerk/astro/server';
 import { isValidSlug } from '@bookpage/shared';
 import { getMe } from './lib/api';
-import { isInternalPath, resolveSite } from './lib/host';
+import { domainsFor, isInternalPath, resolveSite } from './lib/host';
 
 const notFound = () => new Response('Not found', { status: 404 });
 
@@ -21,10 +21,11 @@ const withClerk = clerkMiddleware();
 // next(path) rewrites without running this middleware a second time.
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname, search } = context.url;
+  const hosts = domainsFor(context.url.hostname, ROOT_DOMAIN, APP_HOST, import.meta.env.DEV);
 
   // Dashboard panels stream in as server islands; they call the API, so on the owner
   // app they need the signed-in owner's token like any page (no rewrite, though).
-  if (pathname.startsWith('/_server-islands/') && resolveSite(context.url.hostname, ROOT_DOMAIN, APP_HOST).kind === 'app') {
+  if (pathname.startsWith('/_server-islands/') && resolveSite(context.url.hostname, hosts.root, hosts.app).kind === 'app') {
     return (await withClerk(context, () => islandAuth(context, next))) ?? notFound();
   }
   // /_astro, /_image etc. are framework internals.
@@ -32,7 +33,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Uploaded images are public and served the same on every host.
   if (pathname.startsWith('/media/')) return next();
 
-  const site = resolveSite(context.url.hostname, ROOT_DOMAIN, APP_HOST);
+  const site = resolveSite(context.url.hostname, hosts.root, hosts.app);
   const rest = pathname === '/' ? '' : pathname;
 
   switch (site.kind) {

@@ -37,7 +37,8 @@ export default defineConfig({
   server: { port: 4321, host: true },
   vite: {
     plugins: [clerkConfigModule()],
-    server: { allowedHosts: ['.localhost'] },
+    // .nip.io: phone testing over Wi-Fi (see domainsFor in src/lib/host.ts).
+    server: { allowedHosts: ['.localhost', '.nip.io'] },
     // Bundle browser deps up front so the first visit to onboarding or the home page
     // doesn't trigger a mid-session re-optimise and reload in dev.
     optimizeDeps: {

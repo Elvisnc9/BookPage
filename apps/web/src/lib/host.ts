@@ -27,6 +27,20 @@ export function resolveSite(hostname: string, rootDomain: string, appHost = `app
   return { kind: 'booking', slug: sub };
 }
 
+/**
+ * The root and app hosts for a request. In development only, a "<a-b-c-d>.nip.io"
+ * name stands in for the root domain, so a phone on the same Wi-Fi can open
+ * http://10-66-252-254.nip.io:4321 (marketing), glowstudio.10-66-252-254.nip.io:4321
+ * (a booking page) and app.10-66-252-254.nip.io:4321 (owner app). nip.io is public DNS
+ * that maps such names to that IP. Production always uses the configured domains.
+ */
+export function domainsFor(hostname: string, rootDomain: string, appHost: string, dev: boolean): { root: string; app: string } {
+  const lan = dev ? /(?:^|\.)(\d{1,3}(?:-\d{1,3}){3}\.nip\.io)\.?$/i.exec(hostname) : null;
+  if (!lan) return { root: rootDomain, app: appHost };
+  const root = lan[1]!.toLowerCase();
+  return { root, app: `app.${root}` };
+}
+
 /** Internal path prefixes only reachable through a rewrite, never directly. */
 export const INTERNAL_PREFIXES = ['/app', '/site'] as const;
 
