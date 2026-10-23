@@ -1,16 +1,50 @@
 ---
-import { SignIn, SignUp } from '@clerk/astro/components';
+import { SignIn } from '@clerk/astro/components';
 import ClerkScript from '../../components/ClerkScript.astro';
 import Base from '../../layouts/Base.astro';
 
-// Clerk does the signing in (Google, or email with a code) and owns the session.
-// ?new shows sign-up; both land on "/", where middleware sends new owners to onboarding.
+// One form for new and returning owners (Google, or email + one-time code, no passwords).
+// Both land on "/", where middleware sends new owners to onboarding. ?new only changes the heading.
 const isNew = Astro.url.searchParams.has('new');
 // Middleware only renders this page signed in when the API refused the account.
 const refused = Boolean(Astro.locals.auth().userId);
 
+// Clerk's form rendered straight into our card: no inner card, header or footer,
+// and our neobrutalist controls (black borders, hard offset shadows).
+const INK = '#0D0D10';
+const button = {
+  minHeight: '48px',
+  border: `2px solid ${INK} !important`,
+  borderRadius: '6px',
+  boxShadow: `3px 3px 0 ${INK} !important`,
+  fontWeight: 600,
+  transition: 'transform 140ms cubic-bezier(.23, 1, .32, 1), box-shadow 140ms cubic-bezier(.23, 1, .32, 1)',
+  '&:active': { transform: 'translate(2px, 2px)', boxShadow: `1px 1px 0 ${INK} !important` },
+  '@media (hover: hover) and (pointer: fine)': { '&:hover': { transform: 'translate(-1px, -1px)', boxShadow: `4px 4px 0 ${INK} !important` } },
+};
+const appearance = {
+  layout: { socialButtonsPlacement: 'top', socialButtonsVariant: 'blockButton', unsafe_disableDevelopmentModeWarnings: true },
+  variables: { colorPrimary: INK, colorText: INK, colorTextSecondary: '#5C5C66', colorBackground: '#FFFFFF', colorInputBackground: '#FFFFFF', borderRadius: '6px', fontFamily: 'inherit', fontSize: '15px' },
+  elements: {
+    rootBox: { width: '100%' },
+    cardBox: { width: '100%', maxWidth: 'none', boxShadow: 'none !important', border: 'none', borderRadius: 0, background: 'transparent' },
+    card: { boxShadow: 'none !important', border: 'none', borderRadius: 0, background: 'transparent', padding: 0, gap: '20px' },
+    header: { display: 'none' },
+    footer: { display: 'none' },
+    socialButtonsBlockButton: { ...button, background: '#FFFFFF', color: INK },
+    socialButtonsBlockButtonText: { fontSize: '15px', fontWeight: 600 },
+    dividerLine: { background: '#D7D6D0' },
+    formFieldLabel: { fontWeight: 600, color: INK },
+    formFieldInput: { minHeight: '48px', border: `2px solid ${INK} !important`, borderRadius: '6px', boxShadow: 'none !important', fontSize: '16px', '&:focus': { boxShadow: `3px 3px 0 ${INK} !important`, borderColor: `${INK} !important` } },
+    formButtonPrimary: { ...button, background: INK, color: '#FFFFFF', boxShadow: '3px 3px 0 #E9B949 !important', textTransform: 'none', fontSize: '15px', '&:active': { transform: 'translate(2px, 2px)', boxShadow: '1px 1px 0 #E9B949 !important' }, '@media (hover: hover) and (pointer: fine)': { '&:hover': { background: INK, transform: 'translate(-1px, -1px)', boxShadow: '4px 4px 0 #E9B949 !important' } } },
+    otpCodeFieldInput: { border: `2px solid ${INK} !important`, borderRadius: '6px' },
+    formResendCodeLink: { color: INK, fontWeight: 600 },
+    identityPreviewEditButton: { color: INK },
+  },
+};
+
 const copy = isNew
-  ? { kicker: 'Free forever · no card', t1: 'Get', t2: 'booking', sub: 'Continue with Google or your email. Your free booking page is about four minutes away.' }
+  ? { kicker: 'Free forever · no card', t1: 'Get', t2: 'bookings', sub: 'Continue with Google or your email. Your free booking page is about four minutes away.' }
   : { kicker: 'Sign in', t1: 'Welcome', t2: 'back', sub: 'Use the Google account or email you signed up with. Your bookings are waiting.' };
 ---
 
@@ -34,19 +68,18 @@ const copy = isNew
           </>
         ) : (
           <div class="clerk">
-            {isNew
-              ? <SignUp routing="hash" signInUrl="/sign-in" forceRedirectUrl="/" />
-              : <SignIn routing="hash" signUpUrl="/sign-in?new" forceRedirectUrl="/" />}
+            <div class="clerk-wait" aria-hidden="true">
+              <span class="cw-btn"></span><span class="cw-or"></span><span class="cw-label"></span><span class="cw-input"></span><span class="cw-btn cw-ink"></span>
+            </div>
+            {/* One form for everyone: an email Clerk doesn't know continues as a sign-up. */}
+            <SignIn routing="hash" withSignUp forceRedirectUrl="/" signUpForceRedirectUrl="/" appearance={appearance} />
+            {!isNew && <p class="newhere">New here? Just continue. Your booking page is about four minutes away.</p>}
           </div>
         )}
       </section>
 
       <p class="legal">
         By continuing you agree to the <a href="https://bookpage.app/terms">Terms</a> and <a href="https://bookpage.app/privacy">Privacy Policy</a>.
-      </p>
-      <p class="switch lab">
-        {isNew ? 'Have an account?' : 'New to BookPage?'}
-        <a href={isNew ? '/sign-in' : '/sign-in?new'}>{isNew ? 'Sign in' : 'Create account'}</a>
       </p>
     </div>
 
@@ -130,11 +163,23 @@ const copy = isNew
   /* Clerk's form, inside our card: reserve its height so the page doesn't jump while it loads. */
   .clerk { min-height: 340px; display: grid; justify-items: stretch; }
   .clerk :global(.cl-rootBox), .clerk :global(.cl-cardBox) { width: 100%; max-width: none; }
+  /* Until Clerk's form mounts, its shape holds the space (no blank card, no jump). */
+  .newhere { margin: 4px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+  .clerk-wait { display: grid; gap: 12px; padding: 8px 0; }
+  .clerk:has(:global(.cl-rootBox)) .clerk-wait { display: none; }
+  .clerk:has(:global(.cl-rootBox)) :global(.cl-rootBox) { animation: cw-in 200ms var(--ease-out) both; }
+  @keyframes cw-in { from { opacity: 0; transform: translateY(4px); } }
+  @keyframes cw-sweep { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+  .clerk-wait span { display: block; border-radius: var(--r); background: linear-gradient(90deg, var(--line) 0%, var(--surface-2) 50%, var(--line) 100%) 0 0 / 200% 100%; opacity: .55; animation: cw-sweep 1.4s linear infinite; }
+  .cw-btn { height: 44px; }
+  .cw-or { height: 10px; width: 40%; justify-self: center; }
+  .cw-label { height: 10px; width: 30%; }
+  .cw-input { height: 44px; }
+  .cw-ink { opacity: .8 !important; }
+  @media (prefers-reduced-motion: reduce) { .clerk-wait span { animation: none; } }
   .note { margin: 0; font-size: 13px; color: var(--muted); }
   .legal { margin: 0; font-size: 12px; color: var(--muted); text-align: center; }
   .legal a { color: var(--muted); }
-  .switch { margin: 0; text-align: center; }
-  .switch a { margin-left: 6px; color: var(--ink); font-weight: 600; }
   .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
   /* The product still: wide screens only. */
