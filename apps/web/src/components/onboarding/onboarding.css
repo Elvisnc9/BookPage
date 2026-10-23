@@ -214,6 +214,41 @@ select.ob-input { appearance: none; padding-right: 36px; background-image: linea
   transition: opacity 160ms ease, transform 220ms var(--ease-out);
 }
 .ob-tpl[data-selected] .ob-tpl-badge { opacity: 1; transform: none; }
+
+/* Pro templates on the free plan: a button that previews. The lock is shown, not just coloured. */
+button.ob-tpl { width: 100%; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+button.ob-tpl:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.ob-tpl[data-locked] .ob-tpl-thumb { position: relative; }
+.ob-tpl[data-locked] .ob-tpl-thumb::after {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(135deg, rgba(13, 13, 16, .07) 0 2px, transparent 2px 10px);
+  transition: opacity 200ms ease;
+}
+.ob-tpl[data-previewing] .ob-tpl-thumb::after { opacity: 0; }
+.ob-tpl-pro { display: inline-flex; align-items: center; gap: 4px; }
+.ob-tpl-badge-peek { background: var(--surface); }
+.ob-tpl[data-previewing] { box-shadow: var(--shadow-press); }
+.ob-tpl[data-previewing] .ob-tpl-badge-peek { opacity: 1; transform: none; }
+
+/* "X is a Pro template": opens right under the card being tried on. */
+.ob-unlock {
+  grid-column: 1 / -1; display: grid; gap: 14px; align-items: center;
+  padding: 18px; border: var(--border); border-radius: var(--r-xl); background: var(--tint-yellow);
+  animation: ob-drop 220ms var(--ease-out) both;
+}
+.ob-unlock-icon { display: grid; place-items: center; width: 44px; height: 44px; border: var(--border); border-radius: 50%; background: var(--surface); }
+.ob-unlock-copy { display: grid; gap: 4px; min-width: 0; }
+.ob-unlock-copy strong { font-size: 18px; letter-spacing: -0.01em; }
+.ob-unlock-copy p { margin: 0; color: var(--ink-soft); }
+.ob-unlock-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.ob-unlock-actions .btn { min-height: 44px; }
+@media (min-width: 900px) {
+  .ob-unlock { grid-template-columns: auto minmax(0, 1fr) auto; }
+}
+
+/* The custom-design offer closes the gallery, full width, after every template. */
+.ob-freelance { grid-column: 1 / -1; margin-top: 8px; }
+.ob-pv-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1.5px solid var(--ink); border-radius: 4px; background: var(--yellow); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
 @keyframes ob-rise { from { opacity: 0; transform: translateY(10px); } }
 
 .ob-customise { gap: 20px; }

@@ -2,6 +2,7 @@ import {
   type BusinessPatch,
   type CategoryKey,
   CLASSIC_FALLBACK,
+  canUseTemplate,
   CLASSIC_THEME,
   type Currency,
   FALLBACK_TEMPLATE_SLUG,
@@ -245,12 +246,18 @@ export function draftSite(templates: SiteTemplate[], design: DesignDraft, saved:
   const picked = design.templateId
     ? templates.find((t) => t.id === design.templateId)
     : templates.find((t) => t.slug === FALLBACK_TEMPLATE_SLUG);
-  if (picked) {
+  if (picked && canUseTemplate(picked, saved.plan)) {
     const { id, slug, name, version, schemaVersion, layout } = picked;
     return { template: { id, slug, name, version, schemaVersion, layout }, theme: mergeTheme(picked.defaultTheme, design.theme), notice: null };
   }
   if (design.templateId === saved.templateId) return { ...saved.site, theme: mergeTheme(saved.site.theme, design.theme) };
   return { template: CLASSIC_FALLBACK, theme: mergeTheme(CLASSIC_THEME, design.theme), notice: null };
+}
+
+/** A template drawn for preview only (a Pro template a free owner is looking at), with their theme on top. */
+export function previewSiteFor(t: SiteTemplate, design: DesignDraft): ResolvedSite {
+  const { id, slug, name, version, schemaVersion, layout } = t;
+  return { template: { id, slug, name, version, schemaVersion, layout }, theme: mergeTheme(t.defaultTheme, design.theme), notice: null };
 }
 
 /**

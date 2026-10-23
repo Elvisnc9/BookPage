@@ -1,4 +1,4 @@
-import { isValidSlug, ONBOARDING_STEPS, type OwnerBusiness, type PublishIssue, type ServiceInput, type SiteTemplate } from '@bookpage/shared';
+import { isValidSlug, ONBOARDING_STEPS, type OwnerBusiness, type PublishIssue, type ServiceInput, type SiteTemplate, PRO_UPGRADE_PATH } from '@bookpage/shared';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { buildSite } from '../../site/model';
 import { Icon } from '../../site/parts';
@@ -6,7 +6,7 @@ import { api, ApiError } from './api';
 import { type SaveState, useAutosave } from './autosave';
 import {
   type AboutDraft, aboutFrom, aboutTo, type DayDraft, type DesignDraft, designFrom, detectLocale, draftSite, hoursFrom, hoursTo,
-  type ListEdit, needsAddress, needsAreas, previewBusiness, type ServiceDraft, servicesFrom, serviceTo, type StaffDraft, staffFrom, suggestSlug,
+  type ListEdit, needsAddress, needsAreas, previewBusiness, previewSiteFor, type ServiceDraft, servicesFrom, serviceTo, type StaffDraft, staffFrom, suggestSlug,
 } from './model';
 import { type Device, PreviewPanel, PreviewSheet } from './Preview';
 import { StepAbout } from './StepAbout';
@@ -20,6 +20,9 @@ export interface PageOrigin {
   rootDomain: string;
   port: string;
 }
+
+/** The marketing site's pricing section (with the Pro waitlist), on its own host. */
+export const proUrl = (o: PageOrigin) => `${o.protocol}//www.${o.rootDomain}${o.port ? `:${o.port}` : ''}${PRO_UPGRADE_PATH}`;
 
 export default function Onboarding(props: { initial: OwnerBusiness | null; templates: SiteTemplate[]; origin: PageOrigin }) {
   const [biz, setBiz] = useState<OwnerBusiness | null>(props.initial);
@@ -58,6 +61,8 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   const [sheet, setSheet] = useState(false);
   const [navError, setNavError] = useState('');
   const [elsewhere, setElsewhere] = useState<OwnerBusiness | null>(null);
+  // A Pro template a free owner is trying on: shown in the preview only, never saved.
+  const [previewing, setPreviewing] = useState<string | null>(null);
   const seen = useRef(props.initial.updatedAt);
 
   const onBiz = (b: OwnerBusiness) => {
@@ -131,7 +136,8 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   const editDesign = (patch: Partial<DesignDraft>) => setDesign((cur) => { const next = { ...cur, ...patch }; designSave.queue(next); return next; });
 
   // ─── One model for the preview, the review step and (via the API) the live page ───
-  const resolved = useMemo(() => draftSite(templates, design, biz), [templates, design, biz]);
+  const peek = previewing ? templates.find((t) => t.id === previewing) : undefined;
+  const resolved = useMemo(() => (peek ? previewSiteFor(peek, design) : draftSite(templates, design, biz)), [peek, templates, design, biz]);
   const site = useMemo(
     () => buildSite(previewBusiness({ saved: biz, about, days, services, staff, site: resolved }), 'preview'),
     [biz, about, days, services, staff, resolved],
@@ -214,6 +220,7 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   const goTo = (n: number) => {
     setNavError('');
     setServerIssues([]);
+    setPreviewing(null);
     setDir(n >= step ? 1 : -1);
     setStep(n);
     window.scrollTo({ top: 0 });
@@ -275,7 +282,7 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   const furthest = Math.min(biz.onboardingStep + 1, 5);
   const host = `${slug || suggestSlug(about.name) || 'yourname'}.${origin.rootDomain}`;
   const preview = (onClose?: () => void) => (
-    <PreviewPanel site={site} host={host} device={onClose ? 'phone' : device} onDevice={setDevice} saving={saveState === 'saving'} onClose={onClose} />
+    <PreviewPanel site={site} host={host} badge={peek ? `${peek.name} · Pro preview` : undefined} device={onClose ? 'phone' : device} onDevice={setDevice} saving={saveState === 'saving'} onClose={onClose} />
   );
 
   return (
@@ -322,7 +329,8 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
         <form class="ob-form" onSubmit={(e) => { e.preventDefault(); void next(); }} noValidate>
           <div class="ob-step" key={step} data-dir={dir} ref={heading}>
             <p class="ob-kicker mono">Step {step} of 5 · {ONBOARDING_STEPS[step - 1]}</p>
-            {step === 1 && <StepTemplate templates={templates} design={design} onDesign={editDesign} notice={design.templateId === biz.templateId ? biz.site.notice : null} />}
+            {step === 1 && <StepTemplate templates={templates} design={design} onDesign={editDesign} notice={design.templateId === biz.templateId ? biz.site.notice : null}
+              plan={biz.plan} previewing={previewing} onPreview={setPreviewing} proUrl={proUrl(origin)} />}
             {step === 2 && <StepAbout about={about} onAbout={editAbout} issues={aboutSave.issues} biz={biz} onBiz={onBiz} />}
             {step === 3 && <StepServices services={services} onServices={editServices} category={about.category} currency={about.currency} depositsOn={!!rules.depositUrl} media={{ biz, onBiz }} />}
             {step === 4 && <StepBooking rules={rules} onRules={editRules} staff={staff} onStaff={editStaff} hours={{ days, onDays: editDays }} media={{ biz, onBiz }} />}

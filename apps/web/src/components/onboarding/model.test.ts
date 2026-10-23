@@ -17,7 +17,7 @@ export function owner(patch: Partial<OwnerBusiness> = {}): OwnerBusiness {
     id: 'b1', slug: 'draft-1234abcd', name: 'Kantine Rae', category: 'other', description: 'Lunch by the canal', locationType: 'premises',
     addressLine1: '1 Canal Street', addressLine2: null, city: 'Berlin', region: null, postalCode: null, country: 'DE', serviceAreas: [],
     phone: '+49301234567', whatsapp: null, email: null, timezone: 'Europe/Berlin', currency: 'EUR',
-    templateId: classic.id, theme: {},
+    plan: 'free', templateId: classic.id, theme: {},
     site: { template: { id: classic.id, slug: 'classic', name: 'Classic', version: 1, schemaVersion: 1, layout: classic.layout }, theme: classic.defaultTheme, notice: null },
     logo: null, hero: img('hero'), gallery: [], onboardingStep: 2, publishedAt: null, updatedAt: '2030-01-01T00:00:00.000Z',
     hours: [{ weekday: 1, opensAt: 540, closesAt: 1080 }],
@@ -59,8 +59,8 @@ describe('the preview draft', () => {
     const b = owner();
     const d = draft(b);
     const classic = previewBusiness({ ...d, site: draftSite(templates, { templateId: bySlug('classic').id, theme: {} }, b) });
-    const noir = previewBusiness({ ...d, site: draftSite(templates, { templateId: bySlug('noir').id, theme: {} }, b) });
-    expect(noir.site.template.slug).toBe('noir');
+    const noir = previewBusiness({ ...d, site: draftSite(templates, { templateId: bySlug('journal').id, theme: {} }, b) });
+    expect(noir.site.template.slug).toBe('journal');
     const { site: _a, ...restClassic } = classic;
     const { site: _b, ...restNoir } = noir;
     expect(restNoir).toEqual(restClassic);
@@ -68,6 +68,14 @@ describe('the preview draft', () => {
 });
 
 describe('draftSite', () => {
+  it('never draws a Pro template the plan does not cover, even if the draft points at it', () => {
+    const bloom = bySlug('bloom');
+    expect(bloom.isPremium).toBe(true);
+    const free = owner({ plan: 'free', templateId: bloom.id, site: { ...owner().site, notice: { code: 'locked', requested: 'bloom' } } });
+    expect(draftSite(templates, { templateId: bloom.id, theme: {} }, free)).toMatchObject({ template: { slug: 'classic' }, notice: { code: 'locked' } });
+    expect(draftSite(templates, { templateId: bloom.id, theme: {} }, owner({ plan: 'pro' })).template.slug).toBe('bloom');
+  });
+
   it('draws the picked template with the owner theme on top', () => {
     const site = draftSite(templates, { templateId: bySlug('pulse').id, theme: { accent: '#123456' } }, owner());
     expect(site.template.slug).toBe('pulse');

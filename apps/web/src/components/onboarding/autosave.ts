@@ -35,7 +35,8 @@ export function useAutosave<T>(save: (value: T) => Promise<void>, delay = 700) {
       setIssues([]);
       setState(pending.current ? 'saving' : 'saved');
     } catch (error) {
-      if (error instanceof ApiError && error.status === 400) {
+      // A request the API refuses (400 invalid, 403 not allowed…) won't succeed by retrying; wait for the next edit.
+      if (error instanceof ApiError && error.status >= 400 && error.status < 500 && error.status !== 408 && error.status !== 429) {
         setIssues(error.issues);
         setState('invalid');
       } else {

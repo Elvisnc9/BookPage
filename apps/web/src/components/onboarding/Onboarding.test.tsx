@@ -5,6 +5,7 @@ import { type OwnerBusiness, publishIssues, resolveSite, type SiteTemplate } fro
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TEMPLATE_CATALOGUE, toRow } from '../../../../api/prisma/templates';
+import { FREELANCE_URL } from '../../lib/freelance';
 import Onboarding from './Onboarding';
 
 const rows = TEMPLATE_CATALOGUE.map((t, i) => ({ ...toRow(t, i), thumbnailUrl: null, previewImageUrl: null }));
@@ -19,7 +20,7 @@ function fakeApi(start: OwnerBusiness) {
   const calls: { method: string; path: string; body: unknown }[] = [];
   const view = (): OwnerBusiness => {
     const selected = rows.find((r) => r.id === biz.templateId) ?? null;
-    biz.site = resolveSite({ selected, fallback: rows[0], theme: biz.theme });
+    biz.site = resolveSite({ selected, fallback: rows[0], theme: biz.theme, plan: biz.plan });
     biz.updatedAt = new Date(Date.now() + ids++).toISOString();
     return structuredClone(biz);
   };
@@ -33,6 +34,8 @@ function fakeApi(start: OwnerBusiness) {
     if (method === 'GET' && path === '/business') return ok({ business: view() });
     if (method === 'PATCH' && path === '/business') {
       if (body.templateId && !rows.some((r) => r.id === body.templateId)) return new Response(JSON.stringify({ issues: [{ path: 'templateId', message: 'nope' }] }), { status: 400 });
+      const row = rows.find((r) => r.id === body.templateId);
+      if (row?.isPremium && biz.plan !== 'pro') return new Response(JSON.stringify({ message: `${row.name} is a Pro template.`, code: 'template_locked' }), { status: 403 });
       biz = { ...biz, ...body, theme: body.theme ?? biz.theme };
       return ok(view());
     }
@@ -59,7 +62,7 @@ function draft(): OwnerBusiness {
   return {
     id: 'b1', slug: 'draft-abcd1234', name: '', category: null, description: null, locationType: 'premises', addressLine1: null, addressLine2: null,
     city: null, region: null, postalCode: null, country: 'GB', serviceAreas: [], phone: null, whatsapp: null, email: null,
-    timezone: 'Europe/London', currency: 'GBP', templateId: null, theme: {},
+    timezone: 'Europe/London', currency: 'GBP', plan: 'free', templateId: null, theme: {},
     site: resolveSite({ selected: null, fallback: rows[0], theme: {} }),
     logo: null, hero: null, gallery: [], onboardingStep: 0, publishedAt: null, updatedAt: '2030-01-01T00:00:00.000Z',
     hours: [1, 2, 3, 4, 5].map((weekday) => ({ weekday, opensAt: 540, closesAt: 1080 })),
@@ -95,7 +98,11 @@ describe('onboarding', () => {
   it('loads the active templates and marks the current pick', () => {
     render(<Onboarding initial={draft()} templates={templates} origin={ORIGIN} />);
     const radios = screen.getAllByRole('radio', { name: /, / }).filter((r) => (r as HTMLInputElement).name === 'template');
-    expect(radios).toHaveLength(templates.length);
+    const premium = templates.filter((t) => t.isPremium);
+    expect(premium.length).toBeGreaterThan(0);
+    // Free plan: free templates are choices; Pro ones are preview buttons with a lock.
+    expect(radios).toHaveLength(templates.length - premium.length);
+    for (const t of premium) expect(screen.getByRole('button', { name: `${t.name}, Pro template, locked. Preview it` })).toBeTruthy();
     expect((screen.getByRole('radio', { name: 'Classic, Beauty & wellness' }) as HTMLInputElement).checked).toBe(true);
     expect(document.querySelector('.ob-tpl[data-selected]')?.textContent).toContain('Selected');
   });
@@ -110,13 +117,13 @@ describe('onboarding', () => {
 
   it('keeps the pick after a refresh', async () => {
     const first = render(<Onboarding initial={draft()} templates={templates} origin={ORIGIN} />);
-    fireEvent.click(screen.getByRole('radio', { name: 'Noir, Beauty & wellness' }));
-    await waitFor(() => expect(api.get().templateId).toBe(bySlug('noir').id), { timeout: 3000 });
+    fireEvent.click(screen.getByRole('radio', { name: 'Journal, Creative' }));
+    await waitFor(() => expect(api.get().templateId).toBe(bySlug('journal').id), { timeout: 3000 });
     first.unmount();
     // A refresh renders from the server's copy.
     render(<Onboarding initial={structuredClone(api.get())} templates={templates} origin={ORIGIN} />);
-    expect((screen.getByRole('radio', { name: 'Noir, Beauty & wellness' }) as HTMLInputElement).checked).toBe(true);
-    expect(previewSite()?.dataset.template).toBe('noir');
+    expect((screen.getByRole('radio', { name: 'Journal, Creative' }) as HTMLInputElement).checked).toBe(true);
+    expect(previewSite()?.dataset.template).toBe('journal');
   });
 
   it('walks all five steps, keeps the draft when moving back, and publishes with the picked template', async () => {
@@ -190,5 +197,42 @@ describe('onboarding', () => {
     render(<Onboarding initial={retired} templates={templates} origin={ORIGIN} />);
     expect(document.body.textContent).toContain('The template you picked (vapor) has been retired');
     expect(previewSite()?.dataset.template).toBe('classic');
+  });
+
+  it('lets a free owner try a Pro template in the preview without picking it', async () => {
+    render(<Onboarding initial={draft()} templates={templates} origin={ORIGIN} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Bloom, Pro template, locked. Preview it' }));
+    await waitFor(() => expect(previewSite()?.dataset.template).toBe('bloom'));
+    expect(screen.getByRole('button', { name: 'Bloom, Pro template, locked. Preview it' }).getAttribute('aria-pressed')).toBe('true');
+    expect(document.body.textContent).toContain('Bloom is a Pro template');
+    expect(document.querySelector('.ob-pv-badge')?.textContent).toContain('Bloom · Pro preview');
+    const unlock = screen.getByRole('link', { name: 'Unlock with Pro' }) as HTMLAnchorElement;
+    expect(unlock.href).toBe('http://www.bookpage.test/pricing');
+
+    // Nothing was saved: no PATCH carried the Pro template.
+    await new Promise((r) => setTimeout(r, 400));
+    expect(api.calls.some((c) => (c.body as { templateId?: string } | undefined)?.templateId === bySlug('bloom').id)).toBe(false);
+    expect(api.get().templateId).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Classic' }));
+    await waitFor(() => expect(previewSite()?.dataset.template).toBe('classic'));
+  });
+
+  it('lets a Pro owner pick a Pro template', async () => {
+    const pro = { ...draft(), plan: 'pro' as const };
+    api = fakeApi(pro);
+    vi.stubGlobal('fetch', api.fetch);
+    render(<Onboarding initial={pro} templates={templates} origin={ORIGIN} />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Bloom, Retail, Pro' }));
+    await waitFor(() => expect(api.get().templateId).toBe(bySlug('bloom').id), { timeout: 3000 });
+    expect(previewSite()?.dataset.template).toBe('bloom');
+  });
+
+  it('ends the gallery with the custom-design offer, linking to the one configured URL', () => {
+    render(<Onboarding initial={draft()} templates={templates} origin={ORIGIN} />);
+    const link = screen.getByRole('link', { name: /Talk to Elvis/ }) as HTMLAnchorElement;
+    expect(link.href).toBe(FREELANCE_URL);
+    expect(link.target).toBe('_blank');
+    expect(document.querySelector('.ob-gallery')?.lastElementChild?.classList.contains('fl-card')).toBe(true);
   });
 });

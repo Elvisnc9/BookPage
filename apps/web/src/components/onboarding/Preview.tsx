@@ -73,6 +73,8 @@ export function PreviewPanel(props: {
   /** "Saving…" / "Saved" etc. from the wizard, so the preview says when it matches the server. */
   saving: boolean;
   onClose?: (() => void) | undefined;
+  /** Shown when the preview isn't the owner's pick, e.g. a Pro template they're trying on. */
+  badge?: string | undefined;
 }) {
   const site = useThrottled(props.site, 120);
   const stale = site !== props.site;
@@ -82,6 +84,7 @@ export function PreviewPanel(props: {
     <section class="ob-pv" aria-labelledby="ob-pv-title">
       <div class="ob-pv-bar">
         <h2 id="ob-pv-title" class="ob-pv-title mono">Live preview</h2>
+        {props.badge && <span class="ob-pv-badge mono"><Icon name="lock" size={12} /> {props.badge}</span>}
         <span class="ob-pv-sync mono" data-busy={stale || props.saving || undefined}>
           <i aria-hidden="true" />{stale ? 'Updating' : props.saving ? 'Saving' : 'Up to date'}
         </span>
