@@ -1,0 +1,38 @@
+---
+/**
+ * Placeholder shown while a dashboard island loads: the same shapes as the real
+ * content, so nothing jumps when it arrives. Hidden from assistive tech; the
+ * polite status line says what's happening instead.
+ */
+interface Props {
+  variant: 'today' | 'list';
+  /** What's loading, read to screen readers. */
+  label: string;
+}
+const { variant, label } = Astro.props;
+---
+
+<div class="sk" data-variant={variant}>
+  <p class="visually-hidden" role="status">{label}</p>
+  <div aria-hidden="true">
+    <span class="sk-line sk-date"></span>
+    {variant === 'today' ? (
+      <>
+        <span class="sk-line sk-greet"></span>
+        <span class="sk-line sk-title"></span>
+        <div class="sk-hero">
+          <div class="sk-stats"><span class="sk-card"></span><span class="sk-card"></span><span class="sk-card"></span></div>
+          <span class="sk-card sk-week"></span>
+        </div>
+      </>
+    ) : (
+      <div class="sk-filters"><span class="sk-pill"></span><span class="sk-pill"></span><span class="sk-pill"></span><span class="sk-pill"></span></div>
+    )}
+    <div class="sk-panel">
+      <span class="sk-line sk-h2"></span>
+      {[0, 1, 2, 3].map(() => (
+        <div class="sk-row"><span class="sk-dot"></span><span class="sk-line"></span><span class="sk-line sk-short"></span></div>
+      ))}
+    </div>
+  </div>
+</div>

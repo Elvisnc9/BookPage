@@ -1,30 +1,82 @@
 ---
-import type { OwnerBusiness, SiteTemplate } from '@bookpage/shared';
-import { ROOT_DOMAIN } from 'astro:env/server';
-import Onboarding from '../../components/onboarding/Onboarding';
+import ClerkScript from '../../components/ClerkScript.astro';
+import OnboardingLoader from '../../components/onboarding/OnboardingLoader.astro';
 import '../../site/index.css';
 import '../../components/onboarding/onboarding.css';
-import ClerkScript from '../../components/ClerkScript.astro';
 import Base from '../../layouts/Base.astro';
-import { apiFetch } from '../../lib/api';
 
 // Reached only via the app-host rewrite in middleware.ts, which guarantees `me`.
 const { business: summary } = Astro.locals.me!;
 if (summary?.publishedAt) return Astro.redirect('/', 303);
-
-// The business draft and the template gallery (active, validated rows from the database).
-const [bizRes, tplRes] = await Promise.all([apiFetch('/business', Astro), apiFetch('/templates', Astro)]);
-if (!bizRes.ok) throw new Error(`GET /business failed: ${bizRes.status}`);
-if (!tplRes.ok) throw new Error(`GET /templates failed: ${tplRes.status}`);
-const { business } = (await bizRes.json()) as { business: OwnerBusiness | null };
-const { templates } = (await tplRes.json()) as { templates: SiteTemplate[] };
-
-const origin = { protocol: Astro.url.protocol, rootDomain: ROOT_DOMAIN, port: Astro.url.port };
 ---
 
 <Base title="Set up your page · BookPage">
   <main class="ob-root">
-    <Onboarding client:load initial={business} templates={templates} origin={origin} />
+    <OnboardingLoader server:defer protocol={Astro.url.protocol} port={Astro.url.port}>
+      <!-- Shown at once; replaced when the draft and templates arrive. -->
+      <div slot="fallback" class="ob-wait">
+        <p class="visually-hidden" role="status">Loading your page setup…</p>
+        <div class="ob-wait-stamp" aria-hidden="true">
+          <svg width="44" height="44" viewBox="0 0 24 24"><rect class="w1" x="2" y="2" width="9" height="9" rx="2" /><rect class="w2" x="13" y="2" width="9" height="9" rx="2" /><rect class="w3" x="13" y="13" width="9" height="9" rx="2" /><rect class="w4" x="2" y="13" width="9" height="9" rx="2" /></svg>
+        </div>
+        <ul class="ob-wait-lines mono" aria-hidden="true">
+          <li>Unpacking your templates…</li>
+          <li>Laying out your page…</li>
+          <li>Warming up the booking calendar…</li>
+        </ul>
+        <div class="ob-wait-sk" aria-hidden="true">
+          <span class="ob-wait-bar"></span>
+          <div class="ob-wait-grid">
+            <div class="ob-wait-form"><span></span><span></span><span></span><span class="short"></span></div>
+            <span class="ob-wait-preview"></span>
+          </div>
+        </div>
+      </div>
+    </OnboardingLoader>
   </main>
   <ClerkScript />
 </Base>
+
+<style>
+  /* Loading screen: a playful first impression that holds the layout's shape. One-time screen, so it
+     can afford a little character; everything stops once onboarding arrives. */
+  .ob-wait { display: grid; justify-items: center; gap: 18px; min-height: 100dvh; padding: 48px 16px; box-sizing: border-box; align-content: start; }
+  .ob-wait-stamp svg rect { fill: #0D0D10; transform-box: fill-box; transform-origin: center; animation: ob-wait-pop 1.6s cubic-bezier(.23, 1, .32, 1) infinite both; }
+  .ob-wait-stamp svg .w2 { fill: #F7D45C; stroke: #0D0D10; stroke-width: 1.6; animation-delay: 120ms; }
+  .ob-wait-stamp svg .w3 { animation-delay: 240ms; }
+  .ob-wait-stamp svg .w4 { fill: none; stroke: #0D0D10; stroke-width: 1.6; animation-delay: 360ms; }
+  @keyframes ob-wait-pop { 0% { transform: scale(.9); opacity: .35; } 25% { transform: scale(1); opacity: 1; } 70% { transform: scale(1); opacity: 1; } 100% { transform: scale(.9); opacity: .35; } }
+
+  /* Three status lines, one at a time. */
+  .ob-wait-lines { position: relative; height: 20px; width: min(320px, 100%); margin: 0; padding: 0; list-style: none; text-align: center; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted, #5C5C66); }
+  .ob-wait-lines li { position: absolute; inset: 0; opacity: 0; animation: ob-wait-line 3.6s cubic-bezier(.23, 1, .32, 1) infinite; }
+  .ob-wait-lines li:nth-child(2) { animation-delay: 1.2s; }
+  .ob-wait-lines li:nth-child(3) { animation-delay: 2.4s; }
+  @keyframes ob-wait-line { 0% { opacity: 0; transform: translateY(6px); } 8%, 28% { opacity: 1; transform: none; } 36%, 100% { opacity: 0; transform: translateY(-6px); } }
+
+  /* The shape of what's coming: steps bar, form column, preview. */
+  .ob-wait-sk { display: grid; gap: 20px; width: min(1120px, 100%); margin-top: 12px; }
+  .ob-wait-bar, .ob-wait-form span, .ob-wait-preview { display: block; border-radius: 6px; background: linear-gradient(90deg, #D7D6D0 0%, #FAF9F5 50%, #D7D6D0 100%) 0 0 / 200% 100%; opacity: .55; animation: ob-wait-sweep 1.4s linear infinite; }
+  .ob-wait-bar { height: 40px; border-radius: 999px; }
+  .ob-wait-grid { display: grid; gap: 24px; grid-template-columns: minmax(0, 1fr); }
+  .ob-wait-form { display: grid; gap: 14px; align-content: start; }
+  .ob-wait-form span { height: 52px; }
+  .ob-wait-form span:first-child { height: 34px; width: 60%; }
+  .ob-wait-form .short { width: 40%; }
+  .ob-wait-preview { height: 420px; border-radius: 12px; }
+  @media (min-width: 960px) { .ob-wait-grid { grid-template-columns: minmax(0, 1fr) 440px; } }
+  @media (max-width: 959px) { .ob-wait-preview { display: none; } }
+  @keyframes ob-wait-sweep { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+
+  /* Onboarding arriving: a short fade up, not a pop. */
+  :global(.ob-arrive) { animation: ob-arrive 260ms cubic-bezier(.23, 1, .32, 1) both; }
+  @keyframes ob-arrive { from { opacity: 0; transform: translateY(8px); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ob-wait-stamp svg rect, .ob-wait-bar, .ob-wait-form span, .ob-wait-preview { animation: none; }
+    .ob-wait-lines li { animation: none; }
+    .ob-wait-lines li:first-child { opacity: 1; }
+    :global(.ob-arrive) { animation-name: ob-arrive-fade; }
+    @keyframes ob-arrive-fade { from { opacity: 0; } }
+  }
+</style>

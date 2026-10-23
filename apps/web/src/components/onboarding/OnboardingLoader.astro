@@ -1,0 +1,30 @@
+---
+import type { OwnerBusiness, SiteTemplate } from '@bookpage/shared';
+import { ROOT_DOMAIN } from 'astro:env/server';
+import Onboarding from './Onboarding';
+import { apiFetch } from '../../lib/api';
+
+/**
+ * The onboarding app with its data, streamed in as a server island: the page
+ * shows a loading screen at once and this replaces it when the API answers.
+ * The page's protocol and port come in as props (an island has its own URL).
+ */
+interface Props {
+  protocol: string;
+  port: string;
+}
+const { protocol, port } = Astro.props;
+
+// The business draft and the template gallery (active, validated rows from the database).
+const [bizRes, tplRes] = await Promise.all([apiFetch('/business', Astro), apiFetch('/templates', Astro)]);
+if (!bizRes.ok) throw new Error(`GET /business failed: ${bizRes.status}`);
+if (!tplRes.ok) throw new Error(`GET /templates failed: ${tplRes.status}`);
+const { business } = (await bizRes.json()) as { business: OwnerBusiness | null };
+const { templates } = (await tplRes.json()) as { templates: SiteTemplate[] };
+
+const origin = { protocol, rootDomain: ROOT_DOMAIN, port };
+---
+
+<div class="ob-arrive">
+  <Onboarding client:load initial={business} templates={templates} origin={origin} />
+</div>

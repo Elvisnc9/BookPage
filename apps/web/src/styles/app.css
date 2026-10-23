@@ -9,7 +9,6 @@
    a full sidebar (from 1100px). */
 @import '@fontsource-variable/archivo/wdth.css';
 
-.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 .ap { min-height: 100dvh; padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
 .ap-num { font-family: 'Archivo Variable', 'Arial Narrow', sans-serif; font-stretch: 70%; font-weight: 900; letter-spacing: -0.01em; line-height: .9; }
@@ -324,4 +323,76 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ap-bar-col i { animation: none; }
+}
+
+/* ─── Loading and motion ──────────────────────────────────────────────────────
+   Dashboard pages render their shell at once and stream data in (server islands).
+   Navigation is the most frequent action here, so motion stays small and fast:
+   transform/opacity only, ≤240ms, the existing --ease-out. Reduced motion keeps
+   the fades and drops the movement (see the block at the end). */
+
+/* Streamed content and its placeholder sit in the main grid like any other block. */
+.ap-island, .sk { display: grid; grid-template-columns: minmax(0, 1fr); gap: inherit; min-width: 0; }
+
+/* Data arriving replaces the skeleton: fade up, panels a beat apart, first rows a touch later. */
+@keyframes ap-rise { from { opacity: 0; transform: translateY(6px); } }
+.ap-island > * { animation: ap-rise 240ms var(--ease-out) both; }
+.ap-island > :nth-child(2) { animation-delay: 40ms; }
+.ap-island > :nth-child(3) { animation-delay: 80ms; }
+.ap-island > :nth-child(4) { animation-delay: 120ms; }
+.ap-island > :nth-child(n + 5) { animation-delay: 160ms; }
+.ap-island .ap-row { animation: ap-rise 240ms var(--ease-out) both; }
+.ap-island .ap-row:nth-of-type(2) { animation-delay: 60ms; }
+.ap-island .ap-row:nth-of-type(3) { animation-delay: 90ms; }
+.ap-island .ap-row:nth-of-type(4) { animation-delay: 120ms; }
+.ap-island .ap-row:nth-of-type(n + 5) { animation-delay: 150ms; }
+
+/* Skeleton: the real layout's shapes, with a slow light sweep while waiting. */
+@keyframes sk-sweep { from { background-position: 150% 0; } to { background-position: -50% 0; } }
+.sk > div { display: grid; gap: 14px; }
+.sk-line, .sk-card, .sk-pill, .sk-dot {
+  display: block; border-radius: var(--r);
+  background: linear-gradient(90deg, var(--line) 0%, var(--surface-2) 50%, var(--line) 100%) 0 0 / 200% 100%;
+  opacity: .55; animation: sk-sweep 1.4s linear infinite;
+}
+.sk-line { height: 12px; width: 100%; }
+.sk-date { width: 140px; height: 10px; }
+.sk-greet { width: 180px; height: 14px; }
+.sk-title { width: min(420px, 80%); height: 32px; }
+.sk-hero { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.sk-stats { display: grid; gap: 12px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sk-card { height: 112px; border-radius: var(--r-xl); }
+.sk-week { height: 112px; }
+.sk-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.sk-pill { width: 96px; height: 36px; border-radius: 999px; }
+.sk-panel { display: grid; gap: 16px; padding: 18px; border: 1.5px solid var(--line); border-radius: var(--r-xl); }
+.sk-h2 { width: 200px; height: 16px; }
+.sk-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) 80px; align-items: center; gap: 12px; }
+.sk-dot { width: 36px; height: 36px; border-radius: 50%; }
+.sk-short { width: 80px; }
+@media (max-width: 640px) { .sk-stats { grid-template-columns: minmax(0, 1fr); } .sk-card { height: 84px; } }
+@media (min-width: 1024px) { .sk-hero { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); } .sk-week { height: 112px; } }
+
+/* Page to page: the browser cross-fades between dashboard pages (no JS router).
+   Navigation and chrome stay put; only the main area changes. */
+@view-transition { navigation: auto; }
+.ap-side { view-transition-name: ap-side; }
+.ap-bar { view-transition-name: ap-bar; }
+.ap-tabs-bottom { view-transition-name: ap-tabs; }
+@keyframes ap-vt-out { to { opacity: 0; } }
+@keyframes ap-vt-in { from { opacity: 0; transform: translateY(4px); } }
+::view-transition-old(root) { animation: ap-vt-out 120ms var(--ease-out) both; }
+::view-transition-new(root) { animation: ap-vt-in 200ms var(--ease-out) both; }
+
+/* Progress bar: appears the moment a link or form is used, so a click never feels ignored.
+   It eases most of the way and waits there; the next page replaces it. */
+.ap-progress { position: fixed; inset: 0 0 auto; z-index: 100; height: 3px; pointer-events: none; background: var(--ink); transform: scaleX(0); transform-origin: left; opacity: 0; }
+html.is-navigating .ap-progress { opacity: 1; transform: scaleX(.85); transition: transform 2.4s var(--ease-out), opacity 120ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-island > *, .ap-island .ap-row { animation-name: ap-fade; }
+  @keyframes ap-fade { from { opacity: 0; } }
+  .sk-line, .sk-card, .sk-pill, .sk-dot { animation: none; }
+  ::view-transition-new(root) { animation-name: ap-fade; }
+  html.is-navigating .ap-progress { transform: scaleX(.85); transition: opacity 120ms ease; }
 }

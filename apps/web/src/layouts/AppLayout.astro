@@ -100,7 +100,23 @@ const nav = [
     </nav>
   </div>
 
+  <div class="ap-progress" aria-hidden="true"></div>
   <ClerkScript />
+  <script>
+    // Start the progress bar the moment the owner navigates (links and form posts),
+    // so a click is acknowledged before the next page arrives.
+    const navigating = () => document.documentElement.classList.add('is-navigating');
+    document.addEventListener('click', (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element).closest('a[href]') as HTMLAnchorElement | null;
+      if (!a || a.target === '_blank' || a.hasAttribute('download') || a.origin !== location.origin) return;
+      if (a.pathname === location.pathname && a.search === location.search && a.hash) return; // same-page anchor
+      navigating();
+    });
+    document.addEventListener('submit', (e) => { if (!e.defaultPrevented) navigating(); });
+    // Coming back with the Back button restores the old page from cache: clear the bar.
+    addEventListener('pageshow', () => document.documentElement.classList.remove('is-navigating'));
+  </script>
   <script>
     // Sign out through Clerk (it clears its own cookies), then back to sign-in.
     for (const button of document.querySelectorAll<HTMLButtonElement>('[data-sign-out]')) {

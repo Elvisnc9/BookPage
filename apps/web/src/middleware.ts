@@ -22,7 +22,12 @@ const withClerk = clerkMiddleware();
 export const onRequest = defineMiddleware(async (context, next) => {
   const { pathname, search } = context.url;
 
-  // /_astro, /_image, /_server-islands etc. are framework internals.
+  // Dashboard panels stream in as server islands; they call the API, so on the owner
+  // app they need the signed-in owner's token like any page (no rewrite, though).
+  if (pathname.startsWith('/_server-islands/') && resolveSite(context.url.hostname, ROOT_DOMAIN, APP_HOST).kind === 'app') {
+    return (await withClerk(context, () => islandAuth(context, next))) ?? notFound();
+  }
+  // /_astro, /_image etc. are framework internals.
   if (pathname.startsWith('/_')) return next();
   // Uploaded images are public and served the same on every host.
   if (pathname.startsWith('/media/')) return next();
@@ -46,6 +51,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 });
 
+async function islandAuth(context: APIContext, next: MiddlewareNext): Promise<Response> {
+  const auth = context.locals.auth();
+  if (!auth.userId) return new Response('Unauthorized', { status: 401 });
+  context.locals.apiToken = await auth.getToken();
+  return next();
+}
+
 async function ownerApp(context: APIContext, next: MiddlewareNext, pathname: string, rest: string, search: string): Promise<Response> {
   const auth = context.locals.auth();
   // The owner's Clerk session token (about a minute long) for this request's API calls.
@@ -55,15 +67,41 @@ async function ownerApp(context: APIContext, next: MiddlewareNext, pathname: str
   if (pathname === '/api' || pathname.startsWith('/api/')) return next(`/app${pathname}${search}`);
 
   const isPublic = PUBLIC_APP_PATHS.has(pathname);
-  if (!auth.userId) return isPublic ? next(`/app${rest}${search}`) : context.redirect('/sign-in', 303);
+  if (!auth.userId) {
+    return ownerPage(isPublic ? await next(`/app${rest}${search}`) : context.redirect('/sign-in', 303), context, null);
+  }
 
   const me = await getMe(context);
   // Signed in to Clerk but the API refused the account (e.g. unverified email): explain on the sign-in page.
-  if (!me) return isPublic ? next(`/app${rest}${search}`) : context.redirect('/sign-in?error=account', 303);
-  if (isPublic) return context.redirect('/', 303);
+  if (!me) return ownerPage(isPublic ? await next(`/app${rest}${search}`) : context.redirect('/sign-in?error=account', 303), context, null);
+  const name = me.user.name?.split(' ')[0] || me.user.email.split('@')[0] || 'Dashboard';
+  if (isPublic) return ownerPage(context.redirect('/', 303), context, name);
   // The dashboard needs a live page; finish onboarding first.
-  if (!me.business?.publishedAt && pathname !== '/onboarding') return context.redirect('/onboarding', 303);
+  if (!me.business?.publishedAt && pathname !== '/onboarding') return ownerPage(context.redirect('/onboarding', 303), context, name);
 
   context.locals.me = me;
-  return next(`/app${rest}${search}`);
+  return ownerPage(await next(`/app${rest}${search}`), context, name);
+}
+
+/** A small, non-secret hint shared with the marketing site: who's signed in, for its header. */
+export const OWNER_HINT_COOKIE = 'bp_owner';
+
+/**
+ * Every owner-app page and redirect: never cached, so the Back button asks the
+ * server again (and gets redirected) instead of showing a stale sign-in page,
+ * or a dashboard after signing out. Also sets or clears the owner hint.
+ */
+function ownerPage(res: Response, context: APIContext, ownerName: string | null): Response {
+  const out = new Response(res.body, res);
+  out.headers.set('cache-control', 'no-store');
+  const has = context.cookies.get(OWNER_HINT_COOKIE)?.value;
+  const value = ownerName ? encodeURIComponent(ownerName.slice(0, 30)) : '';
+  if (value !== (has ?? '')) {
+    // Shared with every subdomain, so www. (marketing) can read it. In dev that's *.localhost.
+    const domain = `; Domain=${ROOT_DOMAIN}`;
+    const secure = context.url.protocol === 'https:' ? '; Secure' : '';
+    const life = value ? `; Max-Age=${60 * 60 * 24 * 30}` : '; Max-Age=0';
+    out.headers.append('set-cookie', `${OWNER_HINT_COOKIE}=${value}; Path=/; SameSite=Lax; HttpOnly${secure}${domain}${life}`);
+  }
+  return out;
 }

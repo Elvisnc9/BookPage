@@ -1,0 +1,98 @@
+---
+import { type BookingStatus, localDate, type OwnerBooking } from '@bookpage/shared';
+import AppIcon from '../AppIcon.astro';
+import BookingRow from '../BookingRow.astro';
+import { getBookings, getSummary } from '../../lib/owner';
+import { dayLabel } from '../../lib/public';
+
+/**
+ * The bookings list, streamed in as a server island (see TodayBoard). The view and
+ * search come from the page's URL as props; the island's own URL doesn't carry them.
+ */
+const VIEWS = {
+  upcoming: { label: 'Upcoming', status: ['pending', 'confirmed'] as BookingStatus[], future: true },
+  pending: { label: 'Needs your OK', status: ['pending'] as BookingStatus[], future: true },
+  past: { label: 'Past', status: ['confirmed', 'completed', 'no_show'] as BookingStatus[], future: false },
+  cancelled: { label: 'Cancelled', status: ['cancelled'] as BookingStatus[], future: null },
+} as const;
+type View = keyof typeof VIEWS;
+
+interface Props {
+  view: string;
+  q: string;
+  message: { tone: 'ok' | 'bad'; text: string } | null;
+}
+const view: View = Astro.props.view in VIEWS ? (Astro.props.view as View) : 'upcoming';
+const { q, message } = Astro.props;
+const v = VIEWS[view];
+const now = new Date();
+const [summary, all] = await Promise.all([
+  getSummary(Astro),
+  getBookings(Astro, {
+    status: v.status,
+    ...(v.future === true ? { from: now, order: 'asc' as const } : v.future === false ? { to: now, order: 'desc' as const } : { order: 'desc' as const }),
+  }),
+]);
+const tz = summary.timezone;
+
+// Search by customer name, email, phone or service (the list is already scoped to this owner).
+const needle = q.toLowerCase();
+const bookings = needle
+  ? all.filter((b) => [b.customer.name, b.customer.email, b.customer.phone, b.serviceName].some((f) => f?.toLowerCase().includes(needle)))
+  : all;
+
+const groups = new Map<string, OwnerBooking[]>();
+for (const b of bookings) {
+  const { date } = localDate(new Date(b.startsAt), tz);
+  groups.set(date, [...(groups.get(date) ?? []), b]);
+}
+const EMPTY: Record<View, string> = {
+  upcoming: 'No upcoming bookings yet. Share your page link to fill your diary.',
+  pending: 'Nothing waiting for your OK.',
+  past: 'No past bookings yet.',
+  cancelled: 'No cancellations.',
+};
+const link = (k: View) => `/bookings?view=${k}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
+---
+
+<div class="ap-island">
+  {message && <p class={`ap-flash ${message.tone}`} role="status">{message.text}</p>}
+
+  <div class="ap-filters">
+    <nav class="ap-seg" aria-label="Filter bookings">
+      {(Object.keys(VIEWS) as View[]).map((k) => (
+        <a href={link(k)} aria-current={k === view ? 'page' : undefined}>
+          {VIEWS[k].label}{k === 'pending' && summary.pendingCount ? <span class="ap-seg-n">{summary.pendingCount}</span> : ''}
+        </a>
+      ))}
+    </nav>
+    <form class="ap-search" method="get" action="/bookings" role="search">
+      <input type="hidden" name="view" value={view} />
+      <AppIcon name="search" />
+      <label class="visually-hidden" for="booking-search">Search bookings</label>
+      <input id="booking-search" name="q" value={q} placeholder="Search name, email or service" autocomplete="off" />
+      {q && <a class="ap-search-clear" href={link(view).replace(/&q=.*/, '')} aria-label="Clear search"><AppIcon name="x" size={18} /></a>}
+    </form>
+  </div>
+
+  {q && <p class="ap-found mono">{bookings.length} {bookings.length === 1 ? 'match' : 'matches'} for “{q}”</p>}
+
+  {groups.size === 0 ? (
+    <div class="ap-panel ap-empty-panel">
+      <p class="ap-empty">{q ? 'Nothing matches that search.' : EMPTY[view]}</p>
+    </div>
+  ) : (
+    [...groups].map(([date, list]) => (
+      <section class="ap-panel ap-table" aria-label={dayLabel(date).long}>
+        <div class="ap-table-head">
+          <h2 class="ap-h2">{dayLabel(date).long}</h2>
+          <span class="pill">{list.length}</span>
+        </div>
+        <div class="ap-rows">
+          <div class="ap-cols mono" aria-hidden="true"><span>Customer</span><span>Service</span><span>Time</span><span>Status</span><span>Price</span><span></span></div>
+          {list.map((b) => <BookingRow booking={b} timezone={tz} />)}
+        </div>
+      </section>
+    ))
+  )}
+</div>
