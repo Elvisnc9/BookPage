@@ -9,6 +9,7 @@ export function siteLinks(url: URL) {
   return {
     signUp: `${app}/sign-in?new`,
     signIn: `${app}/sign-in`,
+    dashboard: `${app}/`,
     example: `${url.protocol}//glowstudio.${ROOT_DOMAIN}${port}`,
     rootDomain: ROOT_DOMAIN,
   };
@@ -39,5 +40,21 @@ export async function listTemplates(request: Request): Promise<SiteTemplate[]> {
     return ((await res.json()) as { templates: SiteTemplate[] }).templates;
   } catch {
     return [];
+  }
+}
+
+export interface LiveStats {
+  businesses: number;
+  bookings: number;
+}
+
+/** Real totals for the "Road to 1,000" board, or null if the API can't be reached (the board then shows goals only). */
+export async function getStats(request: Request): Promise<LiveStats | null> {
+  try {
+    const res = await fetch(`${API_URL}/marketing/stats`, { headers: visitorHeaders(request) });
+    if (!res.ok) return null;
+    return (await res.json()) as LiveStats;
+  } catch {
+    return null;
   }
 }

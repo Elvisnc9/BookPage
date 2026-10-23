@@ -3,10 +3,19 @@ import Hero from '../components/marketing/Hero.astro';
 import Pricing from '../components/marketing/Pricing.astro';
 import Showcase from '../components/marketing/Showcase.astro';
 import MarketingLayout from '../layouts/MarketingLayout.astro';
-import { listTemplates, siteLinks } from '../lib/marketing';
+import { getStats, listTemplates, siteLinks } from '../lib/marketing';
 
 const links = siteLinks(Astro.url);
-const templates = await listTemplates(Astro.request);
+const [templates, stats] = await Promise.all([listTemplates(Astro.request), getStats(Astro.request)]);
+
+// The "Road to 1,000" board: goals are stated as goals, the counts come live from the database.
+const GOALS = [
+  { key: 'businesses', label: 'Businesses on BookPage', goal: 1000, note: 'live pages', goalLine: 'businesses with a live booking page' },
+  { key: 'bookings', label: 'Bookings taken', goal: 5000, note: 'and counting', goalLine: 'bookings taken through BookPage' },
+] as const;
+// Real counts appear only once both pass these; until then the section invites early businesses.
+const SHOW_COUNTS_FROM = { businesses: 25, bookings: 300 };
+const showCounts = !!stats && stats.businesses >= SHOW_COUNTS_FROM.businesses && stats.bookings >= SHOW_COUNTS_FROM.bookings;
 
 const ICON = {
   instagram: 'M7.03.084c-1.277.06-2.149.264-2.911.563-.789.308-1.458.72-2.123 1.388-.665.668-1.075 1.337-1.38 2.127-.296.764-.496 1.637-.552 2.914-.056 1.278-.069 1.688-.063 4.947.006 3.259.021 3.667.083 4.947.061 1.277.264 2.148.563 2.911.308.789.72 1.457 1.388 2.123.668.665 1.337 1.074 2.129 1.38.763.295 1.636.496 2.913.552 1.277.056 1.688.069 4.946.063 3.258-.006 3.668-.021 4.948-.081 1.28-.061 2.147-.265 2.91-.563.789-.309 1.458-.72 2.123-1.388.665-.668 1.074-1.338 1.379-2.129.296-.763.497-1.636.552-2.912.056-1.281.069-1.69.063-4.948-.006-3.258-.021-3.667-.082-4.947-.06-1.28-.264-2.148-.563-2.911-.308-.789-.72-1.457-1.388-2.123C21.298 1.33 20.628.921 19.838.617 19.074.321 18.202.12 16.924.065 15.647.009 15.236-.005 11.977.001 8.718.008 8.31.022 7.03.084m.14 21.693c-1.17-.051-1.805-.245-2.229-.408-.56-.216-.96-.477-1.382-.895-.422-.418-.681-.819-.9-1.378-.164-.423-.362-1.058-.417-2.228-.06-1.264-.072-1.644-.079-4.848-.007-3.204.005-3.583.061-4.848.05-1.169.246-1.805.408-2.228.216-.561.476-.96.895-1.382.419-.422.818-.681 1.378-.9.423-.165 1.058-.361 2.227-.417 1.266-.06 1.645-.072 4.848-.079 3.203-.007 3.584.005 4.85.061 1.169.051 1.805.245 2.228.408.561.216.96.475 1.382.895.422.419.682.818.9 1.379.166.422.362 1.056.417 2.226.06 1.266.074 1.645.08 4.848.006 3.203-.006 3.583-.061 4.848-.051 1.17-.245 1.806-.408 2.23-.216.56-.476.96-.895 1.381-.419.421-.818.681-1.378.9-.423.165-1.058.362-2.226.417-1.266.06-1.645.072-4.85.079-3.204.007-3.582-.006-4.848-.061M16.953 5.586A1.44 1.44 0 1 0 18.39 4.144a1.44 1.44 0 0 0-1.437 1.442M5.839 12.012c.007 3.403 2.77 6.156 6.173 6.149 3.403-.006 6.157-2.77 6.151-6.173-.007-3.403-2.771-6.157-6.174-6.15-3.403.007-6.156 2.771-6.15 6.174M8 12.008a4 4 0 1 1 4.008 3.992A3.999 3.999 0 0 1 8 12.008',
@@ -138,6 +147,61 @@ const faqs = [
     </div>
   </section>
 
+  <!-- Road to 1,000: real totals, live, shown only once they pass a minimum. Until then the
+       same section invites founding businesses. The counts are never made up. -->
+  <section class="mk-road" aria-labelledby="road-title">
+    <div class="mk-w mk-road-in">
+      {showCounts ? (
+        <div class="mk-road-head" data-reveal>
+          <span class="mk-road-live mono"><i aria-hidden="true"></i>Live</span>
+          <h2 id="road-title" class="mk-cond mk-road-title">The road to <span class="mk-road-goal">1,000</span></h2>
+          <p class="mk-road-sub">Every page and booking, counted as it happens. Get on the board.</p>
+        </div>
+      ) : (
+        <div class="mk-road-head" data-reveal>
+          <span class="mk-road-live mono"><i aria-hidden="true"></i>Now open</span>
+          <h2 id="road-title" class="mk-cond mk-road-title">Be one of the <span class="mk-road-goal">first 1,000</span></h2>
+          <p class="mk-road-sub">BookPage just opened its doors. Join early, set up in minutes, and help shape what we build next.</p>
+        </div>
+      )}
+
+      {showCounts ? (
+      <div class="mk-road-board" data-stats-board>
+        {GOALS.map((g, i) => {
+          const value = stats?.[g.key] ?? null;
+          const ratio = value === null ? 0 : Math.min(value / g.goal, 1);
+          return (
+            <article class="mk-road-card" data-reveal style={`--tilt:${i ? '1.2deg' : '-1.2deg'}`}>
+              <p class="mk-road-k mono">{g.label}</p>
+              <p class="mk-road-num" aria-live="polite">
+                <span data-stat={g.key} data-value={value ?? ''}>{value === null ? '—' : value.toLocaleString('en-US')}</span>
+                <span class="mk-road-plus mono" data-plus={g.key} aria-hidden="true"></span>
+              </p>
+              <p class="mk-road-of mono">of {g.goal.toLocaleString('en-US')} · {g.note}</p>
+              <div class="mk-road-bar" role="img" aria-label={`${Math.round(ratio * 100)}% of the way to ${g.goal.toLocaleString('en-US')}`}>
+                <i data-bar={g.key} data-goal={g.goal} style={`transform: scaleX(${Math.max(ratio, 0.02)})`}></i>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+      ) : (
+      <div class="mk-road-board">
+        {GOALS.map((g, i) => (
+          <article class="mk-road-card" data-reveal style={`--tilt:${i ? '1.2deg' : '-1.2deg'}`}>
+            <p class="mk-road-k mono">Our first goal</p>
+            <p class="mk-road-num">{g.goal.toLocaleString('en-US')}</p>
+            <p class="mk-road-of mono">{g.goalLine}</p>
+            <span class="mk-road-sticker mono" aria-hidden="true">Goal</span>
+          </article>
+        ))}
+      </div>
+      )}
+
+      <a class="btn btn-ink mk-road-cta" href={links.signUp} data-reveal>{showCounts ? 'Get on the board' : 'Claim your early spot'} <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+
   <!-- Both sides -->
   <section class="mk-fx mk-sec mk-duo-sec" aria-labelledby="sides-title">
     <div class="mk-w">
@@ -222,6 +286,18 @@ const faqs = [
     </div>
   </section>
 
+  <!-- The promise (no invented numbers: swap in real live counts once there are some) -->
+  <section class="mk-promise" aria-labelledby="promise-title">
+    <div class="mk-w mk-promise-in" data-reveal>
+      <h2 id="promise-title" class="mk-cond mk-promise-title">Free for every business.<br />No commission. <span class="mk-promise-ever">Ever.</span></h2>
+      <ul class="mk-promise-list mono">
+        <li><span aria-hidden="true">✓</span> Unlimited bookings, free</li>
+        <li><span aria-hidden="true">✓</span> 0% commission on every client</li>
+        <li><span aria-hidden="true">✓</span> Your clients stay yours</li>
+      </ul>
+    </div>
+  </section>
+
   <Pricing from="/" />
 
   <!-- FAQ -->
@@ -270,4 +346,67 @@ const faqs = [
   input?.addEventListener('input', check);
   check();
   document.querySelector('[data-slug-form]')?.addEventListener('submit', (e) => e.preventDefault());
+</script>
+
+<script>
+  // "Road to 1,000": check the real totals at an uneven pace (every 6–10 s, re-rolled each
+  // time) and roll a number up only when it actually changed. Paused while the tab is hidden.
+  const board = document.querySelector<HTMLElement>('[data-stats-board]');
+  if (board) {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const fmt = (n: number) => n.toLocaleString('en-US');
+
+    const roll = (el: HTMLElement, from: number, to: number) => {
+      if (reduce || from < 0) { el.textContent = fmt(to); return; }
+      const start = performance.now();
+      const dur = Math.min(900, 300 + (to - from) * 60);
+      const step = (t: number) => {
+        const p = Math.min((t - start) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3); // ease-out
+        el.textContent = fmt(Math.round(from + (to - from) * eased));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+
+    const update = (key: 'businesses' | 'bookings', value: number) => {
+      const num = board.querySelector<HTMLElement>(`[data-stat="${key}"]`);
+      if (!num) return;
+      const before = num.dataset.value === '' ? -1 : Number(num.dataset.value);
+      if (value === before) return;
+      num.dataset.value = String(value);
+      roll(num, before, value);
+      const bar = board.querySelector<HTMLElement>(`[data-bar="${key}"]`);
+      if (bar) bar.style.transform = `scaleX(${Math.max(Math.min(value / Number(bar.dataset.goal), 1), 0.02)})`;
+      if (before >= 0 && value > before) {
+        const card = num.closest<HTMLElement>('.mk-road-card');
+        const plus = board.querySelector<HTMLElement>(`[data-plus="${key}"]`);
+        if (plus) plus.textContent = `+${fmt(value - before)}`;
+        card?.classList.remove('is-bumped');
+        void card?.offsetWidth; // restart the bump if two arrive close together
+        card?.classList.add('is-bumped');
+      }
+    };
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const tick = async () => {
+      try {
+        const res = await fetch('/stats.json', { cache: 'no-store' });
+        if (res.ok) {
+          const stats = (await res.json()) as { businesses?: number; bookings?: number };
+          if (typeof stats.businesses === 'number') update('businesses', stats.businesses);
+          if (typeof stats.bookings === 'number') update('bookings', stats.bookings);
+        }
+      } catch {
+        // Offline for a moment: keep the last numbers and try again later.
+      }
+      schedule();
+    };
+    const schedule = () => {
+      clearTimeout(timer);
+      if (!document.hidden) timer = setTimeout(tick, 6000 + Math.random() * 4000);
+    };
+    document.addEventListener('visibilitychange', () => (document.hidden ? clearTimeout(timer) : schedule()));
+    schedule();
+  }
 </script>

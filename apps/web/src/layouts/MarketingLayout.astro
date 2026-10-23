@@ -10,6 +10,8 @@ interface Props {
 
 const { title, description } = Astro.props;
 const links = siteLinks(Astro.url);
+// Set by the owner app when someone is signed in (a display hint only; the dashboard checks the real session).
+const owner = decodeURIComponent(Astro.cookies.get('bp_owner')?.value ?? '').trim().slice(0, 30) || null;
 const onHome = Astro.url.pathname === '/';
 const anchor = (id: string) => (onHome ? `#${id}` : `/#${id}`);
 ---
@@ -38,8 +40,16 @@ const anchor = (id: string) => (onHome ? `#${id}` : `/#${id}`);
         <a href={onHome ? '#pricing' : '/pricing'}>Pricing</a>
         <a href={anchor('faq')}>FAQ</a>
       </nav>
-      <a class="mk-signin" href={links.signIn}>Sign in</a>
-      <a class="btn btn-ink mk-cta" href={links.signUp}>Create my page</a>
+      {owner ? (
+        <a class="btn btn-ink mk-cta mk-owner" href={links.dashboard} aria-label={`Open your dashboard, ${owner}`}>
+          <span class="mk-owner-dot" aria-hidden="true">{owner.slice(0, 1).toUpperCase()}</span>{owner} <span aria-hidden="true">→</span>
+        </a>
+      ) : (
+        <>
+          <a class="mk-signin" href={links.signIn}>Sign in</a>
+          <a class="btn btn-ink mk-cta" href={links.signUp}>Create my page</a>
+        </>
+      )}
     </header>
 
     <main id="main">
