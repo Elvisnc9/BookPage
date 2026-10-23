@@ -1,7 +1,7 @@
 import type { CustomerFields, ServiceInput } from './business.js';
 import type { LOCATION_TYPES } from './enums.js';
 import type { SiteImage } from './media.js';
-import type { ResolvedSite, SiteTheme } from './site.js';
+import type { Plan, ResolvedSite, SiteTheme } from './site.js';
 
 // Kept apart from business.ts so the owner app can use these without bundling zod.
 
@@ -25,6 +25,8 @@ export interface OwnerBusiness {
   email: string | null;
   timezone: string;
   currency: string;
+  /** What the business has paid for; Pro unlocks premium templates. */
+  plan: Plan;
   /** The template the owner picked (null: never picked, so Classic). */
   templateId: string | null;
   /** The owner's colour/font choices only; `site.theme` is the merged result. */

@@ -7,6 +7,19 @@ export const TEMPLATE_SCHEMA_VERSION = 1;
 /** The template every business can always fall back to. Its config also ships in code (CLASSIC_LAYOUT). */
 export const FALLBACK_TEMPLATE_SLUG = 'classic';
 
+/**
+ * What a business has paid for. Billing sets it (later); until then it's set by hand.
+ * Pro unlocks premium templates.
+ */
+export const PLANS = ['free', 'pro'] as const;
+export type Plan = (typeof PLANS)[number];
+
+/** Whether a business on `plan` may use a template. Premium templates need Pro. */
+export const canUseTemplate = (t: Pick<SiteTemplate, 'isPremium'>, plan: Plan) => !t.isPremium || plan === 'pro';
+
+/** Where "Unlock with Pro" points until checkout exists: the pricing section (with the waitlist). */
+export const PRO_UPGRADE_PATH = '/pricing';
+
 /** Sections a template can show, besides the header and hero, which every template has. */
 export const SITE_SECTIONS = ['services', 'about', 'gallery', 'team', 'hours', 'contact', 'faq'] as const;
 export type SiteSection = (typeof SITE_SECTIONS)[number];
@@ -88,7 +101,7 @@ export interface SiteTemplate {
 
 /** Why the page isn't using the template the owner picked. Shown to the owner, never to customers. */
 export interface TemplateNotice {
-  code: 'missing' | 'inactive' | 'invalid' | 'unsupported';
+  code: 'missing' | 'inactive' | 'invalid' | 'unsupported' | 'locked';
   /** The slug (or id) the business asked for. */
   requested: string;
 }
@@ -153,6 +166,7 @@ export function noticeText(notice: TemplateNotice, fallbackName = 'Classic'): st
     inactive: 'has been retired',
     invalid: "couldn't be loaded",
     unsupported: 'needs an update before it can be used',
+    locked: 'is a Pro template and this page is on the free plan',
   }[notice.code];
   return `The template you picked (${notice.requested}) ${why}, so your page is showing ${fallbackName} for now. Your content is safe; pick another template to change it.`;
 }

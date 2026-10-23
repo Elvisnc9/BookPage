@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { businessPatchSchema } from './business.js';
 import { publishIssues } from './profile.js';
-import { CLASSIC_FALLBACK, mergeTheme, onAccent, contrast } from './site.js';
+import { canUseTemplate, CLASSIC_FALLBACK, contrast, mergeTheme, noticeText, onAccent } from './site.js';
 import { parseTemplate, resolveSite } from './templates.js';
 
 const row = (patch: Record<string, unknown> = {}) => ({
@@ -84,6 +84,29 @@ describe('resolveSite', () => {
     const site = resolveSite({ selected: null, fallback: { ...classic, layoutConfiguration: 'oops' }, theme: { font: 'nope' } });
     expect(site.template).toEqual(CLASSIC_FALLBACK);
     expect(site.theme.font).toBe('grotesk');
+  });
+});
+
+describe('premium templates', () => {
+  const premium = row({ isPremium: true });
+
+  it('render on Pro', () => {
+    expect(resolveSite({ selected: premium, fallback: classic, theme: null, plan: 'pro' })).toMatchObject({ template: { slug: 'bold' }, notice: null });
+  });
+
+  it('fall back to Classic with a "locked" notice on free (and when no plan is given)', () => {
+    for (const plan of ['free', undefined] as const) {
+      const site = resolveSite({ selected: premium, fallback: classic, theme: null, ...(plan ? { plan } : {}) });
+      expect(site.template.slug).toBe('classic');
+      expect(site.notice).toEqual({ code: 'locked', requested: 'bold' });
+    }
+  });
+
+  it('canUseTemplate only gates premium ones', () => {
+    expect(canUseTemplate({ isPremium: false }, 'free')).toBe(true);
+    expect(canUseTemplate({ isPremium: true }, 'free')).toBe(false);
+    expect(canUseTemplate({ isPremium: true }, 'pro')).toBe(true);
+    expect(noticeText({ code: 'locked', requested: 'Bloom' })).toContain('Pro template');
   });
 });
 

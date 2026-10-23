@@ -2,8 +2,10 @@ import { z } from 'zod';
 import {
   CLASSIC_FALLBACK,
   CLASSIC_THEME,
+  canUseTemplate,
   type LayoutConfig,
   mergeTheme,
+  type Plan,
   type ResolvedSite,
   SERVICE_DISPLAYS,
   SITE_FONT_KEYS,
@@ -100,6 +102,8 @@ export function resolveSite(input: {
   fallback: unknown | null;
   /** The owner's colour and font choices (Business.theme). */
   theme: unknown;
+  /** The business's plan; premium templates fall back to Classic on free. Defaults to free. */
+  plan?: Plan;
 }): ResolvedSite {
   const overrides = siteThemePatchSchema.safeParse(input.theme ?? {});
   const themeOf = (base: SiteTheme) => mergeTheme(base, overrides.success ? overrides.data : null);
@@ -109,10 +113,10 @@ export function resolveSite(input: {
     const parsed = parseTemplate(input.selected);
     const requested = (input.selected as { slug?: unknown }).slug;
     const name = typeof requested === 'string' ? requested : 'unknown';
-    if (parsed.ok && parsed.template.isActive) {
+    if (parsed.ok && parsed.template.isActive && canUseTemplate(parsed.template, input.plan ?? 'free')) {
       return { template: pick(parsed.template), theme: themeOf(parsed.template.defaultTheme), notice: null };
     }
-    notice = { code: parsed.ok ? 'inactive' : parsed.code, requested: name };
+    notice = { code: !parsed.ok ? parsed.code : !parsed.template.isActive ? 'inactive' : 'locked', requested: name };
   }
 
   const fallback = input.fallback ? parseTemplate(input.fallback) : null;
