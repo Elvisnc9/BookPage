@@ -9,6 +9,9 @@ export default defineConfig({
     include: process.env.TEST_DB ? ['src/**/*.db.spec.ts'] : ['src/**/*.spec.ts'],
     exclude: process.env.TEST_DB ? [] : ['src/**/*.db.spec.ts'],
     setupFiles: process.env.TEST_DB ? ['dotenv/config'] : [],
+    // DB specs share one database (counts such as the marketing stats see every
+    // file's businesses), so run them one file at a time.
+    fileParallelism: !process.env.TEST_DB,
     // Unit tests never talk to Clerk; these only satisfy loadConfig() (the auth spec sets its own key).
     env: {
       CLERK_SECRET_KEY: 'sk_test_unit',
