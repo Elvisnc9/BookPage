@@ -6,10 +6,15 @@
 import { FALLBACK_TEMPLATE_SLUG, type ResolvedSite, type TemplateNotice } from '@bookpage/shared';
 import type { FunctionComponent } from 'preact';
 import type { SiteModel } from './model';
+import { Atelier } from './templates/Atelier';
 import { Billboard } from './templates/Billboard';
+import { Bistro } from './templates/Bistro';
+import { Bloom } from './templates/Bloom';
 import { Carte } from './templates/Carte';
 import { Classic } from './templates/Classic';
 import { Folio } from './templates/Folio';
+import { Hatch } from './templates/Hatch';
+import { Hearth } from './templates/Hearth';
 import { Journal } from './templates/Journal';
 import { Neighbour } from './templates/Neighbour';
 import { Noir } from './templates/Noir';
@@ -17,6 +22,7 @@ import { Practice } from './templates/Practice';
 import { Pulse } from './templates/Pulse';
 import { Quiet } from './templates/Quiet';
 import { Shelf } from './templates/Shelf';
+import { Stockroom } from './templates/Stockroom';
 
 export interface TemplateRenderer {
   component: FunctionComponent<{ site: SiteModel }>;
@@ -36,6 +42,12 @@ export const REGISTRY: Readonly<Record<string, TemplateRenderer>> = Object.freez
   pulse: { component: Pulse, schemaVersions: [1] },
   folio: { component: Folio, schemaVersions: [1] },
   practice: { component: Practice, schemaVersions: [1] },
+  bistro: { component: Bistro, schemaVersions: [1] },
+  hatch: { component: Hatch, schemaVersions: [1] },
+  hearth: { component: Hearth, schemaVersions: [1] },
+  atelier: { component: Atelier, schemaVersions: [1] },
+  stockroom: { component: Stockroom, schemaVersions: [1] },
+  bloom: { component: Bloom, schemaVersions: [1] },
 });
 
 export interface Rendering {

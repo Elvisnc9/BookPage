@@ -85,6 +85,42 @@ const SAMPLES: Record<string, Sample> = {
     services: [['Check-up', 6500, 30, undefined, 'Exam and advice'], ['Hygiene clean', 8500, 45], ['Whitening consult', 0, 20], ['Emergency visit', 9500, 30]],
     staff: [['Dr. Aoife Byrne'], ['Dr. Tom Walsh']],
   },
+  bistro: {
+    name: 'Comptoir Rive', category: 'other', description: 'A small kitchen on the river: market cooking, natural wine, a long zinc bar.', city: 'Lyon',
+    hero: 'restaurant', gallery: ['pasta', 'wine', 'food-plates'],
+    services: [['Table for two', null, 120, undefined, 'Lunch or dinner, kitchen open till late'], ['Menu du marché', 3800, 120, undefined, 'Three courses, changes daily'], ['Tasting menu', 7200, 150, undefined, 'Six courses, wine pairing optional'], ['Wine at the bar', null, 90, undefined, 'Walk in, or reserve a stool'], ['Private dining', null, 180, undefined, 'The back room, up to ten'], ['Sunday lunch', 4500, 120, undefined, 'Roast, sides and a pudding']],
+    staff: [['Camille'], ['Théo']],
+  },
+  hatch: {
+    name: 'Smash Lane', category: 'other', description: 'Smash burgers, birria tacos and loaded fries. Order ahead, skip the queue.', city: 'Manchester',
+    hero: 'burger', gallery: ['tacos', 'burger', 'pizza', 'food-table'],
+    services: [['Double smash', 1100, 15, 'burger', 'Two patties, American cheese, pickles'], ['Birria tacos', 1200, 15, 'tacos', 'Three tacos and a cup of consommé'], ['Pizza slice', 450, 10, 'pizza'], ['Party tray', null, 30, undefined, 'Feeds ten, order a day ahead']],
+    staff: [['Rico'], ['Jas']],
+  },
+  hearth: {
+    name: 'Crumb & Kettle', category: 'other', description: 'Sourdough, slow coffee and cake big enough to share. Dogs welcome.', city: 'Bristol',
+    hero: 'cafe', gallery: ['croissants', 'coffee', 'cake', 'cafe'],
+    services: [['Table for breakfast', 0, 60, 'croissants', 'Book a table, pay at the counter'], ['Celebration cake', 4200, 30, 'cake', 'Order three days ahead, collect in store'], ['Coffee tasting', 1500, 45, 'coffee', 'Saturdays at 10'], ['Bread class', 6500, 180, undefined, 'Take home your own sourdough']],
+    staff: [['Hannah'], ['Owen'], ['Bea']],
+  },
+  atelier: {
+    name: 'Studio Ondine', category: 'other', description: 'Stoneware, leather and small objects, made in our studio and sold by appointment.', city: 'Copenhagen',
+    hero: 'ceramics', gallery: ['boutique', 'ceramics', 'candle', 'bag'],
+    services: [['Stoneware set', 9500, 30, 'ceramics', 'Four cups, glazed by hand'], ['Leather day bag', 34000, 30, 'bag', 'Vegetable-tanned, made to order'], ['Steel watch', 21000, 30, 'watch'], ['Studio visit', 0, 45, undefined, 'See the work and the workshop']],
+    staff: [['Ondine'], ['Mikkel']],
+  },
+  stockroom: {
+    name: 'Groove & Grain', category: 'other', description: 'Records, headphones and turntables, bought, sold and set up properly.', city: 'Berlin',
+    hero: 'vinyl', gallery: ['vinyl', 'headphones', 'boutique', 'watch', 'bag', 'candle'],
+    services: [['Rare jazz LP', 4500, 15, 'vinyl'], ['Studio headphones', 18900, 15, 'headphones'], ['Field watch', 12900, 15, 'watch'], ['Turntable setup', 3500, 60], ['Listening booth', 800, 30, 'vinyl', 'Half an hour, any record in the shop'], ['Record valuation', 0, 30]],
+    staff: [['Jonas'], ['Ilka']],
+  },
+  bloom: {
+    name: 'Petal & Wick', category: 'other', description: 'Seasonal flowers and hand-poured candles, wrapped with care.', city: 'Amsterdam',
+    hero: 'flowers', gallery: ['flowers', 'candle', 'spa-still', 'skincare', 'calm-room'],
+    services: [['Seasonal bouquet', 4500, 15, 'flowers', 'Whatever is best this week'], ['Soy candle', 2800, 15, 'candle', 'Fig and cedar, 40-hour burn'], ['Gift box', 6500, 15, 'skincare', 'Candle, balm and a small bunch'], ['Bouquet workshop', 7500, 120, 'spa-still', 'Thursday evenings, all flowers included']],
+    staff: [['Noor'], ['Femke']],
+  },
 };
 
 /** A sample business for a template's gallery card, drawn with that template's defaults. */

@@ -1,0 +1,78 @@
+/* Hatch: sign-painter yellow, tarmac black, chunky borders, stickers. Loud on purpose. */
+.t-hatch { --paper: #FFF8E1; --ink: #121110; --muted: #4A453D; --line: #121110; font-size: 16px; }
+.t-hatch .s-btn-accent { color: var(--ink); }
+
+.tha-head { background: var(--ink); color: var(--accent); }
+.tha-head-in { display: flex; align-items: center; gap: 16px; min-height: 60px; }
+.tha-brand { margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 26px; font-weight: 900; text-transform: uppercase; text-decoration: none; }
+.tha-head nav { display: none; }
+.tha-open { padding: 4px 10px; border: 2px solid currentColor; border-radius: 999px; font-size: 14px; font-weight: 800; text-transform: uppercase; rotate: -3deg; }
+.tha-open[data-open='false'] { color: #BDB6A8; }
+
+.tha-hero { display: grid; background: var(--accent); border-bottom: 4px solid var(--ink); overflow: hidden; }
+.tha-hero-in { display: grid; gap: 18px; padding-block: 40px 36px; }
+.tha-name { margin: 0; font-size: clamp(72px, 17cqi, 230px); font-weight: 900; line-height: .82; letter-spacing: -0.01em; text-transform: uppercase; text-wrap: balance; overflow-wrap: break-word; }
+.tha-name[data-length='medium'] { font-size: clamp(60px, 12cqi, 170px); }
+.tha-name[data-length='long'] { font-size: clamp(44px, 8.5cqi, 120px); hyphens: auto; }
+.tha-bubble { position: relative; justify-self: start; max-width: 34ch; margin: 0; padding: 14px 18px; border: 3px solid var(--ink); border-radius: 18px; background: #fff; font-size: 18px; font-weight: 600; box-shadow: 5px 5px 0 var(--ink); }
+.tha-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+.tha-order { display: inline-flex; align-items: center; gap: 10px; min-height: 64px; padding: 0 28px; border-radius: 999px; background: var(--ink); color: var(--accent); font-size: 26px; font-weight: 900; text-transform: uppercase; text-decoration: none; transition: transform 140ms var(--ease-out); }
+.tha-order:active { transform: scale(.97); }
+.tha-when { font-weight: 700; }
+.tha-hero-photo { position: relative; aspect-ratio: 16 / 9; border-top: 4px solid var(--ink); overflow: hidden; }
+.tha-hero-photo > * { position: absolute; inset: 0; }
+
+.tha-board { padding-block: 56px; background: var(--ink); color: #fff; }
+.tha-h2 { margin: 0 0 22px; font-size: clamp(48px, 9cqi, 110px); font-weight: 900; line-height: .85; text-transform: uppercase; }
+.tha-board .tha-h2 { color: var(--accent); }
+.tha-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.tha-tile { position: relative; display: grid; align-content: start; gap: 8px; min-height: 180px; padding: 16px; border: 3px solid #fff; border-radius: 14px; text-decoration: none; transition: transform 160ms var(--ease-out), background-color 160ms ease; }
+.tha-tile strong { font-size: 30px; font-weight: 800; line-height: .95; text-transform: uppercase; padding-right: 64px; }
+.tha-tile-photo { display: block; aspect-ratio: 4 / 3; margin: -16px -16px 4px; border-bottom: 3px solid #fff; border-radius: 11px 11px 0 0; overflow: hidden; }
+.tha-tile-desc { font-size: 14px; opacity: .8; }
+.tha-sticker { position: absolute; right: 10px; top: 10px; z-index: 2; display: grid; place-items: center; min-width: 64px; height: 64px; padding: 0 8px; border: 3px solid var(--ink); border-radius: 50%; background: var(--accent); color: var(--ink); font-size: 18px; font-weight: 900; rotate: -8deg; }
+.tha-tile[data-tilt='1'] .tha-sticker { rotate: 6deg; }
+.tha-tile[data-tilt='2'] .tha-sticker { rotate: -2deg; }
+.tha-go { display: inline-flex; align-items: center; gap: 6px; margin-top: auto; color: var(--accent); font-weight: 800; text-transform: uppercase; }
+
+.tha-band { background: var(--accent); border-block: 4px solid var(--ink); }
+.tha-band ul { display: flex; gap: 0; margin: 0 auto; padding-block: 0; list-style: none; overflow-x: auto; scrollbar-width: none; }
+.tha-band li { display: grid; flex: 1 0 auto; gap: 2px; padding: 14px 16px; border-right: 3px solid var(--ink); font-weight: 700; white-space: nowrap; }
+.tha-band li:last-child { border-right: 0; }
+.tha-band strong { font-size: 24px; font-weight: 900; text-transform: uppercase; }
+.tha-band [data-today] { background: var(--ink); color: var(--accent); }
+.tha-band [data-closed] span { opacity: .55; }
+
+.tha-snaps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; padding-block: 56px 0; }
+.tha-snaps figure { margin: 0; aspect-ratio: 1; padding: 8px 8px 28px; border: 3px solid var(--ink); background: #fff; box-shadow: 5px 5px 0 var(--ink); rotate: -1.5deg; }
+.tha-snaps figure[data-tilt='1'] { rotate: 1.5deg; }
+.tha-snaps figure[data-tilt='2'] { rotate: -.5deg; }
+.tha-snaps figure > * { height: 100%; overflow: hidden; }
+
+.tha-sec { display: grid; gap: 14px; padding-block: 56px 0; }
+.tha-place { margin: 0; font-size: 22px; font-weight: 700; max-width: 30ch; }
+.tha-calls { display: flex; flex-wrap: wrap; gap: 12px; }
+.tha-call { display: inline-flex; align-items: center; gap: 10px; min-height: 60px; padding: 0 22px; border: 3px solid var(--ink); border-radius: 999px; background: var(--accent); font-size: 24px; font-weight: 900; text-decoration: none; box-shadow: 4px 4px 0 var(--ink); }
+.tha-call-alt { background: #fff; }
+.tha-about { margin: 0; max-width: 18ch; font-size: clamp(36px, 6cqi, 72px); font-weight: 900; line-height: .92; text-transform: uppercase; }
+.tha-crew { margin: 0; font-size: 22px; font-weight: 700; }
+.tha-faqs .s-faq { border-bottom: 3px solid var(--ink); }
+.tha-faqs summary { font-size: 18px; font-weight: 800; }
+.tha-foot { margin-top: 72px; background: var(--ink); color: var(--accent); }
+.tha-foot .s-wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-block: 24px; }
+.tha-foot strong { font-size: 34px; font-weight: 900; text-transform: uppercase; }
+
+@media (hover: hover) and (pointer: fine) {
+  .tha-tile:hover { transform: translateY(-3px); background: #1F1D1A; }
+  .tha-head nav a:hover { color: #fff; }
+}
+
+@container site (min-width: 760px) {
+  .tha-head nav { display: flex; gap: 22px; margin-right: 8px; font-weight: 800; text-transform: uppercase; }
+  .tha-head nav a { text-decoration: none; }
+  .tha-hero { grid-template-columns: 1.3fr 1fr; }
+  .tha-hero-in { padding-block: 64px 56px; }
+  .tha-hero-photo { aspect-ratio: auto; border-top: 0; border-left: 4px solid var(--ink); }
+  .tha-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  .tha-snaps { grid-template-columns: repeat(4, 1fr); gap: 22px; }
+}
