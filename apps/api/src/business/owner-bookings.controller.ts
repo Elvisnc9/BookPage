@@ -1,6 +1,8 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { BOOKING_STATUSES, type BookingStatus, type BookingStatusChange, bookingStatusChangeSchema } from '@bookpage/shared';
 import { ClerkAuthGuard, CurrentAuth } from '../auth/clerk-auth.guard';
+import { OWNER_EMAIL_LIMITS, OWNER_LIMITS, OwnerThrottlerGuard } from '../common/throttling';
 import type { AuthUser } from '../auth/owners.service';
 import { ZodPipe } from '../common/zod.pipe';
 import { OwnerBookingsService } from './owner-bookings.service';
@@ -9,7 +11,8 @@ const asDate = (value?: string) => (value && !Number.isNaN(Date.parse(value)) ? 
 
 /** The dashboard's bookings: Today numbers, lists by date/status, and approve/decline/cancel. */
 @Controller('business')
-@UseGuards(ClerkAuthGuard)
+@UseGuards(ClerkAuthGuard, OwnerThrottlerGuard)
+@Throttle(OWNER_LIMITS)
 export class OwnerBookingsController {
   constructor(private readonly bookings: OwnerBookingsService) {}
 
@@ -40,6 +43,7 @@ export class OwnerBookingsController {
   }
 
   @Post('bookings/:id/status')
+  @Throttle(OWNER_EMAIL_LIMITS)
   @HttpCode(200)
   change(
     @CurrentAuth() auth: AuthUser,

@@ -8,6 +8,7 @@ import { AppModule } from '../app.module';
 import { CLIENT_IP_HEADER, PROXY_SECRET_HEADER } from '../common/client-ip';
 import { addDays, localDate } from '@bookpage/shared';
 import { OwnerBookingsService } from '../business/owner-bookings.service';
+import { ENQUIRIES_PER_DAY } from './public.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { DepositHoldsService, HOLD_EXPIRED_REASON } from '../reminders/deposit-holds.service';
 
@@ -290,5 +291,17 @@ describe('public booking page', () => {
     });
     expect(status).toBe(201);
     expect(await prisma.enquiry.count({ where: { business: { slug } } })).toBe(1);
+  });
+
+  it('caps the enquiries one business receives in a day, whoever sends them', async () => {
+    const business = await prisma.business.findUniqueOrThrow({ where: { slug } });
+    const customer = await prisma.customer.findFirstOrThrow({ where: { businessId: business.id } });
+    const already = await prisma.enquiry.count({ where: { businessId: business.id } });
+    await prisma.enquiry.createMany({
+      data: Array.from({ length: ENQUIRIES_PER_DAY - already }, () => ({ businessId: business.id, customerId: customer.id, message: 'Filler' })),
+    });
+    const res = await call('POST', '/enquiries', { message: 'One more', customer: { name: 'Late', email: 'late@example.com' } });
+    expect(res.status).toBe(429);
+    await prisma.enquiry.deleteMany({ where: { businessId: business.id, message: 'Filler' } });
   });
 });

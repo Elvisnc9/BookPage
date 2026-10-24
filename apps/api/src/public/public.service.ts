@@ -1,5 +1,6 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto';
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { TOO_MANY_ATTEMPTS } from '../common/throttling';
 import {
   type BookingRequest,
   type CreatedBooking,
@@ -25,6 +26,8 @@ import { isSlotTaken } from '../prisma/errors';
 
 const ACTIVE = ['pending', 'confirmed'] as const;
 const MAX_DAYS = 31;
+/** Most enquiries one business receives in 24 hours, from everyone together. */
+export const ENQUIRIES_PER_DAY = 50;
 
 const BUSINESS_VIEW = {
   bookingRules: true,
@@ -209,6 +212,9 @@ export class PublicService {
 
   async enquire(slug: string, req: EnquiryRequest): Promise<{ ok: true }> {
     const b = await this.load(slug);
+    // Per-visitor limits can be dodged by switching IPs; this caps what one business's inbox can receive.
+    const today = await this.prisma.enquiry.count({ where: { businessId: b.id, createdAt: { gte: new Date(Date.now() - 86_400_000) } } });
+    if (today >= ENQUIRIES_PER_DAY) throw new HttpException(TOO_MANY_ATTEMPTS, HttpStatus.TOO_MANY_REQUESTS);
     if (req.serviceId && !b.services.some((s) => s.id === req.serviceId)) throw new NotFoundException('Unknown service');
     const phone = this.phone(req.customer.phone, 'optional', b.country);
     const customer = await this.upsertCustomer(b.id, req.customer.name, req.customer.email, phone, false);

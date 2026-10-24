@@ -10,7 +10,7 @@ import {
   rescheduleRequestSchema,
 } from '@bookpage/shared';
 import { ZodPipe } from '../common/zod.pipe';
-import { PUBLIC_READ_LIMITS, PublicThrottlerGuard } from './public-throttler.guard';
+import { PUBLIC_READ_LIMITS, PublicThrottlerGuard, Sends } from '../common/throttling';
 import { PublicService } from './public.service';
 
 /**
@@ -46,6 +46,7 @@ export class PublicController {
   }
 
   @Post('bookings')
+  @Sends()
   book(@Param('slug') slug: string, @Body(new ZodPipe(bookingRequestSchema)) body: BookingRequest) {
     return this.pub.book(slug, body);
   }
@@ -57,6 +58,7 @@ export class PublicController {
   }
 
   @Post('bookings/:id/cancel')
+  @Sends()
   @HttpCode(200)
   cancel(
     @Param('slug') slug: string,
@@ -67,6 +69,7 @@ export class PublicController {
   }
 
   @Post('bookings/:id/reschedule')
+  @Sends()
   @HttpCode(200)
   reschedule(
     @Param('slug') slug: string,
@@ -77,6 +80,7 @@ export class PublicController {
   }
 
   @Post('enquiries')
+  @Sends()
   enquire(@Param('slug') slug: string, @Body(new ZodPipe(enquiryRequestSchema)) body: EnquiryRequest) {
     return this.pub.enquire(slug, body);
   }

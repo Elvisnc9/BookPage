@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { ZodPipe } from '../common/zod.pipe';
 import { PrismaService } from '../prisma/prisma.service';
 import { SiteTemplatesService } from '../site/site-templates.service';
-import { PUBLIC_READ_LIMITS, PublicThrottlerGuard } from './public-throttler.guard';
+import { PUBLIC_READ_LIMITS, PublicThrottlerGuard } from '../common/throttling';
 
 /** Seeded demo pages: shown on the marketing site, never counted as real businesses. */
 const DEMO_SLUGS = ['glowstudio'];

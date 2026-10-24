@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import {
   MEDIA_MAX_BYTES,
@@ -15,6 +16,7 @@ import {
   staffSchema,
 } from '@bookpage/shared';
 import { ClerkAuthGuard, CurrentAuth } from '../auth/clerk-auth.guard';
+import { OWNER_LIMITS, OWNER_RARE_LIMITS, OwnerThrottlerGuard, UPLOAD_LIMITS } from '../common/throttling';
 import type { AuthUser } from '../auth/owners.service';
 import { ZodPipe } from '../common/zod.pipe';
 import { readBody } from '../site/media';
@@ -22,7 +24,8 @@ import { BusinessService } from './business.service';
 
 /** The signed-in owner's business. Used by onboarding (autosave) and the dashboard. */
 @Controller('business')
-@UseGuards(ClerkAuthGuard)
+@UseGuards(ClerkAuthGuard, OwnerThrottlerGuard)
+@Throttle(OWNER_LIMITS)
 export class BusinessController {
   constructor(private readonly business: BusinessService) {}
 
@@ -58,6 +61,7 @@ export class BusinessController {
 
   /** Raw image body, already resized in the browser. `kind` picks the slot; `targetId` the service or person. */
   @Post('media')
+  @Throttle(UPLOAD_LIMITS)
   @HttpCode(200)
   async upload(
     @CurrentAuth() auth: AuthUser,
@@ -83,6 +87,7 @@ export class BusinessController {
   }
 
   @Post('publish')
+  @Throttle(OWNER_RARE_LIMITS)
   @HttpCode(200)
   publish(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(publishSchema)) body: { slug: string }) {
     return this.business.publish(auth.userId, body.slug);

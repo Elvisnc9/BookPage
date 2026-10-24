@@ -1,4 +1,6 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { OWNER_LIMITS, OwnerThrottlerGuard } from '../common/throttling';
 import { PrismaService } from '../prisma/prisma.service';
 import { ClerkAuthGuard, CurrentAuth } from './clerk-auth.guard';
 import type { AuthUser } from './owners.service';
@@ -13,7 +15,8 @@ export class AuthController {
 
   /** Who is signed in, plus the business they're setting up or running. */
   @Get('me')
-  @UseGuards(ClerkAuthGuard)
+  @UseGuards(ClerkAuthGuard, OwnerThrottlerGuard)
+  @Throttle(OWNER_LIMITS)
   async me(@CurrentAuth() auth: AuthUser) {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: auth.userId },

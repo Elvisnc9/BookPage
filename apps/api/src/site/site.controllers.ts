@@ -1,12 +1,15 @@
 import { Controller, Get, NotFoundException, Param, ParseUUIDPipe, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
+import { MEDIA_LIMITS, OWNER_LIMITS, OwnerThrottlerGuard, PublicThrottlerGuard } from '../common/throttling';
 import { MediaService } from './media.service';
 import { SiteTemplatesService } from './site-templates.service';
 
 /** The template gallery for onboarding: active, validated templates in order. */
 @Controller('templates')
-@UseGuards(ClerkAuthGuard)
+@UseGuards(ClerkAuthGuard, OwnerThrottlerGuard)
+@Throttle(OWNER_LIMITS)
 export class TemplatesController {
   constructor(private readonly templates: SiteTemplatesService) {}
 
@@ -21,6 +24,8 @@ export class TemplatesController {
  * /media/{id} on every host). Ids are never reused, so responses are immutable.
  */
 @Controller('media')
+@UseGuards(PublicThrottlerGuard)
+@Throttle(MEDIA_LIMITS)
 export class MediaController {
   constructor(private readonly media: MediaService) {}
 
