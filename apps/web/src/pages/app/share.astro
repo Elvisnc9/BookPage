@@ -2,6 +2,7 @@
 import { ROOT_DOMAIN } from 'astro:env/server';
 import { renderSVG } from 'uqr';
 import AppIcon from '../../components/AppIcon.astro';
+import ProNudge from '../../components/dashboard/ProNudge.astro';
 import AppLayout from '../../layouts/AppLayout.astro';
 import { apiFetch } from '../../lib/api';
 
@@ -12,7 +13,7 @@ import { apiFetch } from '../../lib/api';
  */
 const res = await apiFetch('/business', Astro);
 if (!res.ok) throw new Error(`GET /business failed: ${res.status}`);
-const { business } = (await res.json()) as { business: { slug: string; name: string; timezone: string } };
+const { business } = (await res.json()) as { business: { slug: string; name: string; timezone: string; plan: 'free' | 'pro' } };
 
 const { protocol, port } = Astro.url;
 const host = `${business.slug}.${ROOT_DOMAIN}${port ? `:${port}` : ''}`;
@@ -50,6 +51,10 @@ const whatsapp = `https://wa.me/?text=${encodeURIComponent(messages[1]!.text)}`;
     <h1 class="ap-h1">Share your page</h1>
   </div>
   <p class="ap-lede">Clients book themselves when your link is where they already look. Put it in three places today.</p>
+  {business.plan === 'free' && (
+    <ProNudge id="share-domain" title="Rather share yourname.com?" href="/billing" cta="See Pro"
+      text={`Pro includes your own domain for a year, so your link can be your name instead of ${host}.`} />
+  )}
 
   <section class="ap-panel sh-link" aria-labelledby="sh-link">
     <h2 id="sh-link" class="ap-h2">Your booking link</h2>

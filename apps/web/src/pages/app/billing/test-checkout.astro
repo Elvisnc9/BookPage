@@ -1,0 +1,58 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import { apiFetch } from '../../../lib/api';
+import { handleBillingAction, money } from '../../../lib/billing';
+
+/**
+ * The development test provider's checkout: stands in for the payment provider's
+ * page until one is connected. No money moves. The API refuses it outside test mode.
+ */
+const posted = await handleBillingAction(Astro);
+if (posted) return posted;
+
+const id = Astro.url.searchParams.get('session') ?? '';
+const res = /^[0-9a-f-]{36}$/i.test(id) ? await apiFetch(`/billing/checkout/${id}`, Astro) : null;
+if (!res?.ok) return new Response('Not found', { status: 404 });
+const { session } = (await res.json()) as {
+  session: { id: string; status: string; amountMinor: number; currency: string; domain: { name: string; mode: string } | null; testMode: boolean };
+};
+if (!session.testMode) return new Response('Not found', { status: 404 });
+---
+
+<AppLayout title="Test checkout" active="billing">
+  <div class="tc">
+    <p class="tc-flag mono" role="note">Test mode · no money moves</p>
+    <h1 class="ap-h1">Checkout</h1>
+    <section class="ap-panel tc-card" aria-label="Order">
+      <dl>
+        <div><dt>BookPage Pro, 1 year</dt><dd>{money(session.amountMinor, session.currency)}</dd></div>
+        <div><dt>Domain{session.domain && <span class="mono"> {session.domain.name}</span>}</dt><dd>{session.domain ? (session.domain.mode === 'register' ? 'Included' : 'Yours, connected') : 'Later'}</dd></div>
+        <div class="tc-total"><dt>Total</dt><dd>{money(session.amountMinor, session.currency)}</dd></div>
+      </dl>
+      {session.status === 'open' ? (
+        <form method="post" class="tc-pay">
+          <input type="hidden" name="action" value="pay-test" />
+          <input type="hidden" name="session" value={session.id} />
+          <p class="tc-note">The real checkout (card, Apple Pay and so on) goes here once a payment provider is connected. Pressing Pay acts as a successful payment.</p>
+          <button type="submit" class="btn btn-primary">Pay {money(session.amountMinor, session.currency)} (test)</button>
+          <a class="btn" href="/upgrade">Back</a>
+        </form>
+      ) : (
+        <p class="tc-note">{session.status === 'paid' ? 'This checkout is already paid.' : 'This checkout has expired.'} <a href="/billing">Go to your plan</a></p>
+      )}
+    </section>
+  </div>
+</AppLayout>
+
+<style>
+  .tc { display: grid; gap: 14px; max-width: 520px; }
+  .tc-flag { justify-self: start; margin: 0; padding: 6px 12px; border: 2px dashed var(--ink); border-radius: var(--r-pill); background: var(--tint-yellow); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  .tc-card { display: grid; gap: 16px; padding: 18px; }
+  .tc-card dl { display: grid; gap: 8px; margin: 0; }
+  .tc-card dl div { display: flex; justify-content: space-between; gap: 12px; }
+  .tc-card dt { min-width: 0; overflow-wrap: anywhere; }
+  .tc-card dd { margin: 0; font-weight: 700; white-space: nowrap; }
+  .tc-total { padding-top: 8px; border-top: var(--border); font-size: 18px; }
+  .tc-pay { display: flex; flex-wrap: wrap; gap: 10px; }
+  .tc-note { flex-basis: 100%; margin: 0; color: var(--muted); font-size: 14px; }
+</style>

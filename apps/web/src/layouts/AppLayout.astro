@@ -9,7 +9,7 @@ import { dayLabel, initials } from '../lib/public';
 
 interface Props {
   title: string;
-  active: 'today' | 'bookings' | 'page' | 'share';
+  active: 'today' | 'bookings' | 'page' | 'share' | 'billing';
   /** The business time zone, for the date line. */
   timezone?: string | undefined;
   /** Optional heading shown in the page header (the page's own h1 otherwise). */
@@ -29,6 +29,7 @@ const nav = [
   { key: 'bookings', label: 'Bookings', href: '/bookings', icon: 'bookings' },
   { key: 'page', label: 'My page', href: '/page', icon: 'page' },
   { key: 'share', label: 'Share', href: '/share', icon: 'share' },
+  { key: 'billing', label: 'Plan', href: '/billing', icon: 'star' },
 ] as const;
 ---
 

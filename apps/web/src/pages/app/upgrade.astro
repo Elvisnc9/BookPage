@@ -1,0 +1,44 @@
+---
+import { ROOT_DOMAIN } from 'astro:env/server';
+import { PRO_PRICE } from '@bookpage/shared';
+import Upgrade from '../../components/billing/Upgrade';
+import AppLayout from '../../layouts/AppLayout.astro';
+import { apiFetch } from '../../lib/api';
+import { getBilling, money } from '../../lib/billing';
+
+/**
+ * Upgrade to Pro: pick the included domain (or one they own, or later), then pay.
+ * With ?domain=1, a Pro owner who skipped the domain adds it here.
+ */
+const [billing, res] = await Promise.all([getBilling(Astro), apiFetch('/business', Astro)]);
+if (!res.ok) throw new Error(`GET /business failed: ${res.status}`);
+const { business } = (await res.json()) as { business: { name: string; timezone: string } };
+
+const isPro = billing.effectivePlan === 'pro' && billing.status !== 'past_due';
+const domainOnly = isPro && !billing.domain && Astro.url.searchParams.has('domain');
+if (isPro && !domainOnly) return Astro.redirect('/billing', 303);
+const pricingUrl = `${Astro.url.protocol}//www.${ROOT_DOMAIN}${Astro.url.port ? `:${Astro.url.port}` : ''}/pricing#pro`;
+---
+
+<AppLayout title={domainOnly ? 'Add your domain' : 'Upgrade to Pro'} active="billing" timezone={business.timezone}>
+  <div class="ap-head">
+    <h1 class="ap-h1">{domainOnly ? 'Add your domain' : 'Upgrade to Pro'}</h1>
+  </div>
+  {!domainOnly && <p class="ug-lede">{money(PRO_PRICE.amountMinor)} a year, with your own domain included. Pro templates unlock and the BookPage badge comes off your page as soon as you pay.</p>}
+
+  {domainOnly || billing.checkoutAvailable ? (
+    <Upgrade client:load mode={domainOnly ? 'domain' : 'checkout'} businessName={business.name} testMode={billing.testMode} />
+  ) : (
+    <section class="ap-panel ug-soon" aria-labelledby="ug-soon">
+      <h2 id="ug-soon" class="ap-h2">Pro opens soon</h2>
+      <p>We're finishing payments. Join the waitlist and we'll email you once, the day it opens.</p>
+      <a class="btn btn-primary" href={pricingUrl}>Join the waitlist</a>
+    </section>
+  )}
+</AppLayout>
+
+<style>
+  .ug-lede { margin: -4px 0 16px; max-width: 62ch; color: var(--muted); }
+  .ug-soon { display: grid; gap: 10px; justify-items: start; padding: 18px; }
+  .ug-soon p { margin: 0; }
+</style>

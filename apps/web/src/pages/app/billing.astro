@@ -1,0 +1,150 @@
+---
+import { ROOT_DOMAIN } from 'astro:env/server';
+import { PRO_COMING, PRO_FEATURES, PRO_GRACE_DAYS, PRO_PRICE } from '@bookpage/shared';
+import AppIcon from '../../components/AppIcon.astro';
+import AppLayout from '../../layouts/AppLayout.astro';
+import { apiFetch } from '../../lib/api';
+import { billingFlash, getBilling, handleBillingAction, money } from '../../lib/billing';
+
+/**
+ * The owner's plan. Free: what Pro adds and the way in (or "opening soon" while no
+ * payment provider is connected). Pro: renewal, the included domain, cancel/resume.
+ */
+const posted = await handleBillingAction(Astro);
+if (posted) return posted;
+
+const [billing, res] = await Promise.all([getBilling(Astro), apiFetch('/business', Astro)]);
+if (!res.ok) throw new Error(`GET /business failed: ${res.status}`);
+const { business } = (await res.json()) as { business: { slug: string; timezone: string } };
+const message = billingFlash(Astro.url);
+
+const isPro = billing.effectivePlan === 'pro';
+const date = (iso: string, plusDays = 0) =>
+  new Intl.DateTimeFormat('en-GB', { timeZone: business.timezone, day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(new Date(iso).getTime() + plusDays * 86_400_000));
+const renews = billing.renewsAt ? date(billing.renewsAt) : null;
+const perMonth = money(Math.round(PRO_PRICE.amountMinor / 12));
+const pricingUrl = `${Astro.url.protocol}//www.${ROOT_DOMAIN}${Astro.url.port ? `:${Astro.url.port}` : ''}/pricing#pro`;
+const pageHost = `${business.slug}.${ROOT_DOMAIN}`;
+
+const statusLine = !isPro
+  ? null
+  : billing.status === 'canceling'
+    ? `Ends on ${renews}. You keep Pro until then.`
+    : billing.status === 'past_due'
+      ? `Your renewal didn't go through. Pro stays on until ${billing.renewsAt ? date(billing.renewsAt, PRO_GRACE_DAYS) : 'the end of the grace period'}.`
+      : renews
+        ? `Renews on ${renews} for ${money(PRO_PRICE.amountMinor)}.`
+        : 'Pro is on.';
+
+const domainLine = (() => {
+  const d = billing.domain;
+  if (!d) return null;
+  if (d.status === 'active') return { tone: 'ok', pill: 'Connected', text: billing.testMode && d.mode === 'register' ? 'Test mode: nothing was really registered.' : `Your page opens at ${d.name}.` };
+  if (d.status === 'failed') return { tone: 'bad', pill: 'Needs help', text: "We couldn't set this domain up. Reply to your receipt email and we'll sort it." };
+  if (d.mode === 'connect') return { tone: 'wait', pill: 'Waiting', text: `Custom domains switch on when Pro opens. We'll email you the one DNS record to add at your registrar, pointing ${d.name} at ${pageHost}.` };
+  return { tone: 'wait', pill: 'Registering', text: 'We’re registering it in your name. This usually takes a few minutes.' };
+})();
+---
+
+<AppLayout title="Plan" active="billing" timezone={business.timezone}>
+  <div class="ap-head">
+    <h1 class="ap-h1">Your plan</h1>
+  </div>
+
+  {message && <p class={`ap-flash ${message.tone}`} role={message.tone === 'bad' ? 'alert' : 'status'}>{message.text}</p>}
+  {billing.testMode && (
+    <p class="bl-test mono" role="note">Test mode on this computer: checkout is pretend, no money moves and no domain is registered.</p>
+  )}
+
+  {isPro ? (
+    <div class="bl-grid">
+      <section class="ap-panel bl-card" aria-labelledby="bl-plan">
+        <p class="bl-k"><span class="pill" data-tone="ok">Pro</span>{billing.status === 'canceling' && <span class="pill" data-tone="wait">Not renewing</span>}</p>
+        <h2 id="bl-plan" class="ap-h2">BookPage Pro</h2>
+        <p class="bl-line">{statusLine}</p>
+        {billing.status === 'active' && (
+          <form method="post" class="bl-form">
+            <input type="hidden" name="action" value="cancel" />
+            <button type="submit" class="btn ap-btn">Cancel renewal</button>
+            <span class="bl-muted">Pro stays on until {renews}.</span>
+          </form>
+        )}
+        {billing.status === 'canceling' && (
+          <form method="post" class="bl-form">
+            <input type="hidden" name="action" value="resume" />
+            <button type="submit" class="btn btn-primary ap-btn">Keep Pro renewing</button>
+          </form>
+        )}
+      </section>
+
+      <section class="ap-panel bl-card" aria-labelledby="bl-domain">
+        <h2 id="bl-domain" class="ap-h2"><AppIcon name="globe" size={18} /> Your domain</h2>
+        {billing.domain && domainLine ? (
+          <>
+            <p class="bl-domain"><span class="mono">{billing.domain.name}</span><span class="pill" data-tone={domainLine.tone}>{domainLine.pill}</span></p>
+            <p class="bl-muted">{domainLine.text}</p>
+          </>
+        ) : (
+          <>
+            <p class="bl-muted">One standard domain is included with Pro. You haven't picked yours yet.</p>
+            <a class="btn btn-primary ap-btn bl-start" href="/upgrade?domain=1">Add my domain <AppIcon name="arrow" size={16} /></a>
+          </>
+        )}
+      </section>
+
+      <section class="ap-panel bl-card bl-wide" aria-labelledby="bl-have">
+        <h2 id="bl-have" class="ap-h2">What you have</h2>
+        <ul class="bl-list">{PRO_FEATURES.map((f) => <li><AppIcon name="check" size={16} /> {f}</li>)}</ul>
+        <p class="bl-k lab">Coming to Pro, at no extra cost</p>
+        <ul class="bl-list bl-later">{PRO_COMING.map((f) => <li>{f}</li>)}</ul>
+      </section>
+    </div>
+  ) : (
+    <div class="bl-grid">
+      <section class="ap-panel bl-card" aria-labelledby="bl-free">
+        <p class="bl-k"><span class="pill">Free</span></p>
+        <h2 id="bl-free" class="ap-h2">You're on Free</h2>
+        <p class="bl-muted">Your booking page, unlimited bookings and email reminders. Free for good, so there's no trial to run out.</p>
+      </section>
+
+      <section class="ap-panel bl-card bl-pro" aria-labelledby="bl-pro">
+        <p class="bl-k"><span class="pill" data-tone="wait">Pro</span>{!billing.checkoutAvailable && <span class="pill">Opening soon</span>}</p>
+        <h2 id="bl-pro" class="ap-h2">Your own domain and a page that's all yours</h2>
+        <p class="bl-price"><strong class="ap-num">{money(PRO_PRICE.amountMinor)}</strong><span class="mono">/year</span></p>
+        <p class="bl-muted">About {perMonth} a month, billed once a year. Your domain is included.</p>
+        <ul class="bl-list">{PRO_FEATURES.map((f) => <li><AppIcon name="check" size={16} /> {f}</li>)}</ul>
+        {billing.checkoutAvailable ? (
+          <a class="btn btn-primary bl-start" href="/upgrade">Upgrade to Pro <AppIcon name="arrow" size={16} /></a>
+        ) : (
+          <a class="btn btn-primary bl-start" href={pricingUrl}>Join the Pro waitlist <AppIcon name="arrow" size={16} /></a>
+        )}
+        <p class="bl-k lab">Coming to Pro</p>
+        <ul class="bl-list bl-later">{PRO_COMING.map((f) => <li>{f}</li>)}</ul>
+      </section>
+    </div>
+  )}
+</AppLayout>
+
+<style>
+  .bl-test { margin: 0 0 16px; padding: 10px 14px; border: 2px dashed var(--ink); border-radius: var(--r-lg); background: var(--tint-yellow); font-size: 13px; }
+  .ap-flash { margin-bottom: 16px; }
+  .bl-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 900px) { .bl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .bl-wide { grid-column: 1 / -1; } }
+  .bl-card { display: grid; gap: 10px; padding: 18px; }
+  .bl-card .ap-h2 { display: flex; align-items: center; gap: 8px; }
+  .bl-k { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+  .bl-line { margin: 0; font-weight: 600; }
+  .bl-muted { margin: 0; color: var(--muted); font-size: 14px; }
+  .bl-form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .bl-domain { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0; font-size: 17px; font-weight: 700; }
+  .bl-domain .mono { overflow-wrap: anywhere; }
+  .bl-price { display: flex; align-items: baseline; gap: 6px; margin: 0; }
+  .bl-price strong { font-size: 48px; }
+  .bl-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+  .bl-list li { display: flex; gap: 8px; align-items: flex-start; }
+  .bl-list :global(svg) { flex: none; margin-top: 3px; }
+  .bl-later { color: var(--muted); font-size: 14px; padding-left: 4px; }
+  .bl-later li::before { content: '○'; }
+  .bl-start { justify-self: start; }
+  .bl-pro { border-color: var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+</style>

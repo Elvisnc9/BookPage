@@ -1,0 +1,48 @@
+---
+import AppIcon from '../AppIcon.astro';
+
+/**
+ * A quiet, dismissible pointer to Pro at a moment it is relevant (never a pop-up).
+ * Dismissal is remembered in this browser only; nothing breaks without storage.
+ */
+interface Props {
+  /** Stable key for remembering the dismissal. */
+  id: string;
+  title: string;
+  text: string;
+  href: string;
+  cta: string;
+}
+const { id, title, text, href, cta } = Astro.props;
+---
+
+<aside class="pn" data-nudge={id} aria-label="Pro suggestion">
+  <span class="pn-ic" aria-hidden="true"><AppIcon name="star" size={18} /></span>
+  <div class="pn-body">
+    <strong>{title}</strong>
+    <p>{text}</p>
+    <a class="pn-go" href={href}>{cta} <AppIcon name="arrow" size={14} /></a>
+  </div>
+  <button type="button" class="icon-btn pn-x" data-nudge-close aria-label="Dismiss"><AppIcon name="x" size={16} /></button>
+</aside>
+
+<script>
+  for (const el of document.querySelectorAll<HTMLElement>('[data-nudge]')) {
+    const key = `bp-nudge-${el.dataset.nudge}`;
+    try { if (localStorage.getItem(key)) el.hidden = true; } catch { /* storage blocked: keep showing */ }
+    el.querySelector('[data-nudge-close]')?.addEventListener('click', () => {
+      el.hidden = true;
+      try { localStorage.setItem(key, '1'); } catch { /* fine */ }
+    });
+  }
+</script>
+
+<style>
+  .pn { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; margin: 0 0 16px; padding: 14px 16px; border: var(--border); border-radius: var(--r-xl); background: var(--tint-sun); }
+  .pn[hidden] { display: none; }
+  .pn-ic { display: grid; place-items: center; width: 32px; height: 32px; border: 2px solid var(--ink); border-radius: 50%; background: var(--sun); }
+  .pn-body { display: grid; gap: 4px; }
+  .pn-body p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+  .pn-go { display: inline-flex; align-items: center; gap: 6px; justify-self: start; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .pn-x { width: 32px; height: 32px; }
+</style>

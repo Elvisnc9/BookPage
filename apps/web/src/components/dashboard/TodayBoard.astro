@@ -3,7 +3,9 @@ import { addDays, localDate, weekdayOf, WEEKDAY_SHORT, zonedToUtc } from '@bookp
 import AppIcon from '../AppIcon.astro';
 import BookingRow from '../BookingRow.astro';
 import WeekPanel from '../WeekPanel.astro';
+import { getBilling } from '../../lib/billing';
 import { getBookings, getSummary } from '../../lib/owner';
+import ProNudge from './ProNudge.astro';
 import { dayLabel, timeOf, whenLabel } from '../../lib/public';
 
 /**
@@ -26,10 +28,12 @@ const dayEnd = zonedToUtc(addDays(summary.today, 1), 0, tz);
 const monday = addDays(summary.today, 1 - weekdayOf(summary.today));
 const lastMonday = addDays(monday, -7);
 
-const [today, pending, fortnight] = await Promise.all([
+const [today, pending, fortnight, billing] = await Promise.all([
   getBookings(Astro, { from: dayStart, to: dayEnd, status: ['pending', 'confirmed', 'completed', 'no_show'] }),
   getBookings(Astro, { from: new Date(), status: ['pending'] }),
   getBookings(Astro, { from: zonedToUtc(lastMonday, 0, tz), to: zonedToUtc(addDays(monday, 7), 0, tz), status: ['pending', 'confirmed', 'completed', 'no_show'] }),
+  // The plan only decides whether to mention Pro; the board works without it.
+  getBilling(Astro).catch(() => null),
 ]);
 
 // Bookings per day, Monday to Sunday, in the business's time zone.
@@ -48,6 +52,10 @@ const pendingLater = pending.filter((b) => new Date(b.startsAt) >= dayEnd);
 const n = summary.todayCount;
 const hour = Number(new Intl.DateTimeFormat('en-US', { hour: 'numeric', hourCycle: 'h23', timeZone: tz }).format(new Date()));
 const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+// A milestone worth marking, and only then a word about Pro (free plan only).
+const kept = fortnight.filter((b) => b.status !== 'no_show').length;
+const milestone = billing?.effectivePlan === 'free' && kept >= 10 ? kept : null;
 ---
 
 <div class="ap-island">
@@ -61,6 +69,10 @@ const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Go
   </div>
 
   {message && <p class={`ap-flash ${message.tone}`} role="status">{message.text}</p>}
+  {milestone && (
+    <ProNudge id="milestone-10" title={`${milestone} bookings this week and last. Nice.`} href="/billing" cta="See what Pro adds"
+      text="Ready to look the part? Pro gives you your own domain for a year, the Pro templates, and takes the BookPage badge off your page." />
+  )}
 
   <div class="ap-hero">
     <div class="ap-stats">
