@@ -1,7 +1,7 @@
 // Sample businesses for the template gallery cards. Each card renders the real
 // template component with one of these, so the thumbnail is the template itself,
 // not a screenshot that can drift. Photos are self-hosted Unsplash images
-// (public/samples, Unsplash License) and only ever appear in the gallery.
+// (public/samples, Unsplash License; credits in SAMPLE-PHOTOS.md) and only ever appear in the gallery.
 import type { PublicBusiness, ResolvedSite, SiteImage, SiteTemplate } from '@bookpage/shared';
 
 const img = (name: string): SiteImage => ({ id: `sample-${name}`, url: `/samples/${name}.webp`, width: 900, height: 600 });
