@@ -2,7 +2,6 @@
 import { randomUUID } from 'node:crypto';
 import type { CanActivate, ExecutionContext, INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import cookieParser from 'cookie-parser';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { OwnerBooking, OwnerSummary } from '@bookpage/shared';
 import { AppModule } from '../app.module';
@@ -73,7 +72,6 @@ beforeAll(async () => {
     .useClass(TestSessionGuard)
     .compile();
   app = moduleRef.createNestApplication();
-  app.use(cookieParser());
   await app.listen(0);
   base = await app.getUrl();
   prisma = app.get(PrismaService);

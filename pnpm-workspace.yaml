@@ -13,3 +13,9 @@ packageExtensions:
     dependencies:
       '@emnapi/core': '^1.5.0'
       '@emnapi/runtime': '^1.5.0'
+
+# Security fixes for the API's request path (denial-of-service advisories), within
+# the same major versions express and @nestjs/platform-express already accept.
+overrides:
+  body-parser@>=2.0.0 <2.4.0: ^2.4.0
+  multer@>=2.0.0 <2.5.0: ^2.5.0
