@@ -124,7 +124,7 @@ export function Neighbour({ site }: { site: SiteModel }) {
       </main>
       <footer class="tn-foot">
         <div class="s-wrap tn-foot-in"><strong class="s-display"><Name site={site} /></strong><a class="s-btn s-btn-accent" href="#services">{site.cta}</a></div>
-        <MadeWith />
+        <MadeWith site={site} />
       </footer>
     </>
   );

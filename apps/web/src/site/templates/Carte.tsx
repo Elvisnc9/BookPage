@@ -112,7 +112,7 @@ export function Carte({ site }: { site: SiteModel }) {
       </main>
       <footer class="tc-foot">
         <p class="s-display">{site.name}</p>
-        <MadeWith />
+        <MadeWith site={site} />
       </footer>
     </>
   );

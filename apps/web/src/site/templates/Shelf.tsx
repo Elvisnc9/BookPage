@@ -138,7 +138,7 @@ export function Shelf({ site }: { site: SiteModel }) {
         <span><Name site={site} /></span>
         <span>{site.area}</span>
       </footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

@@ -119,7 +119,7 @@ export function Bistro({ site }: { site: SiteModel }) {
         <span class="s-display"><Name site={site} /></span>
         <a href={site.links.services}>{site.cta} <Icon name="arrow" size={14} /></a>
       </footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

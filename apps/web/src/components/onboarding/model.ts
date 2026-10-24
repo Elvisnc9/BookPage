@@ -314,6 +314,7 @@ export function previewBusiness(input: {
     site,
     timezone: about.timezone,
     currency: about.currency,
+    showBadge: saved.plan !== 'pro',
     hours: hoursTo(input.days),
     services,
     // Everyone takes every bookable service until per-person services exist (the API does the same).

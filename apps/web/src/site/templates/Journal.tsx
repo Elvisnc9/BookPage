@@ -108,7 +108,7 @@ export function Journal({ site }: { site: SiteModel }) {
         <span class="s-display"><Name site={site} /></span>
         <a class="tj-link" href="#services">{site.cta} <Icon name="arrow" size={16} /></a>
       </footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

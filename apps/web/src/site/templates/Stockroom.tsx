@@ -106,7 +106,7 @@ export function Stockroom({ site }: { site: SiteModel }) {
       </main>
       <footer class="tst-foot">
         <div class="s-wrap"><strong class="s-display"><Name site={site} /></strong><span>{site.status.text}</span></div>
-        <MadeWith />
+        <MadeWith site={site} />
       </footer>
     </>
   );

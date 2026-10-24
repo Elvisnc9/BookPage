@@ -118,7 +118,7 @@ export function Hatch({ site }: { site: SiteModel }) {
       </main>
       <footer class="tha-foot">
         <div class="s-wrap"><strong class="s-display"><Name site={site} /></strong><span>{site.area}</span></div>
-        <MadeWith />
+        <MadeWith site={site} />
       </footer>
     </>
   );

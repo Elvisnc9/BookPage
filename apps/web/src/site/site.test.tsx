@@ -23,7 +23,7 @@ function full(slug: string): PublicBusiness {
     locationType: 'premises', addressLine1: '1 Canal Street', addressLine2: null, city: 'Berlin', region: null, postalCode: '10999', country: 'DE',
     serviceAreas: [], phone: '+49301234567', whatsapp: '+49301234567', email: 'hi@kantine.example',
     logo: img('logo'), hero: img('hero'), gallery: [img('g1'), img('g2'), img('g3'), img('g4'), img('g5'), img('g6')],
-    site: siteFor(slug), timezone: 'Europe/Berlin', currency: 'EUR',
+    site: siteFor(slug), timezone: 'Europe/Berlin', currency: 'EUR', showBadge: true,
     hours: [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ weekday, opensAt: 540, closesAt: 1320 })),
     services: [
       { id: 's1', name: 'Tasting menu', description: 'Seven courses', priceType: 'fixed', priceMinor: 6500, durationMin: 120, bookable: true, depositMinor: null, image: img('s1') },
@@ -100,6 +100,13 @@ describe.each(slugs)('template %s', (slug) => {
       expect(out).toContain('Wiśniewska-Kowalczyk');
       for (const bad of ['undefined', 'NaN', '[object Object]', 'src=""', 'null']) expect(out).not.toContain(bad);
     }
+  });
+
+  it('shows the BookPage badge on the free plan only, and the privacy link always', () => {
+    expect(html(full(slug), 'live')).toContain('Made with BookPage');
+    const pro = html({ ...full(slug), showBadge: false }, 'live');
+    expect(pro).not.toContain('Made with BookPage');
+    expect(pro).toContain('bookpage.app/privacy');
   });
 
   it('marks placeholders in the preview and never on the live page', () => {

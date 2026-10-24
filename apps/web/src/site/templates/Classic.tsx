@@ -163,7 +163,7 @@ export function Classic({ site }: { site: SiteModel }) {
             </ul>
           )}
         </div>
-        <MadeWith class="bk-made" />
+        <MadeWith site={site} class="bk-made" />
       </footer>
     </div>
   );

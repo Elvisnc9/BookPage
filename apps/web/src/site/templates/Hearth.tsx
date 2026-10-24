@@ -112,7 +112,7 @@ export function Hearth({ site }: { site: SiteModel }) {
         <strong class="s-display"><Name site={site} /></strong>
         <a href="#services">{site.cta} <Icon name="arrow" size={14} /></a>
       </footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

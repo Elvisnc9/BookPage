@@ -164,6 +164,7 @@ export function sampleBusiness(template: SiteTemplate): PublicBusiness {
     site,
     timezone: 'Europe/London',
     currency: 'EUR',
+    showBadge: true,
     hours: WEEK,
     services,
     staff: s.staff.map(([name, photo], i) => ({ id: `p${i}`, name, serviceIds: services.filter((x) => x.bookable).map((x) => x.id), photo: photo ? img(photo) : null })),

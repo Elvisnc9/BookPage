@@ -121,7 +121,7 @@ export function Practice({ site }: { site: SiteModel }) {
         {site.layout.sections.map(section)}
       </main>
       <footer class="tr-foot s-wrap"><span><Name site={site} /></span><a href="#services">{site.cta}</a></footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

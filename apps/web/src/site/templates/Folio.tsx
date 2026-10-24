@@ -89,7 +89,7 @@ export function Folio({ site }: { site: SiteModel }) {
       </header>
       <main>{site.layout.sections.map(section)}</main>
       <footer class="tf-foot s-wrap"><span>© {site.name}</span><span>{site.status.text}</span></footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

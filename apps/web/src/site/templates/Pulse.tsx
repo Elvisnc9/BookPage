@@ -121,7 +121,7 @@ export function Pulse({ site }: { site: SiteModel }) {
         <strong class="s-display"><Name site={site} /></strong>
         <span>{site.area}</span>
       </footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

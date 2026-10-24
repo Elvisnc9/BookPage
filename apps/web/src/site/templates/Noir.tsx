@@ -100,7 +100,7 @@ export function Noir({ site }: { site: SiteModel }) {
       <footer class="to-foot">
         <p class="s-display"><Name site={site} /></p>
         <p class="to-status">{site.status.text}</p>
-        <MadeWith />
+        <MadeWith site={site} />
       </footer>
     </>
   );

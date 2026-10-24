@@ -144,11 +144,14 @@ export function placeLine(site: SiteModel): string | null {
   return site.serviceAreas.length ? `We come to you in ${site.serviceAreas.join(', ')}` : 'We come to you';
 }
 
-export function MadeWith(props: { class?: string }) {
+/** The footer line: the BookPage badge (free plan only) and the privacy link (always). */
+export function MadeWith(props: { site: SiteModel; class?: string }) {
   return (
     <p class={`s-made ${props.class ?? ''}`}>
-      <a href="https://bookpage.app/?ref=page">Made with BookPage · Get your free page</a>
-      <span aria-hidden="true"> · </span>
+      {props.site.showBadge && <>
+        <a href="https://bookpage.app/?ref=page">Made with BookPage · Get your free page</a>
+        <span aria-hidden="true"> · </span>
+      </>}
       <a href="https://bookpage.app/privacy">Privacy</a>
     </p>
   );

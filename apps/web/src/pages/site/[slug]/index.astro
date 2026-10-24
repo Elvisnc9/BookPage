@@ -2,6 +2,7 @@
 import Base from '../../../layouts/Base.astro';
 import { loadBusiness } from '../../../lib/public';
 import { buildSite } from '../../../site/model';
+import { seoFor } from '../../../site/seo';
 import { Site } from '../../../site/Site';
 import '../../../site/index.css';
 
@@ -12,8 +13,20 @@ const b = await loadBusiness(Astro.params.slug, Astro.request);
 if (b instanceof Response) return b;
 
 const site = buildSite(b, 'live');
+// Search and share details: the rewrite keeps the host, so the origin is the page's own.
+const seo = seoFor(b, Astro.url.href);
 ---
 
-<Base title={`${b.name} · Book online`} description={b.description ?? `Book ${b.name} online.`}>
+<Base title={seo.title} description={seo.description}>
+  <Fragment slot="head">
+    <link rel="canonical" href={seo.canonical} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={b.name} />
+    <meta property="og:description" content={seo.description} />
+    <meta property="og:url" content={seo.canonical} />
+    <meta name="twitter:card" content={seo.image ? 'summary_large_image' : 'summary'} />
+    {seo.image && <meta property="og:image" content={seo.image} />}
+    <script type="application/ld+json" set:html={seo.jsonLd} />
+  </Fragment>
   <Site site={site} />
 </Base>

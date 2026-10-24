@@ -96,7 +96,7 @@ export function Atelier({ site }: { site: SiteModel }) {
         {site.layout.sections.map(section)}
       </main>
       <footer class="tat-foot s-wrap"><span><Name site={site} /></span><span>{site.status.text}</span></footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

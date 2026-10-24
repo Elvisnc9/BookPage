@@ -111,7 +111,7 @@ export function Quiet({ site }: { site: SiteModel }) {
         </section>
         {site.layout.sections.map(section)}
       </main>
-      <MadeWith class="tq-made" />
+      <MadeWith site={site} class="tq-made" />
     </div>
   );
 }

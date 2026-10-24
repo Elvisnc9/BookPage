@@ -111,7 +111,7 @@ export function Bloom({ site }: { site: SiteModel }) {
         {site.layout.sections.map(section)}
       </main>
       <footer class="tbl-foot s-wrap"><span class="s-display"><Name site={site} /></span><span>{site.status.text}</span></footer>
-      <MadeWith />
+      <MadeWith site={site} />
     </>
   );
 }

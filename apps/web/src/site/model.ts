@@ -56,6 +56,8 @@ export interface SiteDay {
 
 export interface SiteModel {
   mode: SiteMode;
+  /** The "Made with BookPage" line; off on Pro. */
+  showBadge: boolean;
   template: ResolvedSite['template'];
   theme: SiteTheme;
   layout: LayoutConfig;
@@ -159,6 +161,7 @@ export function buildSite(b: PublicBusiness, mode: SiteMode, now = new Date()): 
 
   return {
     mode,
+    showBadge: b.showBadge,
     template: b.site.template,
     theme: b.site.theme,
     layout: b.site.template.layout,

@@ -133,7 +133,7 @@ export function Billboard({ site }: { site: SiteModel }) {
           <strong class="s-display"><Name site={site} /></strong>
           <a class="s-btn s-btn-accent" href="#services">{site.cta}</a>
         </div>
-        <MadeWith />
+        <MadeWith site={site} />
       </footer>
     </>
   );
