@@ -27,7 +27,22 @@ export function loadConfig() {
     // Shared with the web app, which sends it alongside the visitor's IP. Without it
     // (or on a mismatch) a forwarded IP is ignored and rate limits key on the socket IP.
     proxySecret: process.env.PROXY_SECRET || null,
+    billing: billingConfig(),
   };
+}
+
+/**
+ * BILLING_PROVIDER picks who takes Pro payments. Until a payment provider is approved
+ * and plugged in, production runs with "none" (Pro shows as opening soon) and
+ * development uses "test": a fake checkout where no money moves and no domain is
+ * really registered. "test" is refused in production.
+ */
+function billingConfig() {
+  const production = process.env.NODE_ENV === 'production';
+  const provider = process.env.BILLING_PROVIDER || (production ? 'none' : 'test');
+  if (provider !== 'none' && provider !== 'test') throw new Error(`Unknown BILLING_PROVIDER ${provider}`);
+  if (provider === 'test' && production) throw new Error('BILLING_PROVIDER=test is for development only');
+  return { provider: provider as 'none' | 'test' };
 }
 
 export type Config = ReturnType<typeof loadConfig>;

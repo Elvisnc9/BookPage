@@ -11,5 +11,6 @@ import { PublicService } from './public.service';
   imports: [SiteModule, ThrottlerModule.forRoot({ throttlers: PUBLIC_THROTTLERS, errorMessage: TOO_MANY_ATTEMPTS })],
   controllers: [PublicController, MarketingController],
   providers: [PublicService, PublicThrottlerGuard],
+  exports: [PublicService],
 })
 export class PublicModule {}

@@ -3,6 +3,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import {
   type BusinessPatch,
   canUseTemplate,
+  effectivePlan,
   CLASSIC_FALLBACK,
   type ResolvedSite,
   siteThemePatchSchema,
@@ -56,12 +57,12 @@ export class BusinessService {
       orderBy: { createdAt: 'asc' },
       include: OWNER_VIEW,
     });
-    return business && toOwnerView(business, await this.templates.resolve(business.template, business.theme, business.plan));
+    return business && toOwnerView(business, await this.templates.resolve(business.template, business.theme, effectivePlan(business)));
   }
 
   /** Autosaves profile fields, creating the draft business on the first save. */
   async patch(ownerId: string, patch: BusinessPatch): Promise<OwnerBusiness> {
-    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true, plan: true } });
+    const existing = await this.prisma.business.findFirst({ where: { ownerId }, select: { id: true, country: true, plan: true, planRenewsAt: true } });
     const data = normalise(patch, patch.country ?? existing?.country ?? 'US');
 
     // Only offered, valid templates can be picked; a stale or made-up id is a field error, never a silent swap.
@@ -71,7 +72,7 @@ export class BusinessService {
         throw new BadRequestException({ message: 'Invalid request', issues: [{ path: 'templateId', message: "That template isn't available. Pick another." }] });
       }
       // Premium templates need Pro. Owners can preview them in onboarding, but not pick them.
-      if (!canUseTemplate(template, existing?.plan ?? 'free')) throw lockedTemplate(template.name);
+      if (!canUseTemplate(template, existing ? effectivePlan(existing) : 'free')) throw lockedTemplate(template.name);
     }
     // The theme is the owner's whole set of overrides (a key left out means "the template's default"); it never touches the layout.
     if (patch.theme) data.theme = patch.theme;
@@ -293,7 +294,7 @@ function toOwnerView(b: BusinessWithView, site: ResolvedSite): OwnerBusiness {
     email: b.email,
     timezone: b.timezone,
     currency: b.currency,
-    plan: b.plan,
+    plan: effectivePlan(b),
     templateId: b.templateId,
     theme: theme.success ? theme.data : {},
     site,

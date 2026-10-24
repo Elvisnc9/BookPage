@@ -16,7 +16,7 @@ import { hashToken } from '../common/tokens';
 import { findSlots } from '../availability/engine';
 import { manageToken } from '../email/links';
 import { NotificationsService } from '../email/notifications.service';
-import { addDays, isDateString, localDate, zonedToUtc } from '@bookpage/shared';
+import { addDays, effectivePlan, isDateString, localDate, zonedToUtc } from '@bookpage/shared';
 import type { Prisma } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MEDIA_META, mediaSlots } from '../site/media';
@@ -56,7 +56,23 @@ export class PublicService {
   async profile(slug: string): Promise<PublicBusiness> {
     const b = await this.load(slug);
     // A premium template on a free plan renders Classic here (the owner sees why in onboarding).
-    return toPublic(b, await this.templates.resolve(b.template, b.theme, b.plan));
+    return toPublic(b, await this.templates.resolve(b.template, b.theme, effectivePlan(b)));
+  }
+
+  /**
+   * For the owner's launch check: can a customer book something right now? Looks for
+   * the first open time of any bookable service across the booking window.
+   */
+  async firstOpenTime(slug: string): Promise<{ bookable: number; firstSlot: string | null; windowDays: number }> {
+    const b = await this.load(slug);
+    const bookable = b.services.filter((s) => s.bookable && s.priceType !== 'quote');
+    const days = Math.min(b.bookingRules!.windowDays, MAX_DAYS);
+    const today = localDate(new Date(), b.timezone).date;
+    for (const service of bookable) {
+      const found = (await this.slots(b, service.id, undefined, today, days)).find((d) => d.slots.length);
+      if (found) return { bookable: bookable.length, firstSlot: found.slots[0]!.start.toISOString(), windowDays: days };
+    }
+    return { bookable: bookable.length, firstSlot: null, windowDays: days };
   }
 
   async availability(slug: string, serviceId: string, staffId: string | undefined, from: string | undefined, days: number): Promise<PublicDay[]> {
@@ -363,6 +379,7 @@ function toPublic(b: LoadedBusiness, site: ResolvedSite): PublicBusiness {
     site: { ...site, notice: null },
     timezone: b.timezone,
     currency: b.currency,
+    showBadge: effectivePlan(b) !== 'pro',
     hours: b.hours.filter((h) => h.kind === 'opening').map(({ weekday, opensAt, closesAt }) => ({ weekday, opensAt, closesAt })),
     services: b.services.map((s) => ({
       id: s.id,

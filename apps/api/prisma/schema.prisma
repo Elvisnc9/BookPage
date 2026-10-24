@@ -79,6 +79,14 @@ model Business {
   theme      Json          @default("{}")
   /// [owner] what the business pays for; Pro unlocks premium templates. Billing will set it; until then, by hand.
   plan       Plan          @default(free)
+  /// [owner] end of the paid Pro year; Pro stays on until then plus a grace period
+  planRenewsAt  DateTime?     @map("plan_renews_at") @db.Timestamptz(3)
+  /// [owner] where the subscription stands, as the payment provider last told us
+  billingStatus BillingStatus @default(none) @map("billing_status")
+  /// [public] the owner's own domain (Pro), e.g. glowstudio.com; null = only {slug}.bookpage.app
+  customDomain  String?       @unique @map("custom_domain")
+  domainMode    String?       @map("domain_mode") /// [owner] register (bought through us) | connect (they own it)
+  domainStatus  DomainStatus  @default(none) @map("domain_status") /// [owner]
 
   timezone String @default("America/New_York") /// [private] IANA zone, detected at onboarding
   currency String @default("USD") @db.Char(3) /// [public] ISO 4217
@@ -99,6 +107,7 @@ model Business {
   enquiries    Enquiry[]
   faqs         Faq[]
   media        MediaAsset[]
+  checkouts    CheckoutSession[]
 
   @@index([ownerId])
   @@index([templateId])
@@ -387,6 +396,59 @@ model SiteTemplate {
 
   @@index([isActive, position])
   @@map("site_templates")
+}
+
+enum BillingStatus {
+  none /// never paid
+  active /// paid year running; renews
+  canceling /// paid year running; won't renew
+  past_due /// renewal failed; in grace
+
+  @@map("billing_status")
+}
+
+enum DomainStatus {
+  none
+  pending /// being registered, or waiting for the owner's DNS
+  active
+  failed
+
+  @@map("domain_status")
+}
+
+/// One attempt to pay for Pro: what the owner chose (domain) and how it ended. The
+/// provider's checkout carries this id, so its webhook can be matched back.
+model CheckoutSession {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  businessId  String    @map("business_id") @db.Uuid
+  provider    String /// "test" in development; the payment provider's name later
+  status      String    @default("open") /// open | paid | expired
+  amountMinor Int       @map("amount_minor")
+  currency    String    @db.Char(3)
+  domainName  String?   @map("domain_name")
+  domainMode  String?   @map("domain_mode")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  paidAt      DateTime? @map("paid_at") @db.Timestamptz(3)
+
+  business Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, createdAt])
+  @@map("checkout_sessions")
+}
+
+/// Every payment event we acted on, once: a repeated webhook finds its row and is ignored.
+model BillingEvent {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  provider   String
+  externalId String   @map("external_id") /// the provider's event id
+  type       String /// e.g. checkout.paid, subscription.renewed
+  businessId String?  @map("business_id") @db.Uuid
+  payload    Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@unique([provider, externalId])
+  @@index([businessId])
+  @@map("billing_events")
 }
 
 enum Plan {
