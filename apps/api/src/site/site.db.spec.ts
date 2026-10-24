@@ -252,6 +252,20 @@ describe('images', () => {
     const removed = biz((await call('DELETE', `/business/media/${gallery[0]!.id}`)).json);
     expect(removed.gallery).toEqual([]);
   });
+
+  it('deletes the photo of a team member who is removed, so storage cannot pile up', async () => {
+    const b = biz((await call('GET', '/business')).json!.business);
+    const team = b.staff.map(({ id, name }) => ({ id, name }));
+    const added = biz((await call('PUT', '/business/staff', [...team, { name: 'Temp Person' }])).json);
+    const temp = added.staff.find((p) => p.name === 'Temp Person')!;
+    expect((await upload(`kind=staff&targetId=${temp.id}`, PNG)).status).toBe(200);
+    expect(await prisma.mediaAsset.count({ where: { staffId: temp.id } })).toBe(1);
+
+    await call('PUT', '/business/staff', team);
+    expect(await prisma.mediaAsset.count({ where: { staffId: temp.id } })).toBe(0);
+    // Everyone still on the team keeps their photo.
+    expect(biz((await call('GET', '/business')).json!.business).staff[0]!.photo).not.toBeNull();
+  });
 });
 
 describe('publishing', () => {

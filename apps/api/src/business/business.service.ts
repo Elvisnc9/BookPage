@@ -117,6 +117,8 @@ export class BusinessService {
       const removed = [...currentIds].filter((sid) => !keep.has(sid));
       if (removed.length) {
         await tx.service.updateMany({ where: { id: { in: removed } }, data: { archivedAt: new Date() } });
+        // Their photos are never shown again; keeping them would let storage grow without limit.
+        await tx.mediaAsset.deleteMany({ where: { businessId: id, serviceId: { in: removed } } });
       }
       await relinkStaff(tx, id);
     });
@@ -141,6 +143,7 @@ export class BusinessService {
       const removed = [...currentIds].filter((sid) => !keep.has(sid));
       if (removed.length) {
         await tx.staff.updateMany({ where: { id: { in: removed } }, data: { archivedAt: new Date() } });
+        await tx.mediaAsset.deleteMany({ where: { businessId: id, staffId: { in: removed } } });
       }
       await relinkStaff(tx, id);
     });
