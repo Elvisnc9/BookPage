@@ -1,5 +1,5 @@
 # Render Blueprint for the BookPage API. In Render: New → Blueprint → pick this repo.
-# Secrets marked `sync: false` are asked for once in the dashboard; see docs/DEPLOY.md.
+# Values marked `sync: false` are asked for once in the dashboard; see docs/DEPLOY-FREE.md.
 services:
   - type: web
     name: bookpage-api
@@ -8,22 +8,29 @@ services:
     dockerContext: .
     # Ohio, next to the Neon database (aws us-east-2). Keep them in the same region.
     region: ohio
-    # An always-on instance: the reminder and deposit-hold jobs run inside the server,
-    # so a plan that sleeps when idle would stop them.
-    plan: starter
+    # Free while testers try it. A free service sleeps after 15 minutes without requests,
+    # which would also pause the reminder and deposit-hold jobs, so an outside pinger
+    # (cron-job.org) calls /health every 10 minutes to keep it awake. One service running
+    # all month fits Render's 750 free hours. Switch to `starter` when real customers pay.
+    plan: free
     healthCheckPath: /health
     autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
-      - key: APP_ORIGIN
-        value: https://app.bookpage.app
-      - key: PAGE_URL_TEMPLATE
-        value: https://{slug}.bookpage.app
-      - key: EMAIL_FROM
-        value: bookings@mail.bookpage.app
       - key: REMINDERS_ENABLED
         value: "true"
+      # Your domain goes in these three (no default on purpose: the API refuses to start
+      # without them, rather than emailing localhost links):
+      #   APP_ORIGIN        https://app.YOURDOMAIN
+      #   PAGE_URL_TEMPLATE https://{slug}.YOURDOMAIN
+      #   EMAIL_FROM        bookings@mail.YOURDOMAIN  (the address only; the business name is added)
+      - key: APP_ORIGIN
+        sync: false
+      - key: PAGE_URL_TEMPLATE
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: DIRECT_URL

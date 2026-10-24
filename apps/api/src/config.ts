@@ -12,7 +12,25 @@ function required(name: string): string {
   return value;
 }
 
+/**
+ * In production every one of these must be set: without them emails would link to
+ * localhost, not be sent at all, or be signed with the development secret. Refusing
+ * to start is safer than running half-configured.
+ */
+const REQUIRED_IN_PRODUCTION = ['APP_ORIGIN', 'PAGE_URL_TEMPLATE', 'EMAIL_FROM', 'RESEND_API_KEY', 'MANAGE_TOKEN_SECRET', 'PROXY_SECRET', 'DATABASE_URL'];
+
+function checkProduction() {
+  if (process.env.NODE_ENV !== 'production') return;
+  const missing = REQUIRED_IN_PRODUCTION.filter((name) => !process.env[name]);
+  if (missing.length) throw new Error(`Missing environment variables for production: ${missing.join(', ')}`);
+  for (const name of ['APP_ORIGIN', 'PAGE_URL_TEMPLATE']) {
+    if (!process.env[name]!.startsWith('https://')) throw new Error(`${name} must be an https:// address in production`);
+  }
+  if (!process.env.PAGE_URL_TEMPLATE!.includes('{slug}')) throw new Error('PAGE_URL_TEMPLATE must contain {slug}');
+}
+
 export function loadConfig() {
+  checkProduction();
   const appOrigin = (process.env.APP_ORIGIN ?? 'http://localhost:4321').replace(/\/$/, '');
   return {
     appOrigin,
