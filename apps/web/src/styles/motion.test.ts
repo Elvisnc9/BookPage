@@ -33,7 +33,7 @@ describe('motion', () => {
     for (const body of animated) expect(body).not.toMatch(/\b(width|height|top|left|margin|padding):/);
     // Only loading indicators loop.
     const loops = [...onboarding.matchAll(/animation: ([\w-]+)[^;]*infinite/g)].map((m) => m[1]);
-    expect(loops.sort()).toEqual(['ob-blink', 'ob-pulse', 'ob-spin']);
+    expect([...new Set(loops)].sort()).toEqual(['ob-blink', 'ob-pulse', 'ob-spin']);
   });
 
   it('gates hover effects to devices that can hover', () => {

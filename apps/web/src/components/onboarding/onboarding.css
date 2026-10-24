@@ -406,7 +406,6 @@ fieldset.ob-team { border: 0; }
 .ob-launch-step[data-status='note'] .ob-launch-mark { background: var(--sun); animation: ob-tick 300ms var(--ease-out) both; }
 .ob-launch-step[data-status='note'] .ob-launch-mark { background: var(--tint-sun); }
 .ob-launch-step[data-status='fail'] .ob-launch-mark { background: var(--tint-red); border-color: var(--red); color: var(--red); }
-@keyframes ob-spin { to { transform: rotate(360deg); } }
 @keyframes ob-tick { from { transform: scale(.6); opacity: 0; } }
 .ob-launch-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 .ob-live { display: grid; gap: 14px; width: 100%; animation: ob-rise 360ms var(--ease-out) both; }
