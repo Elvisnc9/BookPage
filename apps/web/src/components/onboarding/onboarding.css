@@ -390,6 +390,34 @@ fieldset.ob-team { border: 0; }
 .ob-link-card a { font-weight: 700; overflow-wrap: anywhere; }
 .ob-done-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 
+/* Launch sequence: real steps, ticked as each answer arrives. */
+.ob-launch { display: grid; justify-items: start; gap: 18px; max-width: 680px; margin: 6vh auto; padding: 0 4px; }
+.ob-launch .ob-title { animation: ob-rise 360ms var(--ease-out) both; }
+.ob-launch-steps { display: grid; gap: 0; width: 100%; margin: 0; padding: 0; list-style: none; border: 2px solid var(--ink); border-radius: var(--r); background: var(--surface); box-shadow: 4px 4px 0 var(--ink); }
+.ob-launch-step { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; align-items: start; padding: 14px 16px; border-top: 1px solid var(--line); transition: opacity 200ms ease; }
+.ob-launch-step:first-child { border-top: 0; }
+.ob-launch-step[data-status='waiting'] { opacity: .45; }
+.ob-launch-text { display: grid; gap: 2px; min-width: 0; padding-top: 3px; }
+.ob-launch-text strong { font-weight: 700; }
+.ob-launch-text small { color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.ob-launch-mark { display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--ink); border-radius: 50%; font-weight: 800; }
+.ob-launch-step[data-status='running'] .ob-launch-mark { border-color: var(--line); border-top-color: var(--ink); animation: ob-spin 700ms linear infinite; }
+.ob-launch-step[data-status='ok'] .ob-launch-mark,
+.ob-launch-step[data-status='note'] .ob-launch-mark { background: var(--sun); animation: ob-tick 300ms var(--ease-out) both; }
+.ob-launch-step[data-status='note'] .ob-launch-mark { background: var(--tint-sun); }
+.ob-launch-step[data-status='fail'] .ob-launch-mark { background: var(--tint-red); border-color: var(--red); color: var(--red); }
+@keyframes ob-spin { to { transform: rotate(360deg); } }
+@keyframes ob-tick { from { transform: scale(.6); opacity: 0; } }
+.ob-launch-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.ob-live { display: grid; gap: 14px; width: 100%; animation: ob-rise 360ms var(--ease-out) both; }
+.ob-live .ob-intro { margin: 0; }
+.ob-live-share { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; }
+.ob-live-qr { display: block; width: 128px; flex: none; padding: 6px; border: 2px solid var(--ink); border-radius: 8px; background: #fff; }
+.ob-live-qr svg { display: block; width: 100%; height: auto; }
+.ob-live-share .ob-done-actions { flex: 1 1 240px; }
+.ob-live-pro { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+.ob-live-pro a { color: var(--ink); font-weight: 700; }
+
 /* ─── Bottom bar ─────────────────────────────────────────────────────── */
 .ob-nav {
   position: fixed; inset: auto 0 0 0; z-index: 15;

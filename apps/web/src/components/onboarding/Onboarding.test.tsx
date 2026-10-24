@@ -53,6 +53,12 @@ function fakeApi(start: OwnerBusiness) {
       biz = { ...biz, slug: body.slug, onboardingStep: 5, publishedAt: new Date().toISOString(), templateId: biz.templateId ?? rows[0]!.id };
       return ok(view());
     }
+    if (method === 'GET' && path === '/business/launch-check') {
+      if (!biz.publishedAt) return new Response(JSON.stringify({ message: 'Publish your page first' }), { status: 409 });
+      const step = url.searchParams.get('step');
+      // The secure check is a note on a local preview, as in development.
+      return ok({ check: { step, status: step === 'secure' ? 'note' : 'ok', detail: `${step} checked` } });
+    }
     return new Response('{}', { status: 404 });
   });
   return { fetch, calls, get: () => biz };
@@ -167,14 +173,23 @@ describe('onboarding', () => {
     await waitFor(() => expect(title()).toBe('Review and publish'));
     await waitFor(() => expect(document.querySelector('.ob-slug-note')?.textContent).toContain('is yours'), { timeout: 3000 });
     await act(async () => { fireEvent.submit(document.querySelector('form.ob-form')!); });
-    await waitFor(() => expect(screen.getByText(/Your page is/)).toBeTruthy(), { timeout: 4000 });
+    // The launch sequence: publish first, then each real check, in order, ticked as it answers.
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Launching your page' })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('heading', { name: /You’re\s*live/ })).toBeTruthy(), { timeout: 8000 });
+    const checks = api.calls.filter((c) => c.path === '/business/launch-check' || c.path === '/business/publish').map((c) => c.path);
+    expect(checks).toEqual(['/business/publish', ...Array(4).fill('/business/launch-check')]);
+    expect([...document.querySelectorAll('.ob-launch-step')].map((li) => li.getAttribute('data-status'))).toEqual(['ok', 'ok', 'note', 'ok', 'ok']);
+    expect(screen.getByText('calendar checked')).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'polishbar.bookpage.test' }).getAttribute('href')).toBe('http://polishbar.bookpage.test');
+    expect(screen.getByRole('img', { name: /QR code/ })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Pro includes a domain/ }).getAttribute('href')).toBe('/upgrade');
 
     const published = api.get();
     expect(published.templateId).toBe(bySlug('shelf').id);
     expect(published.theme).toEqual({ accent: '#D9432B' });
     expect(published).toMatchObject({ name: 'Polish Bar', city: 'London', slug: 'polishbar' });
     expect(published.services.map((s) => s.name)).toEqual(['Gel manicure']);
-  });
+  }, 20_000);
 
   it('switching template keeps what the owner typed', async () => {
     const start = { ...draft(), name: 'Forge Athletic', onboardingStep: 2 };

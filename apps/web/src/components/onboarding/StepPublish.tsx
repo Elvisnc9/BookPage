@@ -1,5 +1,4 @@
 import { type OwnerBusiness, type PublishIssue, publishIssues, SITE_FONTS } from '@bookpage/shared';
-import { useState } from 'preact/hooks';
 import type { SiteModel } from '../../site/model';
 import { Icon } from '../../site/parts';
 import { Card, Field, Section } from './ui';
@@ -113,33 +112,5 @@ export function StepPublish(props: {
         </div>
       </div>
     </Section>
-  );
-}
-
-export function Published(props: { url: string; host: string }) {
-  const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle');
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(props.url);
-      setCopied('ok');
-    } catch {
-      setCopied('fail');
-    }
-  };
-  return (
-    <section class="ob-done" aria-labelledby="ob-done-title">
-      <span class="ob-stamp mono" aria-hidden="true"><Icon name="check" size={28} /> Live</span>
-      <h1 id="ob-done-title" class="ob-title" tabIndex={-1}>Your page is <span class="ob-scan">live</span>.</h1>
-      <p class="ob-intro">Share it anywhere customers find you: your Instagram bio, WhatsApp status, Google profile.</p>
-      <div class="ob-card ob-link-card">
-        <a class="mono" href={props.url} target="_blank" rel="noopener">{props.host}</a>
-        <button type="button" class="btn" onClick={copy}>{copied === 'ok' ? 'Copied' : 'Copy link'}</button>
-      </div>
-      <p class="ob-hint" role="status">{copied === 'fail' ? "Couldn't copy. Select the link and copy it yourself." : copied === 'ok' ? 'Link copied to your clipboard.' : ''}</p>
-      <div class="ob-done-actions">
-        <a class="btn btn-primary" href={props.url} target="_blank" rel="noopener">Open my page <Icon name="arrow" size={16} /></a>
-        <a class="btn" href="/">Go to your dashboard</a>
-      </div>
-    </section>
   );
 }

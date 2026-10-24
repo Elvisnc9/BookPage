@@ -11,7 +11,8 @@ import {
 import { type Device, PreviewPanel, PreviewSheet } from './Preview';
 import { StepAbout } from './StepAbout';
 import { StepBooking } from './StepBooking';
-import { Published, type SlugStatus, StepPublish } from './StepPublish';
+import { LaunchSequence } from './LaunchSequence';
+import { type SlugStatus, StepPublish } from './StepPublish';
 import { StepServices } from './StepServices';
 import { StepTemplate } from './StepTemplate';
 
@@ -173,8 +174,7 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   const [slug, setSlug] = useState(() => (biz.slug.startsWith('draft-') ? '' : biz.slug));
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('checking');
   const [serverIssues, setServerIssues] = useState<PublishIssue[]>([]);
-  const [publishing, setPublishing] = useState(false);
-  const [published, setPublished] = useState<string | null>(null);
+  const [launching, setLaunching] = useState(false);
   const slugCheck = useRef(0);
 
   useEffect(() => {
@@ -250,19 +250,23 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
       return goTo(step + 1);
     }
 
-    setPublishing(true);
-    try {
-      const live = await api('POST', '/business/publish', { slug });
-      onBiz(live);
-      setPublished(live.slug);
-      window.scrollTo({ top: 0 });
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 409) setSlugStatus('taken');
-      else if (error instanceof ApiError && error.status === 422) setServerIssues(error.issues as unknown as PublishIssue[]);
-      else setNavError("Couldn't publish. Check your connection and try again.");
-    } finally {
-      setPublishing(false);
-    }
+    // Publishing is the launch sequence's first step, so the owner sees it happen.
+    setLaunching(true);
+    window.scrollTo({ top: 0 });
+  };
+
+  const publish = async () => {
+    const live = await api('POST', '/business/publish', { slug });
+    onBiz(live);
+    return live.slug;
+  };
+
+  // The API said no (address just taken, something missing, a Pro template): back to the review.
+  const refused = (error: ApiError) => {
+    setLaunching(false);
+    if (error.status === 409) setSlugStatus('taken');
+    else if (error.status === 422) setServerIssues(error.issues as unknown as PublishIssue[]);
+    else setNavError(error.message);
   };
 
   // Everything is saved, so signing out (through Clerk) is safe; they pick up here next time.
@@ -274,9 +278,17 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
   };
 
   const domain = `${origin.rootDomain}${origin.port ? `:${origin.port}` : ''}`;
-  if (published) {
-    const host = `${published}.${domain}`;
-    return <div class="ob-shell ob-shell-done"><Published url={`${origin.protocol}//${host}`} host={host} /></div>;
+  if (launching) {
+    return (
+      <div class="ob-shell ob-shell-done">
+        <LaunchSequence
+          publish={publish}
+          onRefused={refused}
+          pageUrl={(live) => `${origin.protocol}//${live}.${domain}`}
+          upgradeHref={biz.plan === 'pro' ? null : '/upgrade'}
+        />
+      </div>
+    );
   }
 
   const furthest = Math.min(biz.onboardingStep + 1, 5);
@@ -344,8 +356,8 @@ function Wizard(props: { initial: OwnerBusiness; templates: SiteTemplate[]; orig
             {step > 1 ? <button type="button" class="btn" onClick={() => goTo(step - 1)}><Icon name="back" size={16} /> Back</button> : <span />}
             <button type="button" class="btn ob-nav-preview" onClick={() => setSheet(true)}>Preview</button>
             <p class={`ob-nav-msg${navError ? ' bad' : ''}`} role="status" aria-live="polite">{navError}</p>
-            <button type="submit" class="btn btn-primary ob-continue" disabled={publishing} data-busy={publishing || undefined}>
-              {step === 5 ? (publishing ? 'Publishing…' : 'Publish my page') : (
+            <button type="submit" class="btn btn-primary ob-continue">
+              {step === 5 ? 'Publish my page' : (
                 <><span class="ob-continue-long">Continue to {ONBOARDING_STEPS[step]!.toLowerCase()}</span><span class="ob-continue-short">Continue</span></>
               )}
               <Icon name="arrow" size={16} />
