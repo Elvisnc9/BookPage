@@ -63,15 +63,7 @@ export class BillingService {
     const b = await this.row(ownerId);
     if (effectivePlan(b) === 'pro' && b.billingStatus !== 'past_due') throw new ConflictException('You’re already on Pro');
 
-    if (req.domain) {
-      const taken = await this.prisma.business.findFirst({ where: { customDomain: req.domain.name, id: { not: b.id } }, select: { id: true } });
-      if (taken) throw domainIssue('That domain is already connected to another BookPage page');
-      if (req.domain.mode === 'register') {
-        const option = (await this.searchDomains(req.domain.name)).find((o) => o.name === req.domain!.name);
-        if (!option?.available) throw domainIssue('That domain isn’t available. Pick another.');
-        if (!option.included) throw domainIssue('That domain costs more than the one included with Pro. Pick a standard one, or connect one you own.');
-      }
-    }
+    if (req.domain) await this.checkDomain(b.id, req.domain);
 
     const session = await this.prisma.checkoutSession.create({
       data: {
@@ -155,6 +147,25 @@ export class BillingService {
     }
   }
 
+  /** Pro without a domain yet (skipped at checkout): add the included one now. */
+  async addDomain(ownerId: string, domain: NonNullable<CheckoutRequest['domain']>): Promise<BillingView> {
+    const b = await this.row(ownerId);
+    if (effectivePlan(b) !== 'pro') throw new ConflictException('A domain comes with Pro');
+    if (b.customDomain) throw new ConflictException('Your page already has a domain');
+    await this.checkDomain(b.id, domain);
+    try {
+      await this.prisma.business.update({
+        where: { id: b.id },
+        // As at checkout: the test provider registers nothing, so a new name is active at once.
+        data: { customDomain: domain.name, domainMode: domain.mode, domainStatus: domain.mode === 'register' ? 'active' : 'pending' },
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw domainIssue('That domain is already connected to another BookPage page');
+      throw error;
+    }
+    return this.view(ownerId);
+  }
+
   /** Stop renewing; Pro stays on until the paid year ends. */
   async cancel(ownerId: string): Promise<BillingView> {
     const b = await this.row(ownerId);
@@ -168,6 +179,16 @@ export class BillingService {
     if (b.billingStatus !== 'canceling' || effectivePlan(b) !== 'pro') throw new ConflictException('There’s nothing to resume');
     await this.prisma.business.update({ where: { id: b.id }, data: { billingStatus: 'active' } });
     return this.view(ownerId);
+  }
+
+  private async checkDomain(businessId: string, domain: NonNullable<CheckoutRequest['domain']>) {
+    const taken = await this.prisma.business.findFirst({ where: { customDomain: domain.name, id: { not: businessId } }, select: { id: true } });
+    if (taken) throw domainIssue('That domain is already connected to another BookPage page');
+    if (domain.mode === 'register') {
+      const option = (await this.searchDomains(domain.name)).find((o) => o.name === domain.name);
+      if (!option?.available) throw domainIssue('That domain isn’t available. Pick another.');
+      if (!option.included) throw domainIssue('That domain costs more than the one included with Pro. Pick a standard one, or connect one you own.');
+    }
   }
 
   private async row(ownerId: string): Promise<BillingRow> {

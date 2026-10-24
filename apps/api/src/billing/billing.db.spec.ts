@@ -137,10 +137,14 @@ describe('Pro billing (test provider)', () => {
     expect((await billing()).effectivePlan).toBe('pro');
   });
 
-  it('connecting a domain you own waits for DNS', async () => {
-    const { json } = await call('POST', '/billing/checkout', { domain: { name: `${label}-own.co.uk`, mode: 'connect' } }, otherOwnerId);
-    const view = (await call('POST', `/billing/test/${sessionId(json!.url)}/pay`, undefined, otherOwnerId)).json!.billing as BillingView;
+  it('adds the domain later when it was skipped at checkout; one you own waits for DNS', async () => {
+    expect((await call('POST', '/billing/domain', { domain: { name: `${label}-late.co.uk`, mode: 'connect' } }, otherOwnerId)).status).toBe(409); // not Pro
+    const { json } = await call('POST', '/billing/checkout', { domain: null }, otherOwnerId);
+    await call('POST', `/billing/test/${sessionId(json!.url)}/pay`, undefined, otherOwnerId);
+    expect((await billing(otherOwnerId)).domain).toBeNull();
+    const view = (await call('POST', '/billing/domain', { domain: { name: `${label}-own.co.uk`, mode: 'connect' } }, otherOwnerId)).json!.billing as BillingView;
     expect(view.domain).toEqual({ name: `${label}-own.co.uk`, mode: 'connect', status: 'pending' });
+    expect((await call('POST', '/billing/domain', { domain: { name: `${label}-two.co.uk`, mode: 'connect' } }, otherOwnerId)).status).toBe(409);
   });
 });
 

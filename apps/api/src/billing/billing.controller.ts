@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { type CheckoutRequest, checkoutRequestSchema } from '@bookpage/shared';
 import { ClerkAuthGuard, CurrentAuth } from '../auth/clerk-auth.guard';
 import type { AuthUser } from '../auth/owners.service';
@@ -37,6 +37,14 @@ export class BillingController {
   @HttpCode(200)
   async payTest(@CurrentAuth() auth: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
     return { billing: await this.billing.payTest(auth.userId, id) };
+  }
+
+  /** Pro owners who skipped the domain at checkout add it here. */
+  @Post('domain')
+  @HttpCode(200)
+  async addDomain(@CurrentAuth() auth: AuthUser, @Body(new ZodPipe(checkoutRequestSchema)) body: CheckoutRequest) {
+    if (!body.domain) throw new BadRequestException('Choose a domain');
+    return { billing: await this.billing.addDomain(auth.userId, body.domain) };
   }
 
   @Post('cancel')
