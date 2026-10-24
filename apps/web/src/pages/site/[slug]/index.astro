@@ -1,5 +1,6 @@
 ---
 import Base from '../../../layouts/Base.astro';
+import { marketingOrigin } from '../../../lib/marketing';
 import { loadBusiness } from '../../../lib/public';
 import { buildSite } from '../../../site/model';
 import { seoFor } from '../../../site/seo';
@@ -12,7 +13,7 @@ import '../../../site/index.css';
 const b = await loadBusiness(Astro.params.slug, Astro.request);
 if (b instanceof Response) return b;
 
-const site = buildSite(b, 'live');
+const site = buildSite(b, 'live', new Date(), marketingOrigin(Astro.url));
 // Search and share details: the rewrite keeps the host, so the origin is the page's own.
 const seo = seoFor(b, Astro.url.href);
 ---

@@ -2,11 +2,18 @@ import type { SiteTemplate } from '@bookpage/shared';
 import { API_URL, APP_HOST, ROOT_DOMAIN } from 'astro:env/server';
 import { visitorHeaders } from './api';
 
+/** The marketing site for this environment: https://{ROOT_DOMAIN}, or www.localhost in dev. */
+export function marketingOrigin(url: URL): string {
+  const host = ROOT_DOMAIN === 'localhost' ? 'www.localhost' : ROOT_DOMAIN;
+  return `${url.protocol}//${host}${url.port ? `:${url.port}` : ''}`;
+}
+
 /** Links from the marketing site to the owner app and the demo booking page, for this environment. */
 export function siteLinks(url: URL) {
   const port = url.port ? `:${url.port}` : '';
   const app = `${url.protocol}//${APP_HOST}${port}`;
   return {
+    home: marketingOrigin(url),
     signUp: `${app}/sign-in?new`,
     signIn: `${app}/sign-in`,
     dashboard: `${app}/`,

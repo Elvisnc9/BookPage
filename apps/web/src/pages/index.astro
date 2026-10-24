@@ -141,7 +141,7 @@ const faqs = [
           <span class="mk-hc-top"><span class="mk-hc-ic" style="--ic:var(--sun)"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg></span><span class="mono">Step 03</span></span>
           <h3 class="mk-cond">Share your link</h3>
           <p>In your Instagram bio, WhatsApp status and Google listing. Customers book from there.</p>
-          <span class="mk-hc-ui"><span class="mk-url mono">glowstudio.bookpage.app</span></span>
+          <span class="mk-hc-ui"><span class="mk-url mono">glowstudio.{links.rootDomain}</span></span>
         </li>
       </ol>
     </div>
@@ -230,10 +230,10 @@ const faqs = [
         <p class="mk-sub">Type your business name. That is your booking page address, and it's free.</p>
       </div>
       <div class="mk-link-box" data-reveal>
-        <form class="box mk-slug" action={links.signUp} method="get" data-slug-form>
+        <form class="box mk-slug" action={links.signUp} method="get" data-slug-form data-root={links.rootDomain}>
           <span class="mono">https://</span>
           <input class="mono" name="slug" value="lunanails" aria-label="Your business name" maxlength="40" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="yourbusiness" data-slug-input />
-          <span class="mono">.bookpage.app</span>
+          <span class="mono">.{links.rootDomain}</span>
         </form>
         <p class="mk-slug-note mono" role="status" data-slug-note>Type a name to check it</p>
       </div>
@@ -336,7 +336,8 @@ const faqs = [
       try {
         const r = (await (await fetch(`/check-slug?slug=${encodeURIComponent(slug)}`)).json()) as { available: boolean; valid: boolean };
         if (input.value !== slug) return;
-        note.textContent = !r.valid ? 'Use 3–40 letters, numbers or single hyphens' : r.available ? `✓ ${slug}.bookpage.app is available` : `× ${slug}.bookpage.app is taken, try another`;
+        const root = document.querySelector<HTMLElement>('[data-slug-form]')?.dataset.root ?? '';
+        note.textContent = !r.valid ? 'Use 3–40 letters, numbers or single hyphens' : r.available ? `✓ ${slug}.${root} is available` : `× ${slug}.${root} is taken, try another`;
         note.dataset.tone = r.valid && r.available ? 'ok' : 'bad';
       } catch {
         note.textContent = 'Claim it when you sign up';

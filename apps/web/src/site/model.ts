@@ -58,6 +58,8 @@ export interface SiteModel {
   mode: SiteMode;
   /** The "Made with BookPage" line; off on Pro. */
   showBadge: boolean;
+  /** The marketing site's origin (badge and privacy links); empty in previews and samples. */
+  home: string;
   template: ResolvedSite['template'];
   theme: SiteTheme;
   layout: LayoutConfig;
@@ -108,7 +110,7 @@ const CREW: Record<string, string> = {
   tutor: 'tutors', fitness: 'coaches', photography: 'photographers', cleaning: 'crew', mechanic: 'mechanics',
 };
 
-export function buildSite(b: PublicBusiness, mode: SiteMode, now = new Date()): SiteModel {
+export function buildSite(b: PublicBusiness, mode: SiteMode, now = new Date(), home = ''): SiteModel {
   const category = b.category && b.category in CATEGORIES ? CATEGORIES[b.category as CategoryKey] : null;
   const name = b.name.trim();
   const onPremises = (b.locationType === 'premises' || b.locationType === 'both') && !!b.addressLine1;
@@ -162,6 +164,7 @@ export function buildSite(b: PublicBusiness, mode: SiteMode, now = new Date()): 
   return {
     mode,
     showBadge: b.showBadge,
+    home,
     template: b.site.template,
     theme: b.site.theme,
     layout: b.site.template.layout,

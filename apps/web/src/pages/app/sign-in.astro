@@ -2,10 +2,12 @@
 import { SignIn } from '@clerk/astro/components';
 import ClerkScript from '../../components/ClerkScript.astro';
 import Base from '../../layouts/Base.astro';
+import { siteLinks } from '../../lib/marketing';
 
 // One form for new and returning owners (Google, or email + one-time code, no passwords).
 // Both land on "/", where middleware sends new owners to onboarding. ?new only changes the heading.
 const isNew = Astro.url.searchParams.has('new');
+const { home } = siteLinks(Astro.url);
 // Middleware only renders this page signed in when the API refused the account.
 const refused = Boolean(Astro.locals.auth().userId);
 
@@ -79,7 +81,7 @@ const copy = isNew
       </section>
 
       <p class="legal">
-        By continuing you agree to the <a href="https://bookpage.app/terms">Terms</a> and <a href="https://bookpage.app/privacy">Privacy Policy</a>.
+        By continuing you agree to the <a href={`${home}/terms`}>Terms</a> and <a href={`${home}/privacy`}>Privacy Policy</a>.
       </p>
     </div>
 

@@ -1,5 +1,5 @@
 ---
-import { ROOT_DOMAIN } from 'astro:env/server';
+import { marketingOrigin } from '../lib/marketing';
 import { onAccent, type PublicBusiness } from '@bookpage/shared';
 import Base from './Base.astro';
 import Icon from '../components/booking/Icon.astro';
@@ -20,8 +20,8 @@ interface Props {
 
 const { business: b, title, description, bar = true, nav = [], noReferrer = false } = Astro.props;
 // The booking flow wears the business's brand colour and display font, whatever its template.
-// The marketing site on this environment's root domain (bookpage.app in production).
-const marketing = `${Astro.url.protocol}//${ROOT_DOMAIN === 'localhost' ? 'www.localhost' : ROOT_DOMAIN}${Astro.url.port ? `:${Astro.url.port}` : ''}`;
+// The marketing site on this environment's root domain.
+const marketing = marketingOrigin(Astro.url);
 const theme = `--accent: ${b.site.theme.accent}; --on-accent: ${onAccent(b.site.theme.accent)}`;
 const whatsapp = b.whatsapp ? `https://wa.me/${b.whatsapp.replace(/\D/g, '')}` : null;
 const contacts = [

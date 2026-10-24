@@ -1,6 +1,9 @@
 ---
 import MarketingLayout from '../layouts/MarketingLayout.astro';
 import { LEGAL } from '../lib/legal';
+import { siteLinks } from '../lib/marketing';
+
+const { rootDomain } = siteLinks(Astro.url);
 
 // Plain-language terms for business owners. Keep them honest about what ships today.
 ---
@@ -15,7 +18,7 @@ import { LEGAL } from '../lib/legal';
     <ul>
       <li>You can make a booking page for a business you run or are allowed to represent. Keep its details (prices, hours, address, policies) accurate.</li>
       <li>You own your content: text, photos, services and your client list. You give us permission to host and show it so your page works.</li>
-      <li>Your page address ({'{name}'}.bookpage.app) is yours to use while your account is active. We may reclaim an address that impersonates someone else or breaks these terms.</li>
+      <li>Your page address ({'{name}'}.{rootDomain}) is yours to use while your account is active. We may reclaim an address that impersonates someone else or breaks these terms.</li>
     </ul>
 
     <h2>2. Your customers</h2>

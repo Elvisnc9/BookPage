@@ -149,10 +149,10 @@ export function MadeWith(props: { site: SiteModel; class?: string }) {
   return (
     <p class={`s-made ${props.class ?? ''}`}>
       {props.site.showBadge && <>
-        <a href="https://bookpage.app/?ref=page">Made with BookPage · Get your free page</a>
+        <a href={`${props.site.home}/?ref=page`}>Made with BookPage · Get your free page</a>
         <span aria-hidden="true"> · </span>
       </>}
-      <a href="https://bookpage.app/privacy">Privacy</a>
+      <a href={`${props.site.home}/privacy`}>Privacy</a>
     </p>
   );
 }

@@ -52,7 +52,7 @@ function worst(slug: string): PublicBusiness {
 /** The markup a template produces (rendered by Preact, as on the server and in the preview). */
 function html(b: PublicBusiness, mode: SiteMode): string {
   const root = document.createElement('div');
-  mount(<Site site={buildSite(b, mode, NOW)} />, root);
+  mount(<Site site={buildSite(b, mode, NOW, 'https://bookpage.test')} />, root);
   const out = root.innerHTML;
   mount(null, root);
   return out;
@@ -106,7 +106,7 @@ describe.each(slugs)('template %s', (slug) => {
     expect(html(full(slug), 'live')).toContain('Made with BookPage');
     const pro = html({ ...full(slug), showBadge: false }, 'live');
     expect(pro).not.toContain('Made with BookPage');
-    expect(pro).toContain('bookpage.app/privacy');
+    expect(pro).toContain('href="https://bookpage.test/privacy"');
   });
 
   it('marks placeholders in the preview and never on the live page', () => {

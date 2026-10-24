@@ -22,5 +22,5 @@ export const PROCESSORS = [
   { name: 'Neon', purpose: 'Database (business profiles, bookings, customers)', where: 'United States (AWS us-east-2)' },
   { name: 'Resend', purpose: 'Sending booking emails and reminders', where: 'United States' },
   { name: 'Clerk', purpose: 'Owner sign-in, sessions and account security', where: 'United States' },
-  { name: '[API host]', purpose: 'Running the BookPage server', where: '[region]' },
+  { name: 'Render', purpose: 'Running the BookPage server', where: 'United States (Ohio)' },
 ];

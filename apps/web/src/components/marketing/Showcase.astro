@@ -4,6 +4,7 @@
 // sample businesses. Static HTML (no hydration); a small script fits each
 // fixed-width canvas to its frame.
 import type { SiteTemplate } from '@bookpage/shared';
+import { siteLinks } from '../../lib/marketing';
 import { sampleBusiness } from '../onboarding/samples';
 import { buildSite } from '../../site/model';
 import { Site } from '../../site/Site';
@@ -18,13 +19,14 @@ interface Props {
 }
 
 const { templates, signUp } = Astro.props;
+const links = siteLinks(Astro.url);
 // Four that look nothing alike; any the catalogue no longer offers are skipped.
 const FEATURED = ['classic', 'hatch', 'stockroom', 'bloom'];
 const featured = FEATURED.map((slug) => templates.find((t) => t.slug === slug)).filter((t): t is SiteTemplate => !!t);
 const shown = featured.length >= 2 ? featured : templates.slice(0, 4);
 const rows = shown.map((t) => {
   const business = sampleBusiness(t);
-  return { t, business, site: buildSite(business, 'live') };
+  return { t, business, site: buildSite(business, 'live', new Date(), links.home) };
 });
 const tints = ['var(--tint-sun)', 'var(--tint-periwinkle)', 'var(--tint-red)', 'var(--tint-mint)'];
 ---
@@ -51,7 +53,7 @@ const tints = ['var(--tint-sun)', 'var(--tint-periwinkle)', 'var(--tint-red)', '
           <li class="mk-show-row" data-flip={i % 2 === 1 ? '' : undefined} data-reveal>
             <div class="mk-show-media" style={`--tint:${tints[i % tints.length]}`} aria-hidden="true" inert>
               <div class="box mk-show-desk">
-                <div class="mk-show-bar"><i></i><i></i><i></i><span class="mono">{business.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.bookpage.app</span></div>
+                <div class="mk-show-bar"><i></i><i></i><i></i><span class="mono">{business.name.toLowerCase().replace(/[^a-z0-9]+/g, '')}.{links.rootDomain}</span></div>
                 <div class="mk-canvas" data-canvas="1280"><div class="mk-canvas-in"><NoIds><Site site={site} /></NoIds></div></div>
               </div>
               <div class="box mk-show-phone">

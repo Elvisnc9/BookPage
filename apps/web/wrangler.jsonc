@@ -6,7 +6,8 @@
   // Dev uses the astro:env defaults (localhost). Production is selected with CLOUDFLARE_ENV=production.
   "env": {
     "production": {
-      // One Worker serves every host: marketing (apex, www), the owner app (app.) and every
+      // YOUR DOMAIN: replace bookpage.app below (5 places) with your domain, e.g.
+      // bookpage.dpdns.org. One Worker serves every host: marketing (apex, www), the owner app (app.) and every
       // booking page ({slug}.). The zone must be on Cloudflare with proxied DNS records for
       // the apex, www, app and a wildcard (*). See docs/DEPLOY.md.
       "routes": [
@@ -16,9 +17,9 @@
       "vars": {
         "ROOT_DOMAIN": "bookpage.app",
         "APP_HOST": "app.bookpage.app",
-        // The API's own address. If you give it api.bookpage.app, make that DNS record
-        // DNS-only (grey cloud) so the wildcard route above doesn't catch it.
-        "API_URL": "https://api.bookpage.app"
+        // The API's address on Render (free plan: no custom domain needed). Use the exact
+        // URL Render shows for the service; it adds a suffix if the name is taken.
+        "API_URL": "https://bookpage-api.onrender.com"
       }
       // Secret, set once: wrangler secret put PROXY_SECRET --env production
     }
