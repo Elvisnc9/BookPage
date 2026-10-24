@@ -1,7 +1,12 @@
 ---
+import { PRO_COMING, PRO_FEATURES, PRO_PRICE } from '@bookpage/shared';
+import { money } from '../../lib/billing';
 import { siteLinks } from '../../lib/marketing';
 
-/** Free and Pro ($15/mo, waitlist only for now), plus what's coming. Used on the home page and /pricing. */
+/**
+ * Free and Pro (yearly, waitlist until payments open), plus what's coming. Used on
+ * the home page and /pricing. Pro lists only what exists; the rest is under "Coming".
+ */
 interface Props {
   /** Where the waitlist form returns to. */
   from: string;
@@ -23,28 +28,16 @@ const free = [
   'An email for every new booking',
   'Approve requests or auto-confirm',
 ];
-const pro = [
-  'Everything in Free',
-  'More templates, your colours and logo',
-  'A short video of your space',
-  'A gallery of your best work',
-  'Remove the BookPage badge',
-  'Priority support',
-];
-const later = [
-  'AI receptionist that answers customer questions',
-  'Google Calendar sync',
-  'WhatsApp reminders',
-  'Your own domain',
-  'Deposits and online payments',
-];
+const pro = ['Everything in Free', ...PRO_FEATURES];
+const later = [...PRO_COMING, 'AI receptionist that answers customer questions', 'Online card payments'];
+const perMonth = money(Math.round(PRO_PRICE.amountMinor / 12));
 ---
 
 <section id="pricing" class="mk-fx mk-sec mk-white mk-ruled-top" aria-labelledby="pricing-title">
   <div class="mk-w mk-stack mk-pricing">
     <div class="mk-head mk-head-center" data-reveal>
       <Heading id="pricing-title" class="mk-h2">Start free. <span class="scan">Grow with Pro.</span></Heading>
-      <p class="mk-sub mono">Taking bookings is free, for good. Upgrade when you want your page to look and feel like your brand.</p>
+      <p class="mk-sub mono">Taking bookings is free, for good. Upgrade when you want your own domain and a page that looks like your brand.</p>
     </div>
 
     <div class="mk-plans" data-reveal>
@@ -59,8 +52,8 @@ const later = [
       <article id="pro" class="box mk-plan mk-plan-pro">
         <span class="mk-flag mono">Opening soon</span>
         <span class="mk-badge mono" style="background:#E9B949">Pro</span>
-        <p class="mk-price"><strong>$15</strong><span class="mono">/month</span></p>
-        <p>Your page, your brand, your best work on show.</p>
+        <p class="mk-price"><strong>{money(PRO_PRICE.amountMinor)}</strong><span class="mono">/year</span></p>
+        <p>Your own domain, included. About {perMonth} a month, billed once a year. No monthly plan, no trial needed: Free is the trial.</p>
         {joined ? (
           <p class="mk-joined mono" role="status">✓ You're on the list. We'll email you once, when Pro opens.</p>
         ) : (
@@ -83,7 +76,7 @@ const later = [
         <span class="mk-badge mono" style="background:#C8553D;color:#FFFFFF">Coming soon</span>
         <p class="mk-plan-title">What we're building next.</p>
         <ul class="mk-plus-list mono">{later.map((x) => <li>○ {x}</li>)}</ul>
-        <p class="mk-plan-note mono">Join the Pro waitlist and we will tell you when each one is ready.</p>
+        <p class="mk-plan-note mono">Coming to Pro at no extra cost. Join the waitlist and we will tell you when each one is ready.</p>
         <a class="btn mk-plan-btn-sm" href="#pro">Join the waitlist</a>
       </article>
     </div>
