@@ -5,6 +5,7 @@ import { clerkMiddleware } from '@clerk/astro/server';
 import { isValidSlug } from '@bookpage/shared';
 import { getMe } from './lib/api';
 import { domainsFor, isInternalPath, resolveSite } from './lib/host';
+import { withSecurityHeaders } from './lib/security-headers';
 
 const notFound = () => new Response('Not found', { status: 404 });
 
@@ -19,7 +20,9 @@ const PUBLIC_APP_PATHS = new Set(['/sign-in']);
 const withClerk = clerkMiddleware();
 
 // next(path) rewrites without running this middleware a second time.
-export const onRequest = defineMiddleware(async (context, next) => {
+export const onRequest = defineMiddleware(async (context, next) => withSecurityHeaders(await route(context, next), context.url));
+
+async function route(context: APIContext, next: MiddlewareNext): Promise<Response> {
   const { pathname, search } = context.url;
   const hosts = domainsFor(context.url.hostname, ROOT_DOMAIN, APP_HOST, import.meta.env.DEV);
 
@@ -50,7 +53,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
       // Clerk's handler is typed as possibly returning nothing; ours always returns a response.
       return (await withClerk(context, () => ownerApp(context, next, pathname, rest, search))) ?? notFound();
   }
-});
+}
 
 async function islandAuth(context: APIContext, next: MiddlewareNext): Promise<Response> {
   const auth = context.locals.auth();
