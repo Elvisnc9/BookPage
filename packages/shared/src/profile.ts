@@ -25,7 +25,7 @@ export interface OwnerBusiness {
   email: string | null;
   timezone: string;
   currency: string;
-  /** What the business has paid for; Pro unlocks premium templates. */
+  /** What applies now (Pro until the paid year plus grace ends); Pro unlocks premium templates. */
   plan: Plan;
   /** The template the owner picked (null: never picked, so Classic). */
   templateId: string | null;

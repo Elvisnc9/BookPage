@@ -26,6 +26,8 @@ export interface PublicBusiness {
   logo: SiteImage | null;
   hero: SiteImage | null;
   gallery: SiteImage[];
+  /** False on Pro: the page hides the "Made with BookPage" badge. */
+  showBadge: boolean;
   /** The template and theme the page renders with (already resolved; see resolveSite). */
   site: ResolvedSite;
   timezone: string;
